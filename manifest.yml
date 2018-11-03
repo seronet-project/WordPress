@@ -1,0 +1,12 @@
+---
+applications:
+- name: wp
+  memory: 256M
+  path: .
+  buildpacks:
+  - php_buildpack
+  services:
+  - wpdb
+#  - wpvol
+  routes:
+  - route: "wp.cf.sero.network"

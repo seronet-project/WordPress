@@ -1,0 +1,4 @@
+{
+    "WEBDIR": "wordpress",
+    "PHP_VERSION": "{PHP_72_LATEST}"
+}
