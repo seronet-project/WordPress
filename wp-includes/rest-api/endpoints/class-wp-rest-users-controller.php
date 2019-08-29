@@ -329,7 +329,7 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 
 		$response->header( 'X-WP-TotalPages', (int) $max_pages );
 
-		$base = add_query_arg( $request->get_query_params(), rest_url( sprintf( '%s/%s', $this->namespace, $this->rest_base ) ) );
+		$base = add_query_arg( urlencode_deep( $request->get_query_params() ), rest_url( sprintf( '%s/%s', $this->namespace, $this->rest_base ) ) );
 		if ( $page > 1 ) {
 			$prev_page = $page - 1;
 
@@ -498,7 +498,8 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 					foreach ( $messages as $message ) {
 						$error->add( $code, $message );
 					}
-					if ( $error_data = $error->get_error_data( $code ) ) {
+					$error_data = $error->get_error_data( $code );
+					if ( $error_data ) {
 						$error->add_data( $error_data, $code );
 					}
 				}
@@ -566,6 +567,17 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 
 		$request->set_param( 'context', 'edit' );
 
+		/**
+		 * Fires after a user is completely created or updated via the REST API.
+		 *
+		 * @since 5.0.0
+		 *
+		 * @param WP_User         $user     Inserted or updated user object.
+		 * @param WP_REST_Request $request  Request object.
+		 * @param bool            $creating True when creating a user, false when updating.
+		 */
+		do_action( 'rest_after_insert_user', $user, $request, true );
+
 		$response = $this->prepare_item_for_response( $user, $request );
 		$response = rest_ensure_response( $response );
 
@@ -630,7 +642,9 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 			return new WP_Error( 'rest_user_invalid_id', __( 'Invalid user ID.' ), array( 'status' => 404 ) );
 		}
 
-		if ( email_exists( $request['email'] ) && $request['email'] !== $user->user_email ) {
+		$owner_id = email_exists( $request['email'] );
+
+		if ( $owner_id && $owner_id !== $id ) {
 			return new WP_Error( 'rest_user_invalid_email', __( 'Invalid email address.' ), array( 'status' => 400 ) );
 		}
 
@@ -688,6 +702,9 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 		}
 
 		$request->set_param( 'context', 'edit' );
+
+		/** This action is documented in wp-includes/rest-api/endpoints/class-wp-rest-users-controller.php */
+		do_action( 'rest_after_insert_user', $user, $request, false );
 
 		$response = $this->prepare_item_for_response( $user, $request );
 		$response = rest_ensure_response( $response );
@@ -909,7 +926,7 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 		}
 
 		if ( in_array( 'registered_date', $fields, true ) ) {
-			$data['registered_date'] = date( 'c', strtotime( $user->user_registered ) );
+			$data['registered_date'] = gmdate( 'c', strtotime( $user->user_registered ) );
 		}
 
 		if ( in_array( 'capabilities', $fields, true ) ) {
@@ -921,7 +938,7 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 		}
 
 		if ( in_array( 'avatar_urls', $fields, true ) ) {
-			$data['avatar_urls'] = rest_get_avatar_urls( $user->user_email );
+			$data['avatar_urls'] = rest_get_avatar_urls( $user );
 		}
 
 		if ( in_array( 'meta', $fields, true ) ) {
@@ -1161,6 +1178,10 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 	 * @return array Item schema data.
 	 */
 	public function get_item_schema() {
+		if ( $this->schema ) {
+			return $this->add_additional_fields_schema( $this->schema );
+		}
+
 		$schema = array(
 			'$schema'    => 'http://json-schema.org/draft-04/schema#',
 			'title'      => 'user',
@@ -1317,7 +1338,8 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 
 		$schema['properties']['meta'] = $this->meta->get_field_schema();
 
-		return $this->add_additional_fields_schema( $schema );
+		$this->schema = $schema;
+		return $this->add_additional_fields_schema( $this->schema );
 	}
 
 	/**

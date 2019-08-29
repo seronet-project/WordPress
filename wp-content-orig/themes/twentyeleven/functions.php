@@ -9,11 +9,13 @@
  * The first function, twentyeleven_setup(), sets up the theme by registering support
  * for various features in WordPress, such as post thumbnails, navigation menus, and the like.
  *
- * When using a child theme (see https://codex.wordpress.org/Theme_Development and
- * https://codex.wordpress.org/Child_Themes), you can override certain functions
- * (those wrapped in a function_exists() call) by defining them first in your child theme's
- * functions.php file. The child theme's functions.php file is included before the parent
- * theme's file, so the child theme functions would be used.
+ * When using a child theme you can override certain functions (those wrapped
+ * in a function_exists() call) by defining them first in your child theme's
+ * functions.php file. The child theme's functions.php file is included before
+ * the parent theme's file, so the child theme functions would be used.
+ *
+ * @link https://developer.wordpress.org/themes/basics/theme-functions/
+ * @link https://developer.wordpress.org/themes/advanced-topics/child-themes/
  *
  * Functions that are not pluggable (not wrapped in function_exists()) are instead attached
  * to a filter or action hook. The hook can be removed by using remove_action() or
@@ -31,7 +33,7 @@
  * }
  * </code>
  *
- * For more information on hooks, actions, and filters, see https://codex.wordpress.org/Plugin_API.
+ * For more information on hooks, actions, and filters, see https://developer.wordpress.org/plugins/.
  *
  * @package WordPress
  * @subpackage Twenty_Eleven
@@ -82,6 +84,52 @@ if ( ! function_exists( 'twentyeleven_setup' ) ) :
 
 		// This theme styles the visual editor with editor-style.css to match the theme style.
 		add_editor_style();
+
+		// Load regular editor styles into the new block-based editor.
+		add_theme_support( 'editor-styles' );
+
+		// Load default block styles.
+		add_theme_support( 'wp-block-styles' );
+
+		// Add support for responsive embeds.
+		add_theme_support( 'responsive-embeds' );
+
+		// Add support for custom color scheme.
+		add_theme_support(
+			'editor-color-palette',
+			array(
+				array(
+					'name'  => __( 'Blue', 'twentyeleven' ),
+					'slug'  => 'blue',
+					'color' => '#1982d1',
+				),
+				array(
+					'name'  => __( 'Black', 'twentyeleven' ),
+					'slug'  => 'black',
+					'color' => '#000',
+				),
+				array(
+					'name'  => __( 'Dark Gray', 'twentyeleven' ),
+					'slug'  => 'dark-gray',
+					'color' => '#373737',
+				),
+				array(
+					'name'  => __( 'Medium Gray', 'twentyeleven' ),
+					'slug'  => 'medium-gray',
+					'color' => '#666',
+				),
+				array(
+					'name'  => __( 'Light Gray', 'twentyeleven' ),
+					'slug'  => 'light-gray',
+					'color' => '#e2e2e2',
+				),
+				array(
+					'name'  => __( 'White', 'twentyeleven' ),
+					'slug'  => 'white',
+					'color' => '#fff',
+				),
+			)
+		);
 
 		// Load up our theme options page and related code.
 		require( get_template_directory() . '/inc/theme-options.php' );
@@ -140,7 +188,7 @@ if ( ! function_exists( 'twentyeleven_setup' ) ) :
 			 *
 			 * @param int The default header image height in pixels. Default 288.
 			 */
-			   'height'              => apply_filters( 'twentyeleven_header_image_height', 288 ),
+			'height'                 => apply_filters( 'twentyeleven_header_image_height', 288 ),
 			// Support flexible heights.
 			'flex-height'            => true,
 			// Random image rotation by default.
@@ -238,6 +286,28 @@ if ( ! function_exists( 'twentyeleven_setup' ) ) :
 		add_theme_support( 'customize-selective-refresh-widgets' );
 	}
 endif; // twentyeleven_setup
+
+/**
+ * Enqueue scripts and styles for front end.
+ *
+ * @since Twenty Eleven 2.9
+ */
+function twentyeleven_scripts_styles() {
+	// Theme block stylesheet.
+	wp_enqueue_style( 'twentyeleven-block-style', get_template_directory_uri() . '/blocks.css', array(), '20190102' );
+}
+add_action( 'wp_enqueue_scripts', 'twentyeleven_scripts_styles' );
+
+/**
+ * Enqueue styles for the block-based editor.
+ *
+ * @since Twenty Eleven 2.9
+ */
+function twentyeleven_block_editor_styles() {
+	// Block styles.
+	wp_enqueue_style( 'twentyeleven-block-editor-style', get_template_directory_uri() . '/editor-blocks.css', array(), '20190102' );
+}
+add_action( 'enqueue_block_editor_assets', 'twentyeleven_block_editor_styles' );
 
 if ( ! function_exists( 'twentyeleven_header_style' ) ) :
 	/**
@@ -656,8 +726,8 @@ if ( ! function_exists( 'twentyeleven_comment' ) ) :
 
 						echo get_avatar( $comment, $avatar_size );
 
-						/* translators: 1: comment author, 2: date and time */
 						printf(
+							/* translators: 1: comment author, 2: date and time */
 							__( '%1$s on %2$s <span class="says">said:</span>', 'twentyeleven' ),
 							sprintf( '<span class="fn">%s</span>', get_comment_author_link() ),
 							sprintf(
@@ -714,12 +784,14 @@ if ( ! function_exists( 'twentyeleven_posted_on' ) ) :
 	 */
 	function twentyeleven_posted_on() {
 		printf(
+			/* translators: 1: The permalink, 2: time, 3: date and time, 4: date and time, 5: Author posts, 6: Author post link text, 7: Author display name  */
 			__( '<span class="sep">Posted on </span><a href="%1$s" title="%2$s" rel="bookmark"><time class="entry-date" datetime="%3$s">%4$s</time></a><span class="by-author"> <span class="sep"> by </span> <span class="author vcard"><a class="url fn n" href="%5$s" title="%6$s" rel="author">%7$s</a></span></span>', 'twentyeleven' ),
 			esc_url( get_permalink() ),
 			esc_attr( get_the_time() ),
 			esc_attr( get_the_date( 'c' ) ),
 			esc_html( get_the_date() ),
 			esc_url( get_author_posts_url( get_the_author_meta( 'ID' ) ) ),
+			/* translators: %s: Author display name */
 			esc_attr( sprintf( __( 'View all posts by %s', 'twentyeleven' ), get_the_author() ) ),
 			get_the_author()
 		);
@@ -813,3 +885,21 @@ function twentyeleven_widget_tag_cloud_args( $args ) {
 	return $args;
 }
 add_filter( 'widget_tag_cloud_args', 'twentyeleven_widget_tag_cloud_args' );
+
+if ( ! function_exists( 'wp_body_open' ) ) :
+	/**
+	 * Fire the wp_body_open action.
+	 *
+	 * Added for backwards compatibility to support pre 5.2.0 WordPress versions.
+	 *
+	 * @since Twenty Eleven 3.3
+	 */
+	function wp_body_open() {
+		/**
+		 * Triggered after the opening <body> tag.
+		 *
+		 * @since Twenty Eleven 3.3
+		 */
+		do_action( 'wp_body_open' );
+	}
+endif;

@@ -343,7 +343,7 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 		$response->header( 'X-WP-TotalPages', (int) $max_pages );
 
 		$request_params = $request->get_query_params();
-		$base           = add_query_arg( $request_params, rest_url( sprintf( '%s/%s', $this->namespace, $this->rest_base ) ) );
+		$base           = add_query_arg( urlencode_deep( $request_params ), rest_url( sprintf( '%s/%s', $this->namespace, $this->rest_base ) ) );
 
 		if ( $page > 1 ) {
 			$prev_page = $page - 1;
@@ -608,6 +608,19 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 
 		$request->set_param( 'context', 'edit' );
 
+		/**
+		 * Fires after a single post is completely created or updated via the REST API.
+		 *
+		 * The dynamic portion of the hook name, `$this->post_type`, refers to the post type slug.
+		 *
+		 * @since 5.0.0
+		 *
+		 * @param WP_Post         $post     Inserted or updated post object.
+		 * @param WP_REST_Request $request  Request object.
+		 * @param bool            $creating True when creating a post, false when updating.
+		 */
+		do_action( "rest_after_insert_{$this->post_type}", $post, $request, true );
+
 		$response = $this->prepare_item_for_response( $post, $request );
 		$response = rest_ensure_response( $response );
 
@@ -733,6 +746,15 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 		}
 
 		$request->set_param( 'context', 'edit' );
+
+		// Filter is fired in WP_REST_Attachments_Controller subclass.
+		if ( 'attachment' === $this->post_type ) {
+			$response = $this->prepare_item_for_response( $post, $request );
+			return rest_ensure_response( $response );
+		}
+
+		/** This action is documented in wp-includes/rest-api/endpoints/class-wp-rest-posts-controller.php */
+		do_action( "rest_after_insert_{$this->post_type}", $post, $request, false );
 
 		$response = $this->prepare_item_for_response( $post, $request );
 
@@ -1456,7 +1478,7 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 			// based on the `post_modified` field with the site's timezone
 			// offset applied.
 			if ( '0000-00-00 00:00:00' === $post->post_modified_gmt ) {
-				$post_modified_gmt = date( 'Y-m-d H:i:s', strtotime( $post->post_modified ) - ( get_option( 'gmt_offset' ) * 3600 ) );
+				$post_modified_gmt = gmdate( 'Y-m-d H:i:s', strtotime( $post->post_modified ) - ( get_option( 'gmt_offset' ) * 3600 ) );
 			} else {
 				$post_modified_gmt = $post->post_modified_gmt;
 			}
@@ -1505,10 +1527,11 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 
 		if ( in_array( 'content', $fields, true ) ) {
 			$data['content'] = array(
-				'raw'       => $post->post_content,
+				'raw'           => $post->post_content,
 				/** This filter is documented in wp-includes/post-template.php */
-				'rendered'  => post_password_required( $post ) ? '' : apply_filters( 'the_content', $post->post_content ),
-				'protected' => (bool) $post->post_password,
+				'rendered'      => post_password_required( $post ) ? '' : apply_filters( 'the_content', $post->post_content ),
+				'protected'     => (bool) $post->post_password,
+				'block_version' => block_version( $post->post_content ),
 			);
 		}
 
@@ -1556,7 +1579,8 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 		}
 
 		if ( in_array( 'template', $fields, true ) ) {
-			if ( $template = get_page_template_slug( $post->ID ) ) {
+			$template = get_page_template_slug( $post->ID );
+			if ( $template ) {
 				$data['template'] = $template;
 			} else {
 				$data['template'] = '';
@@ -1584,6 +1608,28 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 			if ( in_array( $base, $fields, true ) ) {
 				$terms         = get_the_terms( $post, $taxonomy->name );
 				$data[ $base ] = $terms ? array_values( wp_list_pluck( $terms, 'term_id' ) ) : array();
+			}
+		}
+
+		$post_type_obj = get_post_type_object( $post->post_type );
+		if ( is_post_type_viewable( $post_type_obj ) && $post_type_obj->public ) {
+			$permalink_template_requested = in_array( 'permalink_template', $fields, true );
+			$generated_slug_requested     = in_array( 'generated_slug', $fields, true );
+
+			if ( $permalink_template_requested || $generated_slug_requested ) {
+				if ( ! function_exists( 'get_sample_permalink' ) ) {
+					require_once ABSPATH . 'wp-admin/includes/post.php';
+				}
+
+				$sample_permalink = get_sample_permalink( $post->ID, $post->post_title, '' );
+
+				if ( $permalink_template_requested ) {
+					$data['permalink_template'] = $sample_permalink[0];
+				}
+
+				if ( $generated_slug_requested ) {
+					$data['generated_slug'] = $sample_permalink[1];
+				}
 			}
 		}
 
@@ -1707,7 +1753,8 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 		}
 
 		// If we have a featured media, add that.
-		if ( $featured_media = get_post_thumbnail_id( $post->ID ) ) {
+		$featured_media = get_post_thumbnail_id( $post->ID );
+		if ( $featured_media ) {
 			$image_url = rest_url( 'wp/v2/media/' . $featured_media );
 
 			$links['https://api.w.org/featuredmedia'] = array(
@@ -1781,6 +1828,10 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 			$rels[] = 'https://api.w.org/action-publish';
 		}
 
+		if ( current_user_can( 'unfiltered_html' ) ) {
+			$rels[] = 'https://api.w.org/action-unfiltered-html';
+		}
+
 		if ( 'post' === $post_type->name ) {
 			if ( current_user_can( $post_type->cap->edit_others_posts ) && current_user_can( $post_type->cap->publish_posts ) ) {
 				$rels[] = 'https://api.w.org/action-sticky';
@@ -1819,6 +1870,9 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 	 * @return array Item schema data.
 	 */
 	public function get_item_schema() {
+		if ( $this->schema ) {
+			return $this->add_additional_fields_schema( $this->schema );
+		}
 
 		$schema = array(
 			'$schema'    => 'http://json-schema.org/draft-04/schema#',
@@ -1914,6 +1968,21 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 		);
 
 		$post_type_obj = get_post_type_object( $this->post_type );
+		if ( is_post_type_viewable( $post_type_obj ) && $post_type_obj->public ) {
+			$schema['properties']['permalink_template'] = array(
+				'description' => __( 'Permalink template for the object.' ),
+				'type'        => 'string',
+				'context'     => array( 'edit' ),
+				'readonly'    => true,
+			);
+
+			$schema['properties']['generated_slug'] = array(
+				'description' => __( 'Slug automatically generated from the object title.' ),
+				'type'        => 'string',
+				'context'     => array( 'edit' ),
+				'readonly'    => true,
+			);
+		}
 
 		if ( $post_type_obj->hierarchical ) {
 			$schema['properties']['parent'] = array(
@@ -2010,18 +2079,24 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 							'validate_callback' => null, // Note: validation implemented in self::prepare_item_for_database()
 						),
 						'properties'  => array(
-							'raw'       => array(
+							'raw'           => array(
 								'description' => __( 'Content for the object, as it exists in the database.' ),
 								'type'        => 'string',
 								'context'     => array( 'edit' ),
 							),
-							'rendered'  => array(
+							'rendered'      => array(
 								'description' => __( 'HTML content for the object, transformed for display.' ),
 								'type'        => 'string',
 								'context'     => array( 'view', 'edit' ),
 								'readonly'    => true,
 							),
-							'protected' => array(
+							'block_version' => array(
+								'description' => __( 'Version of the content block format used by the object.' ),
+								'type'        => 'integer',
+								'context'     => array( 'edit' ),
+								'readonly'    => true,
+							),
+							'protected'     => array(
 								'description' => __( 'Whether the content is protected with a password.' ),
 								'type'        => 'boolean',
 								'context'     => array( 'view', 'edit', 'embed' ),
@@ -2157,7 +2232,8 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 			$schema['links'] = $schema_links;
 		}
 
-		return $this->add_additional_fields_schema( $schema );
+		$this->schema = $schema;
+		return $this->add_additional_fields_schema( $this->schema );
 	}
 
 	/**
@@ -2189,6 +2265,22 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 				),
 			);
 		}
+
+		$links[] = array(
+			'rel'          => 'https://api.w.org/action-unfiltered-html',
+			'title'        => __( 'The current user can post unfiltered HTML markup and JavaScript.' ),
+			'href'         => $href,
+			'targetSchema' => array(
+				'type'       => 'object',
+				'properties' => array(
+					'content' => array(
+						'raw' => array(
+							'type' => 'string',
+						),
+					),
+				),
+			),
+		);
 
 		if ( 'post' === $this->post_type ) {
 			$links[] = array(
@@ -2489,7 +2581,7 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 
 			$post_type_obj = get_post_type_object( $this->post_type );
 
-			if ( current_user_can( $post_type_obj->cap->edit_posts ) ) {
+			if ( current_user_can( $post_type_obj->cap->edit_posts ) || 'private' === $status && current_user_can( $post_type_obj->cap->read_private_posts ) ) {
 				$result = rest_validate_request_arg( $status, $request, $parameter );
 				if ( is_wp_error( $result ) ) {
 					return $result;

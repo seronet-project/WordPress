@@ -3,8 +3,8 @@
  * The loop that displays posts
  *
  * The loop displays the posts and the post content. See
- * https://codex.wordpress.org/The_Loop to understand it and
- * https://codex.wordpress.org/Template_Tags to understand
+ * https://developer.wordpress.org/themes/basics/the-loop/ to understand it and
+ * https://developer.wordpress.org/themes/basics/template-tags/ to understand
  * the tags used in it.
  *
  * This can be overridden in child themes with loop.php or
@@ -86,7 +86,9 @@ while ( have_posts() ) :
 					<p><em>
 					<?php
 						printf(
+							/* translators: 1: HTML tag attributes, 2: image count */
 							_n( 'This gallery contains <a %1$s>%2$s photo</a>.', 'This gallery contains <a %1$s>%2$s photos</a>.', $total_images, 'twentyten' ),
+							/* translators: %s: post title */
 							'href="' . esc_url( get_permalink() ) . '" title="' . esc_attr( sprintf( __( 'Permalink to %s', 'twentyten' ), the_title_attribute( 'echo=0' ) ) ) . '" rel="bookmark"',
 							number_format_i18n( $total_images )
 						);
@@ -98,17 +100,20 @@ while ( have_posts() ) :
 			</div><!-- .entry-content -->
 
 			<div class="entry-utility">
-			<?php if ( function_exists( 'get_post_format' ) && 'gallery' == get_post_format( $post->ID ) ) : ?>
+			<?php
+			$gallery = get_term_by( 'slug', _x( 'gallery', 'gallery category slug', 'twentyten' ), 'category' );
+			if ( function_exists( 'get_post_format' ) && 'gallery' == get_post_format( $post->ID ) ) :
+				?>
 				<a href="<?php echo esc_url( get_post_format_link( 'gallery' ) ); ?>" title="<?php esc_attr_e( 'View Galleries', 'twentyten' ); ?>"><?php _e( 'More Galleries', 'twentyten' ); ?></a>
 				<span class="meta-sep">|</span>
-			<?php elseif ( $gallery = get_term_by( 'slug', _x( 'gallery', 'gallery category slug', 'twentyten' ), 'category' ) && in_category( $gallery->term_id ) ) : ?>
+			<?php elseif ( $gallery && in_category( $gallery->term_id ) ) : ?>
 				<a href="<?php echo esc_url( get_category_link( $gallery ) ); ?>" title="<?php esc_attr_e( 'View posts in the Gallery category', 'twentyten' ); ?>"><?php _e( 'More Galleries', 'twentyten' ); ?></a>
 				<span class="meta-sep">|</span>
 			<?php endif; ?>
 				<span class="comments-link"><?php comments_popup_link( __( 'Leave a comment', 'twentyten' ), __( '1 Comment', 'twentyten' ), __( '% Comments', 'twentyten' ) ); ?></span>
 				<?php edit_post_link( __( 'Edit', 'twentyten' ), '<span class="meta-sep">|</span> <span class="edit-link">', '</span>' ); ?>
 			</div><!-- .entry-utility -->
-		</div><!-- #post-## -->
+		</div><!-- #post-<?php the_ID(); ?> -->
 
 		<?php /* How to display posts of the Aside format. The asides category is the old way. */ ?>
 
@@ -131,9 +136,9 @@ while ( have_posts() ) :
 				<span class="comments-link"><?php comments_popup_link( __( 'Leave a comment', 'twentyten' ), __( '1 Comment', 'twentyten' ), __( '% Comments', 'twentyten' ) ); ?></span>
 				<?php edit_post_link( __( 'Edit', 'twentyten' ), '<span class="meta-sep">|</span> <span class="edit-link">', '</span>' ); ?>
 			</div><!-- .entry-utility -->
-		</div><!-- #post-## -->
+		</div><!-- #post-<?php the_ID(); ?> -->
 
-	<?php /* How to display all other posts. */ ?>
+		<?php /* How to display all other posts. */ ?>
 
 	<?php else : ?>
 		<div id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
@@ -143,7 +148,7 @@ while ( have_posts() ) :
 				<?php twentyten_posted_on(); ?>
 			</div><!-- .entry-meta -->
 
-	<?php if ( is_archive() || is_search() ) : // Only display excerpts for archives and search. ?>
+		<?php if ( is_archive() || is_search() ) : // Only display excerpts for archives and search. ?>
 			<div class="entry-summary">
 				<?php the_excerpt(); ?>
 			</div><!-- .entry-summary -->
@@ -164,7 +169,10 @@ while ( have_posts() ) :
 			<div class="entry-utility">
 				<?php if ( count( get_the_category() ) ) : ?>
 					<span class="cat-links">
-						<?php printf( __( '<span class="%1$s">Posted in</span> %2$s', 'twentyten' ), 'entry-utility-prep entry-utility-prep-cat-links', get_the_category_list( ', ' ) ); ?>
+						<?php
+						/* translators: 1: CSS classes, 2: catgory list */
+						printf( __( '<span class="%1$s">Posted in</span> %2$s', 'twentyten' ), 'entry-utility-prep entry-utility-prep-cat-links', get_the_category_list( ', ' ) );
+						?>
 					</span>
 					<span class="meta-sep">|</span>
 				<?php endif; ?>
@@ -173,14 +181,17 @@ while ( have_posts() ) :
 				if ( $tags_list ) :
 					?>
 				<span class="tag-links">
-					<?php printf( __( '<span class="%1$s">Tagged</span> %2$s', 'twentyten' ), 'entry-utility-prep entry-utility-prep-tag-links', $tags_list ); ?>
+					<?php
+					/* translators: 1: CSS classes, 2: catgory list */
+					printf( __( '<span class="%1$s">Tagged</span> %2$s', 'twentyten' ), 'entry-utility-prep entry-utility-prep-tag-links', $tags_list );
+					?>
 				</span>
 				<span class="meta-sep">|</span>
 				<?php endif; ?>
 				<span class="comments-link"><?php comments_popup_link( __( 'Leave a comment', 'twentyten' ), __( '1 Comment', 'twentyten' ), __( '% Comments', 'twentyten' ) ); ?></span>
 				<?php edit_post_link( __( 'Edit', 'twentyten' ), '<span class="meta-sep">|</span> <span class="edit-link">', '</span>' ); ?>
 			</div><!-- .entry-utility -->
-		</div><!-- #post-## -->
+		</div><!-- #post-<?php the_ID(); ?> -->
 
 		<?php comments_template( '', true ); ?>
 

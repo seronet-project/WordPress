@@ -146,9 +146,9 @@ if ( $action ) {
 					?>
 					</ul>
 				<?php if ( 1 == $themes_to_delete ) : ?>
-					<p><?php _e( 'Are you sure you wish to delete this theme?' ); ?></p>
+					<p><?php _e( 'Are you sure you want to delete this theme?' ); ?></p>
 				<?php else : ?>
-					<p><?php _e( 'Are you sure you wish to delete these themes?' ); ?></p>
+					<p><?php _e( 'Are you sure you want to delete these themes?' ); ?></p>
 				<?php endif; ?>
 				<form method="post" action="<?php echo esc_url( $_SERVER['REQUEST_URI'] ); ?>" style="display:inline;">
 					<input type="hidden" name="verify-delete" value="1" />
@@ -217,7 +217,7 @@ if ( $action ) {
 			check_admin_referer( 'bulk-themes' );
 
 			/** This action is documented in wp-admin/network/site-themes.php */
-			$referer = apply_filters( 'handle_network_bulk_actions-' . get_current_screen()->id, $referer, $action, $themes );
+			$referer = apply_filters( 'handle_network_bulk_actions-' . get_current_screen()->id, $referer, $action, $themes ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 
 			wp_safe_redirect( $referer );
 			exit;
@@ -244,7 +244,7 @@ get_current_screen()->add_help_tab(
 get_current_screen()->set_help_sidebar(
 	'<p><strong>' . __( 'For more information:' ) . '</strong></p>' .
 	'<p>' . __( '<a href="https://codex.wordpress.org/Network_Admin_Themes_Screen">Documentation on Network Themes</a>' ) . '</p>' .
-	'<p>' . __( '<a href="https://wordpress.org/support/">Support Forums</a>' ) . '</p>'
+	'<p>' . __( '<a href="https://wordpress.org/support/">Support</a>' ) . '</p>'
 );
 
 get_current_screen()->set_screen_reader_content(

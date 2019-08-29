@@ -11,14 +11,14 @@
  * functions.php file. The child theme's functions.php file is included before
  * the parent theme's file, so the child theme functions would be used.
  *
- * @link https://codex.wordpress.org/Theme_Development
- * @link https://codex.wordpress.org/Child_Themes
+ * @link https://developer.wordpress.org/themes/basics/theme-functions/
+ * @link https://developer.wordpress.org/themes/advanced-topics/child-themes/
  *
  * Functions that are not pluggable (not wrapped in function_exists()) are
  * instead attached to a filter or action hook.
  *
  * For more information on hooks, actions, and filters,
- * {@link https://codex.wordpress.org/Plugin_API}
+ * {@link https://developer.wordpress.org/plugins/}
  *
  * @package WordPress
  * @subpackage Twenty_Fifteen
@@ -75,7 +75,7 @@ if ( ! function_exists( 'twentyfifteen_setup' ) ) :
 		/*
 		 * Enable support for Post Thumbnails on posts and pages.
 		 *
-		 * See: https://codex.wordpress.org/Function_Reference/add_theme_support#Post_Thumbnails
+		 * See: https://developer.wordpress.org/reference/functions/add_theme_support/#post-thumbnails
 		 */
 		add_theme_support( 'post-thumbnails' );
 		set_post_thumbnail_size( 825, 510, true );
@@ -106,7 +106,7 @@ if ( ! function_exists( 'twentyfifteen_setup' ) ) :
 		/*
 		 * Enable support for Post Formats.
 		 *
-		 * See: https://codex.wordpress.org/Post_Formats
+		 * See: https://wordpress.org/support/article/post-formats/
 		 */
 		add_theme_support(
 			'post-formats',
@@ -171,6 +171,82 @@ if ( ! function_exists( 'twentyfifteen_setup' ) ) :
 		 */
 		add_editor_style( array( 'css/editor-style.css', 'genericons/genericons.css', twentyfifteen_fonts_url() ) );
 
+		// Load regular editor styles into the new block-based editor.
+		add_theme_support( 'editor-styles' );
+
+		// Load default block styles.
+		add_theme_support( 'wp-block-styles' );
+
+		// Add support for responsive embeds.
+		add_theme_support( 'responsive-embeds' );
+
+		// Add support for custom color scheme.
+		add_theme_support(
+			'editor-color-palette',
+			array(
+				array(
+					'name'  => __( 'Dark Gray', 'twentyfifteen' ),
+					'slug'  => 'dark-gray',
+					'color' => '#111',
+				),
+				array(
+					'name'  => __( 'Light Gray', 'twentyfifteen' ),
+					'slug'  => 'light-gray',
+					'color' => '#f1f1f1',
+				),
+				array(
+					'name'  => __( 'White', 'twentyfifteen' ),
+					'slug'  => 'white',
+					'color' => '#fff',
+				),
+				array(
+					'name'  => __( 'Yellow', 'twentyfifteen' ),
+					'slug'  => 'yellow',
+					'color' => '#f4ca16',
+				),
+				array(
+					'name'  => __( 'Dark Brown', 'twentyfifteen' ),
+					'slug'  => 'dark-brown',
+					'color' => '#352712',
+				),
+				array(
+					'name'  => __( 'Medium Pink', 'twentyfifteen' ),
+					'slug'  => 'medium-pink',
+					'color' => '#e53b51',
+				),
+				array(
+					'name'  => __( 'Light Pink', 'twentyfifteen' ),
+					'slug'  => 'light-pink',
+					'color' => '#ffe5d1',
+				),
+				array(
+					'name'  => __( 'Dark Purple', 'twentyfifteen' ),
+					'slug'  => 'dark-purple',
+					'color' => '#2e2256',
+				),
+				array(
+					'name'  => __( 'Purple', 'twentyfifteen' ),
+					'slug'  => 'purple',
+					'color' => '#674970',
+				),
+				array(
+					'name'  => __( 'Blue Gray', 'twentyfifteen' ),
+					'slug'  => 'blue-gray',
+					'color' => '#22313f',
+				),
+				array(
+					'name'  => __( 'Bright Blue', 'twentyfifteen' ),
+					'slug'  => 'bright-blue',
+					'color' => '#55c3dc',
+				),
+				array(
+					'name'  => __( 'Light Blue', 'twentyfifteen' ),
+					'slug'  => 'light-blue',
+					'color' => '#e9f2f9',
+				),
+			)
+		);
+
 		// Indicate widget sidebars can use selective refresh in the Customizer.
 		add_theme_support( 'customize-selective-refresh-widgets' );
 	}
@@ -182,7 +258,7 @@ add_action( 'after_setup_theme', 'twentyfifteen_setup' );
  *
  * @since Twenty Fifteen 1.0
  *
- * @link https://codex.wordpress.org/Function_Reference/register_sidebar
+ * @link https://developer.wordpress.org/reference/functions/register_sidebar/
  */
 function twentyfifteen_widgets_init() {
 	register_sidebar(
@@ -255,8 +331,9 @@ if ( ! function_exists( 'twentyfifteen_fonts_url' ) ) :
 		if ( $fonts ) {
 			$fonts_url = add_query_arg(
 				array(
-					'family' => urlencode( implode( '|', $fonts ) ),
-					'subset' => urlencode( $subsets ),
+					'family'  => urlencode( implode( '|', $fonts ) ),
+					'subset'  => urlencode( $subsets ),
+					'display' => urlencode( 'fallback' ),
 				),
 				'https://fonts.googleapis.com/css'
 			);
@@ -291,27 +368,30 @@ function twentyfifteen_scripts() {
 	wp_enqueue_style( 'genericons', get_template_directory_uri() . '/genericons/genericons.css', array(), '3.2' );
 
 	// Load our main stylesheet.
-	wp_enqueue_style( 'twentyfifteen-style', get_stylesheet_uri() );
+	wp_enqueue_style( 'twentyfifteen-style', get_stylesheet_uri(), array(), '20190507' );
+
+	// Theme block stylesheet.
+	wp_enqueue_style( 'twentyfifteen-block-style', get_template_directory_uri() . '/css/blocks.css', array( 'twentyfifteen-style' ), '20190102' );
 
 	// Load the Internet Explorer specific stylesheet.
-	wp_enqueue_style( 'twentyfifteen-ie', get_template_directory_uri() . '/css/ie.css', array( 'twentyfifteen-style' ), '20141010' );
+	wp_enqueue_style( 'twentyfifteen-ie', get_template_directory_uri() . '/css/ie.css', array( 'twentyfifteen-style' ), '20170916' );
 	wp_style_add_data( 'twentyfifteen-ie', 'conditional', 'lt IE 9' );
 
 	// Load the Internet Explorer 7 specific stylesheet.
-	wp_enqueue_style( 'twentyfifteen-ie7', get_template_directory_uri() . '/css/ie7.css', array( 'twentyfifteen-style' ), '20141010' );
+	wp_enqueue_style( 'twentyfifteen-ie7', get_template_directory_uri() . '/css/ie7.css', array( 'twentyfifteen-style' ), '20141210' );
 	wp_style_add_data( 'twentyfifteen-ie7', 'conditional', 'lt IE 8' );
 
-	wp_enqueue_script( 'twentyfifteen-skip-link-focus-fix', get_template_directory_uri() . '/js/skip-link-focus-fix.js', array(), '20141010', true );
+	wp_enqueue_script( 'twentyfifteen-skip-link-focus-fix', get_template_directory_uri() . '/js/skip-link-focus-fix.js', array(), '20141028', true );
 
 	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
 		wp_enqueue_script( 'comment-reply' );
 	}
 
 	if ( is_singular() && wp_attachment_is_image() ) {
-		wp_enqueue_script( 'twentyfifteen-keyboard-image-navigation', get_template_directory_uri() . '/js/keyboard-image-navigation.js', array( 'jquery' ), '20141010' );
+		wp_enqueue_script( 'twentyfifteen-keyboard-image-navigation', get_template_directory_uri() . '/js/keyboard-image-navigation.js', array( 'jquery' ), '20141210' );
 	}
 
-	wp_enqueue_script( 'twentyfifteen-script', get_template_directory_uri() . '/js/functions.js', array( 'jquery' ), '20150330', true );
+	wp_enqueue_script( 'twentyfifteen-script', get_template_directory_uri() . '/js/functions.js', array( 'jquery' ), '20171218', true );
 	wp_localize_script(
 		'twentyfifteen-script',
 		'screenReaderText',
@@ -322,6 +402,20 @@ function twentyfifteen_scripts() {
 	);
 }
 add_action( 'wp_enqueue_scripts', 'twentyfifteen_scripts' );
+
+/**
+ * Enqueue styles for the block-based editor.
+ *
+ * @since Twenty Fifteen 2.1
+ */
+function twentyfifteen_block_editor_styles() {
+	// Block styles.
+	wp_enqueue_style( 'twentyfifteen-block-editor-style', get_template_directory_uri() . '/css/editor-blocks.css', array(), '20190102' );
+	// Add custom fonts.
+	wp_enqueue_style( 'twentyfifteen-fonts', twentyfifteen_fonts_url(), array(), null );
+}
+add_action( 'enqueue_block_editor_assets', 'twentyfifteen_block_editor_styles' );
+
 
 /**
  * Add preconnect for Google Fonts.
@@ -441,6 +535,28 @@ function twentyfifteen_widget_tag_cloud_args( $args ) {
 	return $args;
 }
 add_filter( 'widget_tag_cloud_args', 'twentyfifteen_widget_tag_cloud_args' );
+
+/**
+ * Prevents `author-bio.php` partial template from interfering with rendering
+ * an author archive of a user with the `bio` username.
+ *
+ * @since Twenty Fifteen 2.6
+ *
+ * @param string $template Template file.
+ * @return string Replacement template file.
+ */
+function twentyfifteen_author_bio_template( $template ) {
+	if ( is_author() ) {
+		$author = get_queried_object();
+		if ( $author instanceof WP_User && 'bio' === $author->user_nicename ) {
+			// Use author templates if exist, fall back to template hierarchy otherwise.
+			return locate_template( array( "author-{$author->ID}.php", 'author.php' ) );
+		}
+	}
+
+	return $template;
+}
+add_filter( 'author_template', 'twentyfifteen_author_bio_template' );
 
 
 /**

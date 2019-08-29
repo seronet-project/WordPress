@@ -103,7 +103,8 @@ class WP_Widget_Custom_HTML extends WP_Widget {
 	 *
 	 * @since 4.8.1
 	 *
-	 * @global WP_Post $post
+	 * @global WP_Post $post Global post object.
+	 *
 	 * @param array $args     Display arguments including 'before_title', 'after_title',
 	 *                        'before_widget', and 'after_widget'.
 	 * @param array $instance Settings for the current Custom HTML widget instance.
@@ -142,6 +143,9 @@ class WP_Widget_Custom_HTML extends WP_Widget {
 
 		/** This filter is documented in wp-includes/widgets/class-wp-widget-text.php */
 		$content = apply_filters( 'widget_text', $instance['content'], $simulated_text_widget_instance, $this );
+
+		// Adds noreferrer and noopener relationships, without duplicating values, to all HTML A elements that have a target.
+		$content = wp_targeted_link_rel( $content );
 
 		/**
 		 * Filters the content of the Custom HTML widget.

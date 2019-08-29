@@ -156,7 +156,6 @@
 
 		events: {
 			'input #menu-items-search': 'debounceSearch',
-			'keyup #menu-items-search': 'debounceSearch',
 			'focus .menu-item-tpl': 'focus',
 			'click .menu-item-tpl': '_submit',
 			'click #custom-menu-item-submit': '_submitLink',
@@ -545,6 +544,7 @@
 			var menuItem,
 				itemName = $( '#custom-menu-item-name' ),
 				itemUrl = $( '#custom-menu-item-url' ),
+				url = itemUrl.val().trim(),
 				urlRegex;
 
 			if ( ! this.currentMenuControl ) {
@@ -568,14 +568,14 @@
 			if ( '' === itemName.val() ) {
 				itemName.addClass( 'invalid' );
 				return;
-			} else if ( ! urlRegex.test( itemUrl.val() ) ) {
+			} else if ( ! urlRegex.test( url ) ) {
 				itemUrl.addClass( 'invalid' );
 				return;
 			}
 
 			menuItem = {
 				'title': itemName.val(),
-				'url': itemUrl.val(),
+				'url': url,
 				'type': 'custom',
 				'type_label': api.Menus.data.l10n.custom_label,
 				'object': 'custom'
@@ -3114,7 +3114,7 @@
 		nav_menu_item: api.Menus.MenuItemControl,
 		nav_menu: api.Menus.MenuControl,
 		nav_menu_name: api.Menus.MenuNameControl,
-		new_menu: api.Menus.NewMenuControl, // @todo Remove in 5.0. See #42364.
+		new_menu: api.Menus.NewMenuControl, // @todo Remove in a future release. See #42364.
 		nav_menu_locations: api.Menus.MenuLocationsControl,
 		nav_menu_auto_add: api.Menus.MenuAutoAddControl
 	});

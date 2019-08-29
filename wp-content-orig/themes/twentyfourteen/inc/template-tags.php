@@ -131,7 +131,8 @@ endif;
  * @return boolean true if blog has more than 1 category
  */
 function twentyfourteen_categorized_blog() {
-	if ( false === ( $all_the_cool_cats = get_transient( 'twentyfourteen_category_count' ) ) ) {
+	$all_the_cool_cats = get_transient( 'twentyfourteen_category_count' );
+	if ( false === $all_the_cool_cats ) {
 		// Create an array of all the categories that are attached to posts
 		$all_the_cool_cats = get_categories(
 			array(
@@ -197,16 +198,16 @@ if ( ! function_exists( 'twentyfourteen_post_thumbnail' ) ) :
 		<?php else : ?>
 
 	<a class="post-thumbnail" href="<?php the_permalink(); ?>" aria-hidden="true">
-	<?php
-	if ( ( ! is_active_sidebar( 'sidebar-2' ) || is_page_template( 'page-templates/full-width.php' ) ) ) {
-		the_post_thumbnail( 'twentyfourteen-full-width' );
-	} else {
-		the_post_thumbnail( 'post-thumbnail', array( 'alt' => get_the_title() ) );
-	}
-	?>
+			<?php
+			if ( ( ! is_active_sidebar( 'sidebar-2' ) || is_page_template( 'page-templates/full-width.php' ) ) ) {
+				the_post_thumbnail( 'twentyfourteen-full-width' );
+			} else {
+				the_post_thumbnail( 'post-thumbnail', array( 'alt' => get_the_title() ) );
+			}
+			?>
 	</a>
 
-	<?php
+			<?php
 	endif; // End is_singular()
 	}
 endif;
@@ -231,4 +232,22 @@ if ( ! function_exists( 'twentyfourteen_excerpt_more' ) && ! is_admin() ) :
 		return ' &hellip; ' . $link;
 	}
 	add_filter( 'excerpt_more', 'twentyfourteen_excerpt_more' );
+endif;
+
+if ( ! function_exists( 'wp_body_open' ) ) :
+	/**
+	 * Fire the wp_body_open action.
+	 *
+	 * Added for backwards compatibility to support pre 5.2.0 WordPress versions.
+	 *
+	 * @since Twenty Fourteen 2.7
+	 */
+	function wp_body_open() {
+		/**
+		 * Triggered after the opening <body> tag.
+		 *
+		 * @since Twenty Fourteen 2.7
+		 */
+		do_action( 'wp_body_open' );
+	}
 endif;

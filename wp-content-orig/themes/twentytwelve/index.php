@@ -7,7 +7,7 @@
  * It is used to display a page when nothing more specific matches a query.
  * For example, it puts together the home page when no home.php file exists.
  *
- * @link https://codex.wordpress.org/Template_Hierarchy
+ * @link https://developer.wordpress.org/themes/basics/template-hierarchy/
  *
  * @package WordPress
  * @subpackage Twenty_Twelve
@@ -43,7 +43,12 @@ get_header(); ?>
 				</header>
 
 				<div class="entry-content">
-					<p><?php printf( __( 'Ready to publish your first post? <a href="%s">Get started here</a>.', 'twentytwelve' ), admin_url( 'post-new.php' ) ); ?></p>
+					<p>
+					<?php
+					/* translators: %s: post editor URL */
+					printf( __( 'Ready to publish your first post? <a href="%s">Get started here</a>.', 'twentytwelve' ), admin_url( 'post-new.php' ) );
+					?>
+					</p>
 				</div><!-- .entry-content -->
 
 				<?php

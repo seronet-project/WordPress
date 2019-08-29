@@ -116,9 +116,11 @@ function find_core_auto_update() {
  * @return bool|array False on failure. An array of checksums on success.
  */
 function get_core_checksums( $version, $locale ) {
-	$url = $http_url = 'http://api.wordpress.org/core/checksums/1.0/?' . http_build_query( compact( 'version', 'locale' ), null, '&' );
+	$http_url = 'http://api.wordpress.org/core/checksums/1.0/?' . http_build_query( compact( 'version', 'locale' ), null, '&' );
+	$url      = $http_url;
 
-	if ( $ssl = wp_http_supports( array( 'ssl' ) ) ) {
+	$ssl = wp_http_supports( array( 'ssl' ) );
+	if ( $ssl ) {
 		$url = set_url_scheme( $url, 'https' );
 	}
 
@@ -132,7 +134,7 @@ function get_core_checksums( $version, $locale ) {
 			sprintf(
 				/* translators: %s: support forums URL */
 				__( 'An unexpected error occurred. Something may be wrong with WordPress.org or this server&#8217;s configuration. If you continue to have problems, please try the <a href="%s">support forums</a>.' ),
-				__( 'https://wordpress.org/support/' )
+				__( 'https://wordpress.org/support/forums/' )
 			) . ' ' . __( '(WordPress could not establish a secure connection to WordPress.org. Please contact your server administrator.)' ),
 			headers_sent() || WP_DEBUG ? E_USER_WARNING : E_USER_NOTICE
 		);
@@ -262,28 +264,26 @@ function update_nag() {
 		return false;
 	}
 
+	$version_url = sprintf(
+		/* translators: %s: WordPress version */
+		esc_url( __( 'https://wordpress.org/support/wordpress-version/version-%s/' ) ),
+		sanitize_title( $cur->current )
+	);
+
 	if ( current_user_can( 'update_core' ) ) {
 		$msg = sprintf(
-			/* translators: 1: Codex URL to release notes, 2: new WordPress version, 3: URL to network admin, 4: accessibility text */
+			/* translators: 1: URL to WordPress release notes, 2: new WordPress version, 3: URL to network admin, 4: accessibility text */
 			__( '<a href="%1$s">WordPress %2$s</a> is available! <a href="%3$s" aria-label="%4$s">Please update now</a>.' ),
-			sprintf(
-				/* translators: %s: WordPress version */
-				esc_url( __( 'https://codex.wordpress.org/Version_%s' ) ),
-				$cur->current
-			),
+			$version_url,
 			$cur->current,
 			network_admin_url( 'update-core.php' ),
 			esc_attr__( 'Please update WordPress now' )
 		);
 	} else {
 		$msg = sprintf(
-			/* translators: 1: Codex URL to release notes, 2: new WordPress version */
+			/* translators: 1: URL to WordPress release notes, 2: new WordPress version */
 			__( '<a href="%1$s">WordPress %2$s</a> is available! Please notify the site administrator.' ),
-			sprintf(
-				/* translators: %s: WordPress version */
-				esc_url( __( 'https://codex.wordpress.org/Version_%s' ) ),
-				$cur->current
-			),
+			$version_url,
 			$cur->current
 		);
 	}
@@ -357,7 +357,7 @@ function wp_plugin_update_rows() {
 	if ( isset( $plugins->response ) && is_array( $plugins->response ) ) {
 		$plugins = array_keys( $plugins->response );
 		foreach ( $plugins as $plugin_file ) {
-			add_action( "after_plugin_row_$plugin_file", 'wp_plugin_update_row', 10, 2 );
+			add_action( "after_plugin_row_{$plugin_file}", 'wp_plugin_update_row', 10, 2 );
 		}
 	}
 }
@@ -402,7 +402,11 @@ function wp_plugin_update_row( $file, $plugin_data ) {
 			$active_class = is_plugin_active( $file ) ? ' active' : '';
 		}
 
-		echo '<tr class="plugin-update-tr' . $active_class . '" id="' . esc_attr( $response->slug . '-update' ) . '" data-slug="' . esc_attr( $response->slug ) . '" data-plugin="' . esc_attr( $file ) . '"><td colspan="' . esc_attr( $wp_list_table->get_column_count() ) . '" class="plugin-update colspanchange"><div class="update-message notice inline notice-warning notice-alt"><p>';
+		$requires_php   = isset( $response->requires_php ) ? $response->requires_php : null;
+		$compatible_php = is_php_version_compatible( $requires_php );
+		$notice_type    = $compatible_php ? 'notice-warning' : 'notice-error';
+
+		echo '<tr class="plugin-update-tr' . $active_class . '" id="' . esc_attr( $response->slug . '-update' ) . '" data-slug="' . esc_attr( $response->slug ) . '" data-plugin="' . esc_attr( $file ) . '"><td colspan="' . esc_attr( $wp_list_table->get_column_count() ) . '" class="plugin-update colspanchange"><div class="update-message notice inline ' . $notice_type . ' notice-alt"><p>';
 
 		if ( ! current_user_can( 'update_plugins' ) ) {
 			/* translators: 1: plugin name, 2: details URL, 3: additional link attributes, 4: version number */
@@ -415,7 +419,7 @@ function wp_plugin_update_row( $file, $plugin_data ) {
 					/* translators: 1: plugin name, 2: version number */
 					esc_attr( sprintf( __( 'View %1$s version %2$s details' ), $plugin_name, $response->new_version ) )
 				),
-				$response->new_version
+				esc_attr( $response->new_version )
 			);
 		} elseif ( empty( $response->package ) ) {
 			/* translators: 1: plugin name, 2: details URL, 3: additional link attributes, 4: version number */
@@ -428,27 +432,44 @@ function wp_plugin_update_row( $file, $plugin_data ) {
 					/* translators: 1: plugin name, 2: version number */
 					esc_attr( sprintf( __( 'View %1$s version %2$s details' ), $plugin_name, $response->new_version ) )
 				),
-				$response->new_version
+				esc_attr( $response->new_version )
 			);
 		} else {
-			/* translators: 1: plugin name, 2: details URL, 3: additional link attributes, 4: version number, 5: update URL, 6: additional link attributes */
-			printf(
-				__( 'There is a new version of %1$s available. <a href="%2$s" %3$s>View version %4$s details</a> or <a href="%5$s" %6$s>update now</a>.' ),
-				$plugin_name,
-				esc_url( $details_url ),
-				sprintf(
-					'class="thickbox open-plugin-details-modal" aria-label="%s"',
-					/* translators: 1: plugin name, 2: version number */
-					esc_attr( sprintf( __( 'View %1$s version %2$s details' ), $plugin_name, $response->new_version ) )
-				),
-				$response->new_version,
-				wp_nonce_url( self_admin_url( 'update.php?action=upgrade-plugin&plugin=' ) . $file, 'upgrade-plugin_' . $file ),
-				sprintf(
-					'class="update-link" aria-label="%s"',
-					/* translators: %s: plugin name */
-					esc_attr( sprintf( __( 'Update %s now' ), $plugin_name ) )
-				)
-			);
+			if ( $compatible_php ) {
+				/* translators: 1: plugin name, 2: details URL, 3: additional link attributes, 4: version number, 5: update URL, 6: additional link attributes */
+				printf(
+					__( 'There is a new version of %1$s available. <a href="%2$s" %3$s>View version %4$s details</a> or <a href="%5$s" %6$s>update now</a>.' ),
+					$plugin_name,
+					esc_url( $details_url ),
+					sprintf(
+						'class="thickbox open-plugin-details-modal" aria-label="%s"',
+						/* translators: 1: plugin name, 2: version number */
+						esc_attr( sprintf( __( 'View %1$s version %2$s details' ), $plugin_name, $response->new_version ) )
+					),
+					esc_attr( $response->new_version ),
+					wp_nonce_url( self_admin_url( 'update.php?action=upgrade-plugin&plugin=' ) . $file, 'upgrade-plugin_' . $file ),
+					sprintf(
+						'class="update-link" aria-label="%s"',
+						/* translators: %s: plugin name */
+						esc_attr( sprintf( __( 'Update %s now' ), $plugin_name ) )
+					)
+				);
+			} else {
+				/* translators: 1: plugin name, 2: details URL, 3: additional link attributes, 4: version number 5: Update PHP page URL */
+				printf(
+					__( 'There is a new version of %1$s available, but it doesn&#8217;t work with your version of PHP. <a href="%2$s" %3$s>View version %4$s details</a> or <a href="%5$s">learn more about updating PHP</a>.' ),
+					$plugin_name,
+					esc_url( $details_url ),
+					sprintf(
+						'class="thickbox open-plugin-details-modal" aria-label="%s"',
+						/* translators: 1: plugin name, 2: version number */
+						esc_attr( sprintf( __( 'View %1$s version %2$s details' ), $plugin_name, $response->new_version ) )
+					),
+					esc_attr( $response->new_version ),
+					esc_url( wp_get_update_php_url() )
+				);
+				wp_update_php_annotation( '<br><em>', '</em>' );
+			}
 		}
 
 		/**
@@ -486,7 +507,7 @@ function wp_plugin_update_row( $file, $plugin_data ) {
 		 *     @type string $package     Plugin update package URL.
 		 * }
 		 */
-		do_action( "in_plugin_update_message-{$file}", $plugin_data, $response );
+		do_action( "in_plugin_update_message-{$file}", $plugin_data, $response ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 
 		echo '</p></div></td></tr>';
 	}
@@ -524,7 +545,7 @@ function wp_theme_update_rows() {
 		$themes = array_keys( $themes->response );
 
 		foreach ( $themes as $theme ) {
-			add_action( "after_theme_row_$theme", 'wp_theme_update_row', 10, 2 );
+			add_action( "after_theme_row_{$theme}", 'wp_theme_update_row', 10, 2 );
 		}
 	}
 }
@@ -625,7 +646,7 @@ function wp_theme_update_row( $theme_key, $theme ) {
 	 *     @type string $package     Theme update package URL.
 	 * }
 	 */
-	do_action( "in_theme_update_message-{$theme_key}", $theme, $response );
+	do_action( "in_theme_update_message-{$theme_key}", $theme, $response ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 
 	echo '</p></div></td></tr>';
 }
@@ -809,5 +830,34 @@ function wp_print_update_row_templates() {
 			</td>
 		</tr>
 	</script>
+	<?php
+}
+
+/**
+ * Displays a notice when the user is in recovery mode.
+ *
+ * @since 5.2.0
+ */
+function wp_recovery_mode_nag() {
+	if ( ! wp_is_recovery_mode() ) {
+		return;
+	}
+
+	$url = wp_login_url();
+	$url = add_query_arg( 'action', WP_Recovery_Mode::EXIT_ACTION, $url );
+	$url = wp_nonce_url( $url, WP_Recovery_Mode::EXIT_ACTION );
+
+	?>
+	<div class="notice notice-info">
+		<p>
+			<?php
+			printf(
+				/* translators: %s: Recovery Mode exit link */
+				__( 'You are in recovery mode. This means there may be an error with a theme or plugin. To exit recovery mode, log out or use the Exit button. <a href="%s">Exit Recovery Mode</a>' ),
+				esc_url( $url )
+			);
+			?>
+		</p>
+	</div>
 	<?php
 }

@@ -2,7 +2,7 @@
 /**
  * The template for displaying Author archive pages
  *
- * @link https://codex.wordpress.org/Template_Hierarchy
+ * @link https://developer.wordpress.org/themes/basics/template-hierarchy/
  *
  * @package WordPress
  * @subpackage Twenty_Fourteen
@@ -28,6 +28,7 @@ get_header(); ?>
 						 */
 						the_post();
 
+						/* translators: %s: author display name */
 						printf( __( 'All posts by %s', 'twentyfourteen' ), get_the_author() );
 					?>
 				</h1>

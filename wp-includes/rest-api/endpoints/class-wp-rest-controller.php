@@ -31,6 +31,14 @@ abstract class WP_REST_Controller {
 	protected $rest_base;
 
 	/**
+	 * Cached results of get_item_schema.
+	 *
+	 * @since 5.3.0
+	 * @var array
+	 */
+	protected $schema;
+
+	/**
 	 * Registers the routes for the objects of the controller.
 	 *
 	 * @since 4.7.0
@@ -212,12 +220,7 @@ abstract class WP_REST_Controller {
 
 		$data   = (array) $response->get_data();
 		$server = rest_get_server();
-
-		if ( method_exists( $server, 'get_compact_response_links' ) ) {
-			$links = call_user_func( array( $server, 'get_compact_response_links' ), $response );
-		} else {
-			$links = call_user_func( array( $server, 'get_response_links' ), $response );
-		}
+		$links  = $server::get_compact_response_links( $response );
 
 		if ( ! empty( $links ) ) {
 			$data['_links'] = $links;
@@ -377,13 +380,15 @@ abstract class WP_REST_Controller {
 	 *
 	 * @since 4.7.0
 	 *
-	 * @param array           $object  Data object.
-	 * @param WP_REST_Request $request Full details about the request.
+	 * @param array           $prepared Prepared response array.
+	 * @param WP_REST_Request $request  Full details about the request.
 	 * @return array Modified data object with additional fields.
 	 */
-	protected function add_additional_fields_to_object( $object, $request ) {
+	protected function add_additional_fields_to_object( $prepared, $request ) {
 
 		$additional_fields = $this->get_additional_fields();
+
+		$requested_fields = $this->get_fields_for_response( $request );
 
 		foreach ( $additional_fields as $field_name => $field_options ) {
 
@@ -391,10 +396,14 @@ abstract class WP_REST_Controller {
 				continue;
 			}
 
-			$object[ $field_name ] = call_user_func( $field_options['get_callback'], $object, $field_name, $request, $this->get_object_type() );
+			if ( ! in_array( $field_name, $requested_fields, true ) ) {
+				continue;
+			}
+
+			$prepared[ $field_name ] = call_user_func( $field_options['get_callback'], $prepared, $field_name, $request, $this->get_object_type() );
 		}
 
-		return $object;
+		return $prepared;
 	}
 
 	/**
@@ -402,7 +411,7 @@ abstract class WP_REST_Controller {
 	 *
 	 * @since 4.7.0
 	 *
-	 * @param array           $object  Data Object.
+	 * @param object          $object  Data model like WP_Term or WP_Post.
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return bool|WP_Error True on success, WP_Error object if a field cannot be updated.
 	 */
@@ -516,12 +525,34 @@ abstract class WP_REST_Controller {
 	 * @return array Fields to be included in the response.
 	 */
 	public function get_fields_for_response( $request ) {
-		$schema = $this->get_item_schema();
-		$fields = isset( $schema['properties'] ) ? array_keys( $schema['properties'] ) : array();
+		$schema     = $this->get_item_schema();
+		$properties = isset( $schema['properties'] ) ? $schema['properties'] : array();
+
+		$additional_fields = $this->get_additional_fields();
+		foreach ( $additional_fields as $field_name => $field_options ) {
+			// For back-compat, include any field with an empty schema
+			// because it won't be present in $this->get_item_schema().
+			if ( is_null( $field_options['schema'] ) ) {
+				$properties[ $field_name ] = $field_options;
+			}
+		}
+
+		// Exclude fields that specify a different context than the request context.
+		$context = $request['context'];
+		if ( $context ) {
+			foreach ( $properties as $name => $options ) {
+				if ( ! empty( $options['context'] ) && ! in_array( $context, $options['context'], true ) ) {
+					unset( $properties[ $name ] );
+				}
+			}
+		}
+
+		$fields = array_keys( $properties );
+
 		if ( ! isset( $request['_fields'] ) ) {
 			return $fields;
 		}
-		$requested_fields = is_array( $request['_fields'] ) ? $request['_fields'] : preg_split( '/[\s,]+/', $request['_fields'] );
+		$requested_fields = wp_parse_list( $request['_fields'] );
 		if ( 0 === count( $requested_fields ) ) {
 			return $fields;
 		}

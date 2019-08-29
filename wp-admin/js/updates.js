@@ -718,7 +718,7 @@
 		$installLink
 			.removeClass( 'updating-message' )
 			.text( wp.updates.l10n.installNow )
-			.attr( 'aria-label', wp.updates.l10n.installNowLabel.replace( '%s', pluginName ) );
+			.attr( 'aria-label', wp.updates.l10n.pluginInstallNowLabel.replace( '%s', pluginName ) );
 
 		wp.a11y.speak( errorMessage, 'assertive' );
 
@@ -1931,7 +1931,7 @@
 					$button
 						.removeClass( 'updating-message' )
 						.text( wp.updates.l10n.installNow )
-						.attr( 'aria-label', wp.updates.l10n.installNowLabel.replace( '%s', pluginName ) );
+						.attr( 'aria-label', wp.updates.l10n.pluginInstallNowLabel.replace( '%s', pluginName ) );
 
 					wp.a11y.speak( wp.updates.l10n.updateCancel, 'polite' );
 				} );
@@ -2235,7 +2235,7 @@
 					wp.a11y.speak( wp.updates.l10n.pluginsFound.replace( '%d', response.count ) );
 				}
 			} );
-		}, 500 ) );
+		}, 1000 ) );
 
 		if ( $pluginSearch.length ) {
 			$pluginSearch.attr( 'aria-describedby', 'live-search-desc' );

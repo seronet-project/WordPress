@@ -4,7 +4,7 @@
  *
  * Displays posts from Aside, Quote, Video, Audio, Image, Gallery, and Link formats.
  *
- * @link https://codex.wordpress.org/Widgets_API#Developing_Widgets
+ * @link https://developer.wordpress.org/themes/functionality/widgets/#developing-widgets
  *
  * @package WordPress
  * @subpackage Twenty_Fourteen
@@ -189,6 +189,7 @@ class Twenty_Fourteen_Ephemera_Widget extends WP_Widget {
 						<p class="wp-caption-text">
 								<?php
 								printf(
+									/* translators: 1: post permalink, 2: number of images in the gallery */
 									_n( 'This gallery contains <a href="%1$s" rel="bookmark">%2$s photo</a>.', 'This gallery contains <a href="%1$s" rel="bookmark">%2$s photos</a>.', $total_images, 'twentyfourteen' ),
 									esc_url( get_permalink() ),
 									number_format_i18n( $total_images )
@@ -226,7 +227,7 @@ class Twenty_Fourteen_Ephemera_Widget extends WP_Widget {
 							<?php endif; ?>
 						</div><!-- .entry-meta -->
 					</header><!-- .entry-header -->
-				</article><!-- #post-## -->
+				</article><!-- #post-<?php the_ID(); ?> -->
 				</li>
 				<?php endwhile; ?>
 

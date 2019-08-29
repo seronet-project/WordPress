@@ -35,8 +35,10 @@ function translations_api( $type, $args = null ) {
 	$res = apply_filters( 'translations_api', false, $type, $args );
 
 	if ( false === $res ) {
-		$url = $http_url = 'http://api.wordpress.org/translations/' . $type . '/1.0/';
-		if ( $ssl = wp_http_supports( array( 'ssl' ) ) ) {
+		$url      = 'http://api.wordpress.org/translations/' . $type . '/1.0/';
+		$http_url = $url;
+		$ssl      = wp_http_supports( array( 'ssl' ) );
+		if ( $ssl ) {
 			$url = set_url_scheme( $url, 'https' );
 		}
 
@@ -60,7 +62,7 @@ function translations_api( $type, $args = null ) {
 				sprintf(
 					/* translators: %s: support forums URL */
 					__( 'An unexpected error occurred. Something may be wrong with WordPress.org or this server&#8217;s configuration. If you continue to have problems, please try the <a href="%s">support forums</a>.' ),
-					__( 'https://wordpress.org/support/' )
+					__( 'https://wordpress.org/support/forums/' )
 				) . ' ' . __( '(WordPress could not establish a secure connection to WordPress.org. Please contact your server administrator.)' ),
 				headers_sent() || WP_DEBUG ? E_USER_WARNING : E_USER_NOTICE
 			);
@@ -74,7 +76,7 @@ function translations_api( $type, $args = null ) {
 				sprintf(
 					/* translators: %s: support forums URL */
 					__( 'An unexpected error occurred. Something may be wrong with WordPress.org or this server&#8217;s configuration. If you continue to have problems, please try the <a href="%s">support forums</a>.' ),
-					__( 'https://wordpress.org/support/' )
+					__( 'https://wordpress.org/support/forums/' )
 				),
 				$request->get_error_message()
 			);
@@ -86,7 +88,7 @@ function translations_api( $type, $args = null ) {
 					sprintf(
 						/* translators: %s: support forums URL */
 						__( 'An unexpected error occurred. Something may be wrong with WordPress.org or this server&#8217;s configuration. If you continue to have problems, please try the <a href="%s">support forums</a>.' ),
-						__( 'https://wordpress.org/support/' )
+						__( 'https://wordpress.org/support/forums/' )
 					),
 					wp_remote_retrieve_body( $request )
 				);
@@ -117,8 +119,11 @@ function translations_api( $type, $args = null ) {
  *               in an error, an empty array will be returned.
  */
 function wp_get_available_translations() {
-	if ( ! wp_installing() && false !== ( $translations = get_site_transient( 'available_translations' ) ) ) {
-		return $translations;
+	if ( ! wp_installing() ) {
+		$translations = get_site_transient( 'available_translations' );
+		if ( false !== $translations ) {
+			return $translations;
+		}
 	}
 
 	include( ABSPATH . WPINC . '/version.php' ); // include an unmodified $wp_version

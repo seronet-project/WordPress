@@ -105,8 +105,8 @@ function _wp_ajax_menu_quick_search( $request = array() ) {
 			}
 		} elseif ( 'taxonomy' == $matches[1] ) {
 			$terms = get_terms(
-				$matches[2],
 				array(
+					'taxonomy'   => $matches[2],
 					'name__like' => $query,
 					'number'     => 10,
 				)
@@ -411,7 +411,9 @@ function wp_nav_menu_item_post_type_meta_box( $object, $box ) {
 		'_wpnonce',
 	);
 
-	$most_recent_url = $view_all_url = $search_url = '';
+	$most_recent_url = '';
+	$view_all_url    = '';
+	$search_url      = '';
 	if ( $nav_menu_selected_id ) {
 		$most_recent_url = esc_url( add_query_arg( $post_type_name . '-tab', 'most-recent', remove_query_arg( $removed_args ) ) );
 		$view_all_url    = esc_url( add_query_arg( $post_type_name . '-tab', 'all', remove_query_arg( $removed_args ) ) );
@@ -661,6 +663,7 @@ function wp_nav_menu_item_taxonomy_meta_box( $object, $box ) {
 	$offset   = 0 < $pagenum ? $per_page * ( $pagenum - 1 ) : 0;
 
 	$args = array(
+		'taxonomy'     => $taxonomy_name,
 		'child_of'     => 0,
 		'exclude'      => '',
 		'hide_empty'   => false,
@@ -673,7 +676,7 @@ function wp_nav_menu_item_taxonomy_meta_box( $object, $box ) {
 		'pad_counts'   => false,
 	);
 
-	$terms = get_terms( $taxonomy_name, $args );
+	$terms = get_terms( $args );
 
 	if ( ! $terms || is_wp_error( $terms ) ) {
 		echo '<p>' . __( 'No items.' ) . '</p>';
@@ -740,7 +743,9 @@ function wp_nav_menu_item_taxonomy_meta_box( $object, $box ) {
 		'_wpnonce',
 	);
 
-	$most_used_url = $view_all_url = $search_url = '';
+	$most_used_url = '';
+	$view_all_url  = '';
+	$search_url    = '';
 	if ( $nav_menu_selected_id ) {
 		$most_used_url = esc_url( add_query_arg( $taxonomy_name . '-tab', 'most-used', remove_query_arg( $removed_args ) ) );
 		$view_all_url  = esc_url( add_query_arg( $taxonomy_name . '-tab', 'all', remove_query_arg( $removed_args ) ) );
@@ -770,8 +775,8 @@ function wp_nav_menu_item_taxonomy_meta_box( $object, $box ) {
 			<ul id="<?php echo $taxonomy_name; ?>checklist-pop" class="categorychecklist form-no-clear" >
 				<?php
 				$popular_terms  = get_terms(
-					$taxonomy_name,
 					array(
+						'taxonomy'     => $taxonomy_name,
 						'orderby'      => 'count',
 						'order'        => 'DESC',
 						'number'       => 10,
@@ -808,8 +813,8 @@ function wp_nav_menu_item_taxonomy_meta_box( $object, $box ) {
 			if ( isset( $_REQUEST[ 'quick-search-taxonomy-' . $taxonomy_name ] ) ) {
 				$searched       = esc_attr( $_REQUEST[ 'quick-search-taxonomy-' . $taxonomy_name ] );
 				$search_results = get_terms(
-					$taxonomy_name,
 					array(
+						'taxonomy'     => $taxonomy_name,
 						'name__like'   => $searched,
 						'fields'       => 'all',
 						'orderby'      => 'count',
@@ -1027,7 +1032,8 @@ function wp_get_nav_menu_to_edit( $menu_id = 0 ) {
 			);
 		}
 
-		$some_pending_menu_items = $some_invalid_menu_items = false;
+		$some_pending_menu_items = false;
+		$some_invalid_menu_items = false;
 		foreach ( (array) $menu_items as $menu_item ) {
 			if ( isset( $menu_item->post_status ) && 'draft' == $menu_item->post_status ) {
 				$some_pending_menu_items = true;
@@ -1181,7 +1187,8 @@ function wp_nav_menu_update_menu_items( $nav_menu_selected_id, $nav_menu_selecte
 			$nav_menu_option['auto_add'][] = $nav_menu_selected_id;
 		}
 	} else {
-		if ( false !== ( $key = array_search( $nav_menu_selected_id, $nav_menu_option['auto_add'] ) ) ) {
+		$key = array_search( $nav_menu_selected_id, $nav_menu_option['auto_add'] );
+		if ( false !== $key ) {
 			unset( $nav_menu_option['auto_add'][ $key ] );
 		}
 	}

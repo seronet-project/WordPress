@@ -23,13 +23,15 @@ if ( ! function_exists( 'twentyfifteen_comment_nav' ) ) :
 		<h2 class="screen-reader-text"><?php _e( 'Comment navigation', 'twentyfifteen' ); ?></h2>
 		<div class="nav-links">
 			<?php
-			if ( $prev_link = get_previous_comments_link( __( 'Older Comments', 'twentyfifteen' ) ) ) :
+			$prev_link = get_previous_comments_link( __( 'Older Comments', 'twentyfifteen' ) );
+			if ( $prev_link ) {
 				printf( '<div class="nav-previous">%s</div>', $prev_link );
-				endif;
+			}
 
-			if ( $next_link = get_next_comments_link( __( 'Newer Comments', 'twentyfifteen' ) ) ) :
+			$next_link = get_next_comments_link( __( 'Newer Comments', 'twentyfifteen' ) );
+			if ( $next_link ) {
 				printf( '<div class="nav-next">%s</div>', $next_link );
-				endif;
+			}
 			?>
 			</div><!-- .nav-links -->
 		</nav><!-- .comment-navigation -->
@@ -141,7 +143,8 @@ endif;
  * @return bool True of there is more than one category, false otherwise.
  */
 function twentyfifteen_categorized_blog() {
-	if ( false === ( $all_the_cool_cats = get_transient( 'twentyfifteen_categories' ) ) ) {
+	$all_the_cool_cats = get_transient( 'twentyfifteen_categories' );
+	if ( false === $all_the_cool_cats ) {
 		// Create an array of all the categories that are attached to posts.
 		$all_the_cool_cats = get_categories(
 			array(
@@ -209,7 +212,7 @@ if ( ! function_exists( 'twentyfifteen_post_thumbnail' ) ) :
 		?>
 	</a>
 
-	<?php
+		<?php
 	endif; // End is_singular()
 	}
 endif;
@@ -265,5 +268,23 @@ if ( ! function_exists( 'twentyfifteen_the_custom_logo' ) ) :
 		if ( function_exists( 'the_custom_logo' ) ) {
 			the_custom_logo();
 		}
+	}
+endif;
+
+if ( ! function_exists( 'wp_body_open' ) ) :
+	/**
+	 * Fire the wp_body_open action.
+	 *
+	 * Added for backwards compatibility to support pre 5.2.0 WordPress versions.
+	 *
+	 * @since Twenty Fifteen 2.5
+	 */
+	function wp_body_open() {
+		/**
+		 * Triggered after the opening <body> tag.
+		 *
+		 * @since Twenty Fifteen 2.5
+		 */
+		do_action( 'wp_body_open' );
 	}
 endif;

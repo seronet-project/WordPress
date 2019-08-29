@@ -56,7 +56,7 @@ function check_upload_size( $file ) {
  * Delete a site.
  *
  * @since 3.0.0
- * @since 5.0.0 Use wp_delete_site() internally to delete the site row from the database.
+ * @since 5.1.0 Use wp_delete_site() internally to delete the site row from the database.
  *
  * @global wpdb $wpdb WordPress database abstraction object.
  *
@@ -97,7 +97,7 @@ function wpmu_delete_blog( $blog_id, $drop = false ) {
 		wp_delete_site( $blog_id );
 	} else {
 		/** This action is documented in wp-includes/ms-blogs.php */
-		do_action_deprecated( 'delete_blog', array( $blog_id, false ), '5.0.0' );
+		do_action_deprecated( 'delete_blog', array( $blog_id, false ), '5.1.0' );
 
 		$users = get_users(
 			array(
@@ -116,7 +116,7 @@ function wpmu_delete_blog( $blog_id, $drop = false ) {
 		update_blog_status( $blog_id, 'deleted', 1 );
 
 		/** This action is documented in wp-includes/ms-blogs.php */
-		do_action_deprecated( 'deleted_blog', array( $blog_id, false ), '5.0.0' );
+		do_action_deprecated( 'deleted_blog', array( $blog_id, false ), '5.1.0' );
 	}
 
 	if ( $switch ) {
@@ -226,7 +226,11 @@ function upload_is_user_over_quota( $echo = true ) {
 
 	if ( ( $space_allowed - $space_used ) < 0 ) {
 		if ( $echo ) {
-			_e( 'Sorry, you have used your space allocation. Please delete some files to upload more files.' );
+			printf(
+				/* translators: %s: allowed space allocation */
+				__( 'Sorry, you have used your space allocation of %s. Please delete some files to upload more files.' ),
+				size_format( $space_allowed * MB_IN_BYTES )
+			);
 		}
 		return true;
 	} else {
@@ -245,15 +249,7 @@ function display_space_usage() {
 
 	$percent_used = ( $space_used / $space_allowed ) * 100;
 
-	if ( $space_allowed > 1000 ) {
-		$space = number_format( $space_allowed / KB_IN_BYTES );
-		/* translators: Gigabytes */
-		$space .= __( 'GB' );
-	} else {
-		$space = number_format( $space_allowed );
-		/* translators: Megabytes */
-		$space .= __( 'MB' );
-	}
+	$space = size_format( $space_allowed * MB_IN_BYTES );
 	?>
 	<strong>
 	<?php
@@ -308,59 +304,6 @@ function upload_space_setting( $id ) {
 }
 
 /**
- * Update the status of a user in the database.
- *
- * Used in core to mark a user as spam or "ham" (not spam) in Multisite.
- *
- * @since 3.0.0
- *
- * @global wpdb $wpdb WordPress database abstraction object.
- *
- * @param int    $id         The user ID.
- * @param string $pref       The column in the wp_users table to update the user's status
- *                           in (presumably user_status, spam, or deleted).
- * @param int    $value      The new status for the user.
- * @param null   $deprecated Deprecated as of 3.0.2 and should not be used.
- * @return int   The initially passed $value.
- */
-function update_user_status( $id, $pref, $value, $deprecated = null ) {
-	global $wpdb;
-
-	if ( null !== $deprecated ) {
-		_deprecated_argument( __FUNCTION__, '3.0.2' );
-	}
-
-	$wpdb->update( $wpdb->users, array( sanitize_key( $pref ) => $value ), array( 'ID' => $id ) );
-
-	$user = new WP_User( $id );
-	clean_user_cache( $user );
-
-	if ( $pref == 'spam' ) {
-		if ( $value == 1 ) {
-			/**
-			 * Fires after the user is marked as a SPAM user.
-			 *
-			 * @since 3.0.0
-			 *
-			 * @param int $id ID of the user marked as SPAM.
-			 */
-			do_action( 'make_spam_user', $id );
-		} else {
-			/**
-			 * Fires after the user is marked as a HAM user. Opposite of SPAM.
-			 *
-			 * @since 3.0.0
-			 *
-			 * @param int $id ID of the user marked as HAM.
-			 */
-			do_action( 'make_ham_user', $id );
-		}
-	}
-
-	return $value;
-}
-
-/**
  * Cleans the user cache for a specific user.
  *
  * @since 3.0.0
@@ -371,7 +314,8 @@ function update_user_status( $id, $pref, $value, $deprecated = null ) {
 function refresh_user_details( $id ) {
 	$id = (int) $id;
 
-	if ( ! $user = get_userdata( $id ) ) {
+	$user = get_userdata( $id );
+	if ( ! $user ) {
 		return false;
 	}
 
@@ -729,7 +673,7 @@ function mu_dropdown_languages( $lang_files = array(), $current = '' ) {
  *
  * @since 3.0.0
  *
- * @global int    $wp_db_version The version number of the database.
+ * @global int    $wp_db_version WordPress database version.
  * @global string $pagenow
  *
  * @return false False if the current user is not a super admin.
@@ -798,7 +742,7 @@ function avoid_blog_page_permalink_collision( $data, $postarr ) {
  */
 function choose_primary_blog() {
 	?>
-	<table class="form-table">
+	<table class="form-table" role="presentation">
 	<tr>
 	<?php /* translators: My sites label */ ?>
 		<th scope="row"><label for="primary_blog"><?php _e( 'Primary Site' ); ?></label></th>
@@ -910,9 +854,10 @@ function confirm_delete_users( $users ) {
 	$site_admins = get_super_admins();
 	$admin_out   = '<option value="' . esc_attr( $current_user->ID ) . '">' . $current_user->user_login . '</option>';
 	?>
-	<table class="form-table">
+	<table class="form-table" role="presentation">
 	<?php
-	foreach ( ( $allusers = (array) $_POST['allusers'] ) as $user_id ) {
+	$allusers = (array) $_POST['allusers'];
+	foreach ( $allusers as $user_id ) {
 		if ( $user_id != '' && $user_id != '0' ) {
 			$delete_user = get_userdata( $user_id );
 
@@ -980,7 +925,7 @@ function confirm_delete_users( $users ) {
 				echo '</fieldset></td></tr>';
 			} else {
 				?>
-				<td><fieldset><p><legend><?php _e( 'User has no sites or content and will be deleted.' ); ?></legend></p>
+				<td><p><?php _e( 'User has no sites or content and will be deleted.' ); ?></p></td>
 			<?php } ?>
 			</tr>
 			<?php
@@ -998,11 +943,11 @@ function confirm_delete_users( $users ) {
 		<p><?php _e( 'Once you hit &#8220;Confirm Deletion&#8221;, the user will be permanently removed.' ); ?></p>
 	<?php else : ?>
 		<p><?php _e( 'Once you hit &#8220;Confirm Deletion&#8221;, these users will be permanently removed.' ); ?></p>
-	<?php
+		<?php
 	endif;
 
 	submit_button( __( 'Confirm Deletion' ), 'primary' );
-?>
+	?>
 	</form>
 	<?php
 	return true;
@@ -1091,7 +1036,7 @@ function network_edit_site_nav( $args = array() ) {
 	);
 
 	// Parse arguments
-	$r = wp_parse_args(
+	$parsed_args = wp_parse_args(
 		$args,
 		array(
 			'blog_id'  => isset( $_GET['blog_id'] ) ? (int) $_GET['blog_id'] : 0,
@@ -1104,35 +1049,39 @@ function network_edit_site_nav( $args = array() ) {
 	$screen_links = array();
 
 	// Loop through tabs
-	foreach ( $r['links'] as $link_id => $link ) {
+	foreach ( $parsed_args['links'] as $link_id => $link ) {
 
 		// Skip link if user can't access
-		if ( ! current_user_can( $link['cap'], $r['blog_id'] ) ) {
+		if ( ! current_user_can( $link['cap'], $parsed_args['blog_id'] ) ) {
 			continue;
 		}
 
 		// Link classes
 		$classes = array( 'nav-tab' );
 
+		// Aria-current attribute.
+		$aria_current = '';
+
 		// Selected is set by the parent OR assumed by the $pagenow global
-		if ( $r['selected'] === $link_id || $link['url'] === $GLOBALS['pagenow'] ) {
-			$classes[] = 'nav-tab-active';
+		if ( $parsed_args['selected'] === $link_id || $link['url'] === $GLOBALS['pagenow'] ) {
+			$classes[]    = 'nav-tab-active';
+			$aria_current = ' aria-current="page"';
 		}
 
 		// Escape each class
 		$esc_classes = implode( ' ', $classes );
 
 		// Get the URL for this link
-		$url = add_query_arg( array( 'id' => $r['blog_id'] ), network_admin_url( $link['url'] ) );
+		$url = add_query_arg( array( 'id' => $parsed_args['blog_id'] ), network_admin_url( $link['url'] ) );
 
 		// Add link to nav links
-		$screen_links[ $link_id ] = '<a href="' . esc_url( $url ) . '" id="' . esc_attr( $link_id ) . '" class="' . $esc_classes . '">' . esc_html( $link['label'] ) . '</a>';
+		$screen_links[ $link_id ] = '<a href="' . esc_url( $url ) . '" id="' . esc_attr( $link_id ) . '" class="' . $esc_classes . '"' . $aria_current . '>' . esc_html( $link['label'] ) . '</a>';
 	}
 
 	// All done!
-	echo '<h2 class="nav-tab-wrapper wp-clearfix">';
+	echo '<nav class="nav-tab-wrapper wp-clearfix" aria-label="' . esc_attr__( 'Secondary menu' ) . '">';
 	echo implode( '', $screen_links );
-	echo '</h2>';
+	echo '</nav>';
 }
 
 /**
@@ -1164,6 +1113,6 @@ function get_site_screen_help_tab_args() {
  */
 function get_site_screen_help_sidebar_content() {
 	return '<p><strong>' . __( 'For more information:' ) . '</strong></p>' .
-		'<p>' . __( '<a href="https://codex.wordpress.org/Network_Admin_Sites_Screen">Documentation on Site Management</a>' ) . '</p>' .
+		'<p>' . __( '<a href="https://wordpress.org/support/article/network-admin-sites-screen/">Documentation on Site Management</a>' ) . '</p>' .
 		'<p>' . __( '<a href="https://wordpress.org/support/forum/multisite/">Support Forums</a>' ) . '</p>';
 }

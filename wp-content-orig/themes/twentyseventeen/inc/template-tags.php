@@ -148,7 +148,8 @@ function twentyseventeen_front_page_section( $partial = null, $id = 0 ) {
 		wp_reset_postdata();
 	} elseif ( is_customize_preview() ) {
 		// The output placeholder anchor.
-		echo '<article class="panel-placeholder panel twentyseventeen-panel twentyseventeen-panel' . $id . '" id="panel' . $id . '"><span class="twentyseventeen-panel-title">' . sprintf( __( 'Front Page Section %1$s Placeholder', 'twentyseventeen' ), $id ) . '</span></article>';
+		/* translators: %s: The section id */
+		echo '<article class="panel-placeholder panel twentyseventeen-panel twentyseventeen-panel' . $id . '" id="panel' . $id . '"><span class="twentyseventeen-panel-title">' . sprintf( __( 'Front Page Section %s Placeholder', 'twentyseventeen' ), $id ) . '</span></article>';
 	}
 }
 
@@ -198,3 +199,21 @@ function twentyseventeen_category_transient_flusher() {
 }
 add_action( 'edit_category', 'twentyseventeen_category_transient_flusher' );
 add_action( 'save_post', 'twentyseventeen_category_transient_flusher' );
+
+if ( ! function_exists( 'wp_body_open' ) ) :
+	/**
+	 * Fire the wp_body_open action.
+	 *
+	 * Added for backwards compatibility to support pre 5.2.0 WordPress versions.
+	 *
+	 * @since Twenty Seventeen 2.2
+	 */
+	function wp_body_open() {
+		/**
+		 * Triggered after the opening <body> tag.
+		 *
+		 * @since Twenty Seventeen 2.2
+		 */
+		do_action( 'wp_body_open' );
+	}
+endif;

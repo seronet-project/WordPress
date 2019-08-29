@@ -53,7 +53,7 @@ function get_postdata($postid) {
  *
  * Use The Loop instead.
  *
- * @link https://codex.wordpress.org/The_Loop
+ * @link https://developer.wordpress.org/themes/basics/the-loop/
  *
  * @since 1.0.1
  * @deprecated 1.5.0
@@ -247,8 +247,8 @@ function user_can_edit_post($user_id, $post_id, $blog_id = 1) {
 	$post_author_data = get_userdata($post->post_author);
 
 	if ( (($user_id == $post_author_data->ID) && !($post->post_status == 'publish' && $author_data->user_level < 2))
-			 || ($author_data->user_level > $post_author_data->user_level)
-			 || ($author_data->user_level >= 10) ) {
+			|| ($author_data->user_level > $post_author_data->user_level)
+			|| ($author_data->user_level >= 10) ) {
 		return true;
 	} else {
 		return false;
@@ -393,8 +393,8 @@ function user_can_edit_user($user_id, $other_user) {
  * @param int $show_updated Optional. Whether to show last updated timestamp
  */
 function get_linksbyname($cat_name = "noname", $before = '', $after = '<br />', $between = " ", $show_images = true, $orderby = 'id',
-						 $show_description = true, $show_rating = false,
-						 $limit = -1, $show_updated = 0) {
+						$show_description = true, $show_rating = false,
+						$limit = -1, $show_updated = 0) {
 	_deprecated_function( __FUNCTION__, '2.1.0', 'get_bookmarks()' );
 
 	$cat_id = -1;
@@ -430,9 +430,9 @@ function wp_get_linksbyname($category, $args = '') {
 		'title_li' => '',
 	);
 
-	$r = wp_parse_args( $args, $defaults );
+	$parsed_args = wp_parse_args( $args, $defaults );
 
-	return wp_list_bookmarks($r);
+	return wp_list_bookmarks($parsed_args);
 }
 
 /**
@@ -565,7 +565,7 @@ function get_linksbyname_withrating($cat_name = "noname", $before = '', $after =
  * @param int $show_updated Whether to show last updated timestamp
  */
 function get_links_withrating($category = -1, $before = '', $after = '<br />', $between = " ", $show_images = true,
-							  $orderby = 'id', $show_description = true, $limit = -1, $show_updated = 0) {
+							$orderby = 'id', $show_description = true, $limit = -1, $show_updated = 0) {
 	_deprecated_function( __FUNCTION__, '2.1.0', 'get_bookmarks()' );
 
 	get_links($category, $before, $after, $between, $show_images, $orderby, $show_description, true, $limit, $show_updated);
@@ -613,8 +613,8 @@ function get_autotoggle($id = 0) {
  * @return false|null
  */
 function list_cats($optionall = 1, $all = 'All', $sort_column = 'ID', $sort_order = 'asc', $file = '', $list = true, $optiondates = 0,
-				   $optioncount = 0, $hide_empty = 1, $use_desc_for_title = 1, $children=false, $child_of=0, $categories=0,
-				   $recurse=0, $feed = '', $feed_image = '', $exclude = '', $hierarchical=false) {
+				$optioncount = 0, $hide_empty = 1, $use_desc_for_title = 1, $children=false, $child_of=0, $categories=0,
+				$recurse=0, $feed = '', $feed_image = '', $exclude = '', $hierarchical=false) {
 	_deprecated_function( __FUNCTION__, '2.1.0', 'wp_list_categories()' );
 
 	$query = compact('optionall', 'all', 'sort_column', 'sort_order', 'file', 'list', 'optiondates', 'optioncount', 'hide_empty', 'use_desc_for_title', 'children',
@@ -635,24 +635,24 @@ function list_cats($optionall = 1, $all = 'All', $sort_column = 'ID', $sort_orde
 function wp_list_cats($args = '') {
 	_deprecated_function( __FUNCTION__, '2.1.0', 'wp_list_categories()' );
 
-	$r = wp_parse_args( $args );
+	$parsed_args = wp_parse_args( $args );
 
 	// Map to new names.
-	if ( isset($r['optionall']) && isset($r['all']))
-		$r['show_option_all'] = $r['all'];
-	if ( isset($r['sort_column']) )
-		$r['orderby'] = $r['sort_column'];
-	if ( isset($r['sort_order']) )
-		$r['order'] = $r['sort_order'];
-	if ( isset($r['optiondates']) )
-		$r['show_last_update'] = $r['optiondates'];
-	if ( isset($r['optioncount']) )
-		$r['show_count'] = $r['optioncount'];
-	if ( isset($r['list']) )
-		$r['style'] = $r['list'] ? 'list' : 'break';
-	$r['title_li'] = '';
+	if ( isset($parsed_args['optionall']) && isset($parsed_args['all']))
+		$parsed_args['show_option_all'] = $parsed_args['all'];
+	if ( isset($parsed_args['sort_column']) )
+		$parsed_args['orderby'] = $parsed_args['sort_column'];
+	if ( isset($parsed_args['sort_order']) )
+		$parsed_args['order'] = $parsed_args['sort_order'];
+	if ( isset($parsed_args['optiondates']) )
+		$parsed_args['show_last_update'] = $parsed_args['optiondates'];
+	if ( isset($parsed_args['optioncount']) )
+		$parsed_args['show_count'] = $parsed_args['optioncount'];
+	if ( isset($parsed_args['list']) )
+		$parsed_args['style'] = $parsed_args['list'] ? 'list' : 'break';
+	$parsed_args['title_li'] = '';
 
-	return wp_list_categories($r);
+	return wp_list_categories($parsed_args);
 }
 
 /**
@@ -892,9 +892,9 @@ function wp_get_links($args = '') {
 		'title_li' => '',
 	);
 
-	$r = wp_parse_args( $args, $defaults );
+	$parsed_args = wp_parse_args( $args, $defaults );
 
-	return wp_list_bookmarks($r);
+	return wp_list_bookmarks($parsed_args);
 }
 
 /**
@@ -960,7 +960,7 @@ function get_links($category = -1, $before = '', $after = '<br />', $between = '
 
 		if ( $show_updated )
 			if (substr($row->link_updated_f, 0, 2) != '00')
-				$title .= ' ('.__('Last updated') . ' ' . date(get_option('links_updated_date_format'), $row->link_updated_f + (get_option('gmt_offset') * HOUR_IN_SECONDS)) . ')';
+				$title .= ' ('.__('Last updated') . ' ' . gmdate(get_option('links_updated_date_format'), $row->link_updated_f + (get_option('gmt_offset') * HOUR_IN_SECONDS)) . ')';
 
 		if ( '' != $title )
 			$title = ' title="' . $title . '"';
@@ -1279,7 +1279,7 @@ function get_category_children( $id, $before = '/', $after = '', $visited = arra
  * @deprecated 4.0.0 Use get_terms()
  * @see get_terms()
  *
- * @link https://codex.wordpress.org/Function_Reference/get_all_category_ids
+ * @link https://developer.wordpress.org/reference/functions/get_all_category_ids/
  *
  * @return object List of all of the category IDs.
  */
@@ -1287,7 +1287,13 @@ function get_all_category_ids() {
 	_deprecated_function( __FUNCTION__, '4.0.0', 'get_terms()' );
 
 	if ( ! $cat_ids = wp_cache_get( 'all_category_ids', 'category' ) ) {
-		$cat_ids = get_terms( 'category', array('fields' => 'ids', 'get' => 'all') );
+		$cat_ids = get_terms(
+			array(
+				'taxonomy' => 'category',
+				'fields'   => 'ids',
+				'get'      => 'all',
+			)
+		);
 		wp_cache_add( 'all_category_ids', $cat_ids, 'category' );
 	}
 
@@ -1878,7 +1884,7 @@ function get_attachment_icon_src( $id = 0, $fullsize = false ) {
 	if ( !$fullsize && $src = wp_get_attachment_thumb_url( $post->ID ) ) {
 		// We have a thumbnail desired, specified and existing
 
-		$src_file = basename($src);
+		$src_file = wp_basename($src);
 	} elseif ( wp_attachment_is_image( $post->ID ) ) {
 		// We have an image without a thumbnail
 
@@ -1888,7 +1894,7 @@ function get_attachment_icon_src( $id = 0, $fullsize = false ) {
 		// No thumb, no image. We'll look for a mime-related icon instead.
 
 		$icon_dir = apply_filters( 'icon_dir', get_template_directory() . '/images' );
-		$src_file = $icon_dir . '/' . basename($src);
+		$src_file = $icon_dir . '/' . wp_basename($src);
 	}
 
 	if ( !isset($src) || !$src )
@@ -1923,7 +1929,7 @@ function get_attachment_icon( $id = 0, $fullsize = false, $max_dims = false ) {
 	// Do we need to constrain the image?
 	if ( ($max_dims = apply_filters('attachment_max_dims', $max_dims)) && file_exists($src_file) ) {
 
-		$imagesize = getimagesize($src_file);
+		$imagesize = @getimagesize($src_file);
 
 		if (($imagesize[0] > $max_dims[0]) || $imagesize[1] > $max_dims[1] ) {
 			$actual_aspect = $imagesize[0] / $imagesize[1];
@@ -2109,7 +2115,7 @@ function attribute_escape( $text ) {
  * @param string|int $name            Widget ID.
  * @param callable   $output_callback Run when widget is called.
  * @param string     $classname       Optional. Classname widget option. Default empty.
- * @param mixed      $params ,...     Widget parameters.
+ * @param mixed      ...$params       Widget parameters.
  */
 function register_sidebar_widget($name, $output_callback, $classname = '') {
 	_deprecated_function( __FUNCTION__, '2.8.0', 'wp_register_sidebar_widget()' );
@@ -2364,7 +2370,7 @@ function update_usermeta( $user_id, $meta_key, $meta_value ) {
  * @deprecated 3.1.0 Use get_users()
  * @see get_users()
  *
- * @global wpdb $wpdb    WordPress database abstraction object.
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param int $id Site ID.
  * @return array List of users that are part of that site ID
@@ -3058,7 +3064,7 @@ function remove_custom_background() {
  */
 function get_theme_data( $theme_file ) {
 	_deprecated_function( __FUNCTION__, '3.4.0', 'wp_get_theme()' );
-	$theme = new WP_Theme( basename( dirname( $theme_file ) ), dirname( dirname( $theme_file ) ) );
+	$theme = new WP_Theme( wp_basename( dirname( $theme_file ) ), dirname( dirname( $theme_file ) ) );
 
 	$theme_data = array(
 		'Name' => $theme->get('Name'),

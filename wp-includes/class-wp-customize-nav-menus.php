@@ -210,8 +210,8 @@ final class WP_Customize_Nav_Menus {
 			}
 		} elseif ( 'taxonomy' === $type ) {
 			$terms = get_terms(
-				$object,
 				array(
+					'taxonomy'     => $object,
 					'child_of'     => 0,
 					'exclude'      => '',
 					'hide_empty'   => false,
@@ -365,8 +365,8 @@ final class WP_Customize_Nav_Menus {
 		// Query taxonomy terms.
 		$taxonomies = get_taxonomies( array( 'show_in_nav_menus' => true ), 'names' );
 		$terms      = get_terms(
-			$taxonomies,
 			array(
+				'taxonomies' => $taxonomies,
 				'name__like' => $args['s'],
 				'number'     => 20,
 				'offset'     => 20 * ( $args['pagenum'] - 1 ),
@@ -595,6 +595,11 @@ final class WP_Customize_Nav_Menus {
 		} else {
 			$description .= '<p>' . __( 'Menus can be displayed in locations defined by your theme.' ) . '</p>';
 		}
+
+		/*
+		 * Once multiple theme supports are allowed in WP_Customize_Panel,
+		 * this panel can be restricted to themes that support menus or widgets.
+		 */
 		$this->manager->add_panel(
 			new WP_Customize_Nav_Menus_Panel(
 				$this->manager,
@@ -603,7 +608,6 @@ final class WP_Customize_Nav_Menus {
 					'title'       => __( 'Menus' ),
 					'description' => $description,
 					'priority'    => 100,
-				// 'theme_supports' => 'menus|widgets', @todo allow multiple theme supports
 				)
 			)
 		);
@@ -874,10 +878,10 @@ final class WP_Customize_Nav_Menus {
 			return new WP_Error( 'unknown_post_type', __( 'Invalid post type.' ) );
 		}
 		if ( empty( $postarr['post_title'] ) ) {
-			return new WP_Error( 'empty_title', __( 'Empty title' ) );
+			return new WP_Error( 'empty_title', __( 'Empty title.' ) );
 		}
 		if ( ! empty( $postarr['post_status'] ) ) {
-			return new WP_Error( 'status_forbidden', __( 'Status is forbidden' ) );
+			return new WP_Error( 'status_forbidden', __( 'Status is forbidden.' ) );
 		}
 
 		/*

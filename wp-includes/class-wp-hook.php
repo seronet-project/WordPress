@@ -253,12 +253,12 @@ final class WP_Hook implements Iterator, ArrayAccess {
 	}
 
 	/**
-	 * Calls the callback functions added to a filter hook.
+	 * Calls the callback functions that have been added to a filter hook.
 	 *
 	 * @since 4.7.0
 	 *
 	 * @param mixed $value The value to filter.
-	 * @param array $args  Arguments to pass to callbacks.
+	 * @param array $args  Additional parameters to pass to the callback functions.
 	 * @return mixed The filtered value after all hooked functions are applied to it.
 	 */
 	public function apply_filters( $value, $args ) {
@@ -272,7 +272,8 @@ final class WP_Hook implements Iterator, ArrayAccess {
 		$num_args                           = count( $args );
 
 		do {
-			$this->current_priority[ $nesting_level ] = $priority = current( $this->iterations[ $nesting_level ] );
+			$this->current_priority[ $nesting_level ] = current( $this->iterations[ $nesting_level ] );
+			$priority                                 = $this->current_priority[ $nesting_level ];
 
 			foreach ( $this->callbacks[ $priority ] as $the_ ) {
 				if ( ! $this->doing_action ) {
@@ -299,11 +300,11 @@ final class WP_Hook implements Iterator, ArrayAccess {
 	}
 
 	/**
-	 * Executes the callback functions hooked on a specific action hook.
+	 * Calls the callback functions that have been added to an action hook.
 	 *
 	 * @since 4.7.0
 	 *
-	 * @param mixed $args Arguments to pass to the hook callbacks.
+	 * @param array $args Parameters to pass to the callback functions.
 	 */
 	public function do_action( $args ) {
 		$this->doing_action = true;

@@ -42,7 +42,7 @@ get_current_screen()->add_help_tab(
 
 get_current_screen()->set_help_sidebar(
 	'<p><strong>' . __( 'For more information:' ) . '</strong></p>' .
-	'<p>' . __( '<a href="https://codex.wordpress.org/Network_Admin_Sites_Screen">Documentation on Site Management</a>' ) . '</p>' .
+	'<p>' . __( '<a href="https://wordpress.org/support/article/network-admin-sites-screen/">Documentation on Site Management</a>' ) . '</p>' .
 	'<p>' . __( '<a href="https://wordpress.org/support/forum/multisite/">Support Forums</a>' ) . '</p>'
 );
 
@@ -211,7 +211,7 @@ if ( isset( $_GET['action'] ) ) {
 					$redirect_to = wp_get_referer();
 					$blogs       = (array) $_POST['allblogs'];
 					/** This action is documented in wp-admin/network/site-themes.php */
-					$redirect_to = apply_filters( 'handle_network_bulk_actions-' . get_current_screen()->id, $redirect_to, $doaction, $blogs, $id );
+					$redirect_to = apply_filters( 'handle_network_bulk_actions-' . get_current_screen()->id, $redirect_to, $doaction, $blogs, $id ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 					wp_safe_redirect( $redirect_to );
 					exit();
 				}

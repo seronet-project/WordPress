@@ -456,11 +456,15 @@ function wp_update_nav_menu_item( $menu_id = 0, $menu_item_db_id = 0, $menu_item
 
 	$original_parent = 0 < $menu_item_db_id ? get_post_field( 'post_parent', $menu_item_db_id ) : 0;
 
-	if ( 'custom' != $args['menu-item-type'] ) {
-		/* if non-custom menu item, then:
-			* use original object's URL
-			* blank default title to sync with original object's
-		*/
+	if ( 'custom' === $args['menu-item-type'] ) {
+		// If custom menu item, trim the URL.
+		$args['menu-item-url'] = trim( $args['menu-item-url'] );
+	} else {
+		/*
+		 * If non-custom menu item, then:
+		 * - use the original object's URL.
+		 * - blank default title to sync with the original object's title.
+		 */
 
 		$args['menu-item-url'] = '';
 
@@ -593,6 +597,7 @@ function wp_update_nav_menu_item( $menu_id = 0, $menu_item_db_id = 0, $menu_item
  */
 function wp_get_nav_menus( $args = array() ) {
 	$defaults = array(
+		'taxonomy'   => 'nav_menu',
 		'hide_empty' => false,
 		'orderby'    => 'name',
 	);
@@ -608,7 +613,7 @@ function wp_get_nav_menus( $args = array() ) {
 	 * @param array $menus An array of menu objects.
 	 * @param array $args  An array of arguments used to retrieve menu objects.
 	 */
-	return apply_filters( 'wp_get_nav_menus', get_terms( 'nav_menu', $args ), $args );
+	return apply_filters( 'wp_get_nav_menus', get_terms( $args ), $args );
 }
 
 /**
@@ -723,8 +728,8 @@ function wp_get_nav_menu_items( $menu, $args = array() ) {
 		if ( ! empty( $terms ) ) {
 			foreach ( array_keys( $terms ) as $taxonomy ) {
 				get_terms(
-					$taxonomy,
 					array(
+						'taxonomy'     => $taxonomy,
 						'include'      => $terms[ $taxonomy ],
 						'hierarchical' => false,
 					)
@@ -814,33 +819,40 @@ function wp_setup_nav_menu_item( $menu_item ) {
 					$menu_item->_invalid = true;
 				}
 
-				$menu_item->url = get_permalink( $menu_item->object_id );
-
 				$original_object = get_post( $menu_item->object_id );
-				/** This filter is documented in wp-includes/post-template.php */
-				$original_title = apply_filters( 'the_title', $original_object->post_title, $original_object->ID );
+
+				if ( $original_object ) {
+					$menu_item->url = get_permalink( $original_object->ID );
+					/** This filter is documented in wp-includes/post-template.php */
+					$original_title = apply_filters( 'the_title', $original_object->post_title, $original_object->ID );
+				} else {
+					$menu_item->url      = '';
+					$original_title      = '';
+					$menu_item->_invalid = true;
+				}
 
 				if ( '' === $original_title ) {
 					/* translators: %d: ID of a post */
-					$original_title = sprintf( __( '#%d (no title)' ), $original_object->ID );
+					$original_title = sprintf( __( '#%d (no title)' ), $menu_item->object_id );
 				}
 
-				$menu_item->title = '' == $menu_item->post_title ? $original_title : $menu_item->post_title;
+				$menu_item->title = ( '' === $menu_item->post_title ) ? $original_title : $menu_item->post_title;
 
 			} elseif ( 'post_type_archive' == $menu_item->type ) {
 				$object = get_post_type_object( $menu_item->object );
 				if ( $object ) {
-					$menu_item->title      = '' == $menu_item->post_title ? $object->labels->archives : $menu_item->post_title;
+					$menu_item->title      = ( '' === $menu_item->post_title ) ? $object->labels->archives : $menu_item->post_title;
 					$post_type_description = $object->description;
 				} else {
-					$menu_item->_invalid   = true;
 					$post_type_description = '';
+					$menu_item->_invalid   = true;
 				}
 
 				$menu_item->type_label = __( 'Post Type Archive' );
 				$post_content          = wp_trim_words( $menu_item->post_content, 200 );
-				$post_type_description = '' == $post_content ? $post_type_description : $post_content;
+				$post_type_description = ( '' === $post_content ) ? $post_type_description : $post_content;
 				$menu_item->url        = get_post_type_archive_link( $menu_item->object );
+
 			} elseif ( 'taxonomy' == $menu_item->type ) {
 				$object = get_taxonomy( $menu_item->object );
 				if ( $object ) {
@@ -850,14 +862,23 @@ function wp_setup_nav_menu_item( $menu_item ) {
 					$menu_item->_invalid   = true;
 				}
 
-				$term_url       = get_term_link( (int) $menu_item->object_id, $menu_item->object );
-				$menu_item->url = ! is_wp_error( $term_url ) ? $term_url : '';
+				$original_object = get_term( (int) $menu_item->object_id, $menu_item->object );
 
-				$original_title = get_term_field( 'name', $menu_item->object_id, $menu_item->object, 'raw' );
-				if ( is_wp_error( $original_title ) ) {
-					$original_title = false;
+				if ( $original_object && ! is_wp_error( $original_object ) ) {
+					$menu_item->url = get_term_link( (int) $menu_item->object_id, $menu_item->object );
+					$original_title = $original_object->name;
+				} else {
+					$menu_item->url      = '';
+					$original_title      = '';
+					$menu_item->_invalid = true;
 				}
-				$menu_item->title = '' == $menu_item->post_title ? $original_title : $menu_item->post_title;
+
+				if ( '' === $original_title ) {
+					/* translators: %d: ID of a term */
+					$original_title = sprintf( __( '#%d (no title)' ), $menu_item->object_id );
+				}
+
+				$menu_item->title = ( '' === $menu_item->post_title ) ? $original_title : $menu_item->post_title;
 
 			} else {
 				$menu_item->type_label = __( 'Custom Link' );
@@ -1186,7 +1207,9 @@ function wp_map_nav_menu_locations( $new_nav_menu_locations, $old_nav_menu_locat
 			foreach ( $registered_nav_menus as $new_location => $name ) {
 
 				// ...actually match!
-				if ( false === stripos( $new_location, $slug ) && false === stripos( $slug, $new_location ) ) {
+				if ( is_string( $new_location ) && false === stripos( $new_location, $slug ) && false === stripos( $slug, $new_location ) ) {
+					continue;
+				} elseif ( is_numeric( $new_location ) && $new_location !== $slug ) {
 					continue;
 				}
 
@@ -1197,7 +1220,9 @@ function wp_map_nav_menu_locations( $new_nav_menu_locations, $old_nav_menu_locat
 					foreach ( $slug_group as $slug ) {
 
 						// ... have a match as well.
-						if ( false === stripos( $location, $slug ) && false === stripos( $slug, $location ) ) {
+						if ( is_string( $location ) && false === stripos( $location, $slug ) && false === stripos( $slug, $location ) ) {
+							continue;
+						} elseif ( is_numeric( $location ) && $location !== $slug ) {
 							continue;
 						}
 

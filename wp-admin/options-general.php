@@ -45,8 +45,8 @@ get_current_screen()->add_help_tab(
 
 get_current_screen()->set_help_sidebar(
 	'<p><strong>' . __( 'For more information:' ) . '</strong></p>' .
-	'<p>' . __( '<a href="https://codex.wordpress.org/Settings_General_Screen">Documentation on General Settings</a>' ) . '</p>' .
-	'<p>' . __( '<a href="https://wordpress.org/support/">Support Forums</a>' ) . '</p>'
+	'<p>' . __( '<a href="https://wordpress.org/support/article/settings-general-screen/">Documentation on General Settings</a>' ) . '</p>' .
+	'<p>' . __( '<a href="https://wordpress.org/support/">Support</a>' ) . '</p>'
 );
 
 include( ABSPATH . 'wp-admin/admin-header.php' );
@@ -58,7 +58,7 @@ include( ABSPATH . 'wp-admin/admin-header.php' );
 <form method="post" action="options.php" novalidate="novalidate">
 <?php settings_fields( 'general' ); ?>
 
-<table class="form-table">
+<table class="form-table" role="presentation">
 
 <tr>
 <th scope="row"><label for="blogname"><?php _e( 'Site Title' ); ?></label></th>
@@ -73,7 +73,8 @@ include( ABSPATH . 'wp-admin/admin-header.php' );
 
 <?php
 if ( ! is_multisite() ) {
-	$wp_site_url_class = $wp_home_class = '';
+	$wp_site_url_class = '';
+	$wp_home_class     = '';
 	if ( defined( 'WP_SITEURL' ) ) {
 		$wp_site_url_class = ' disabled';
 	}
@@ -94,9 +95,9 @@ if ( ! is_multisite() ) {
 <p class="description" id="home-description">
 		<?php
 		printf(
-			/* translators: %s: Codex URL */
+			/* translators: %s: Documentation URL */
 			__( 'Enter the address here if you <a href="%s">want your site home page to be different from your WordPress installation directory</a>.' ),
-			__( 'https://codex.wordpress.org/Giving_WordPress_Its_Own_Directory' )
+			__( 'https://wordpress.org/support/article/giving-wordpress-its-own-directory/' )
 		);
 		?>
 </p>
@@ -107,7 +108,7 @@ if ( ! is_multisite() ) {
 <?php } ?>
 
 <tr>
-<th scope="row"><label for="new_admin_email"><?php _e( 'Email Address' ); ?></label></th>
+<th scope="row"><label for="new_admin_email"><?php _e( 'Administration Email Address' ); ?></label></th>
 <td><input name="new_admin_email" type="email" id="new_admin_email" aria-describedby="new-admin-email-description" value="<?php form_option( 'admin_email' ); ?>" class="regular-text ltr" />
 <p class="description" id="new-admin-email-description"><?php _e( 'This address is used for admin purposes. If you change this we will send you an email at your new address to confirm it. <strong>The new address will not become active until confirmed.</strong>' ); ?></p>
 <?php
@@ -162,7 +163,7 @@ if ( ! is_multisite() && defined( 'WPLANG' ) && '' !== WPLANG && 'en_US' !== WPL
 if ( ! empty( $languages ) || ! empty( $translations ) ) {
 	?>
 	<tr>
-		<th scope="row"><label for="WPLANG"><?php _e( 'Site Language' ); ?></label></th>
+		<th scope="row"><label for="WPLANG"><?php _e( 'Site Language' ); ?><span class="dashicons dashicons-translation" aria-hidden="true"></span></label></th>
 		<td>
 			<?php
 			$locale = get_locale();
@@ -183,14 +184,6 @@ if ( ! empty( $languages ) || ! empty( $translations ) ) {
 
 			// Add note about deprecated WPLANG constant.
 			if ( defined( 'WPLANG' ) && ( '' !== WPLANG ) && $locale !== WPLANG ) {
-				if ( is_multisite() && current_user_can( 'manage_network_options' )
-					|| ! is_multisite() && current_user_can( 'manage_options' ) ) {
-					?>
-					<p class="description">
-						<strong><?php _e( 'Note:' ); ?></strong> <?php printf( __( 'The %1$s constant in your %2$s file is no longer needed.' ), '<code>WPLANG</code>', '<code>wp-config.php</code>' ); ?>
-					</p>
-					<?php
-				}
 				_deprecated_argument( 'define()', '4.0.0', sprintf( __( 'The %1$s constant in your %2$s file is no longer needed.' ), 'WPLANG', 'wp-config.php' ) );
 			}
 			?>
@@ -260,10 +253,10 @@ if ( empty( $tzstring ) ) { // Create a UTC+- zone if no timezone string exists
 <p class="timezone-info">
 <span>
 	<?php
-	// Set TZ so localtime works.
-	date_default_timezone_set( $tzstring );
-	$now = localtime( time(), true );
-	if ( $now['tm_isdst'] ) {
+	$now = new DateTime( 'now', new DateTimeZone( $tzstring ) );
+	$dst = (bool) $now->format( 'I' );
+
+	if ( $dst ) {
 		_e( 'This timezone is currently in daylight saving time.' );
 	} else {
 		_e( 'This timezone is currently in standard time.' );
@@ -304,8 +297,6 @@ if ( empty( $tzstring ) ) { // Create a UTC+- zone if no timezone string exists
 			_e( 'This timezone does not observe daylight saving time.' );
 		}
 	}
-	// Set back to UTC.
-	date_default_timezone_set( 'UTC' );
 	?>
 	</span>
 </p>
@@ -385,7 +376,7 @@ foreach ( $time_formats as $format ) {
 		'<p><strong>' . __( 'Preview:' ) . '</strong> <span class="example">' . date_i18n( get_option( 'time_format' ) ) . '</span>' .
 		"<span class='spinner'></span>\n" . '</p>';
 
-	echo "\t<p class='date-time-doc'>" . __( '<a href="https://codex.wordpress.org/Formatting_Date_and_Time">Documentation on date and time formatting</a>.' ) . "</p>\n";
+	echo "\t<p class='date-time-doc'>" . __( '<a href="https://wordpress.org/support/article/formatting-date-and-time/">Documentation on date and time formatting</a>.' ) . "</p>\n";
 ?>
 	</fieldset>
 </td>
@@ -395,7 +386,7 @@ foreach ( $time_formats as $format ) {
 <td><select name="start_of_week" id="start_of_week">
 <?php
 /**
- * @global WP_Locale $wp_locale
+ * @global WP_Locale $wp_locale WordPress date and time locale object.
  */
 global $wp_locale;
 

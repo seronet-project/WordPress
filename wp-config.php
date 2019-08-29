@@ -81,8 +81,7 @@ $table_prefix = 'wp_';
  */
 define( 'WP_DEBUG', false );
 
-/* That's all, stop editing! Happy blogging. */
-
+/* That's all, stop editing! Happy publishing. */
 
 
 /** Sets up WordPress vars and included files. */

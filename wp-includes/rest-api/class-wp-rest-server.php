@@ -103,11 +103,13 @@ class WP_REST_Server {
 	 * Checks the authentication headers if supplied.
 	 *
 	 * @since 4.4.0
+	 * @since 5.3.0 Added the `$request` parameter.
 	 *
+	 * @param WP_REST_Request $request Full data about the request.
 	 * @return WP_Error|null WP_Error indicates unsuccessful login, null indicates successful
 	 *                       or no authentication provided
 	 */
-	public function check_authentication() {
+	public function check_authentication( $request ) {
 		/**
 		 * Filters REST authentication errors.
 		 *
@@ -128,11 +130,13 @@ class WP_REST_Server {
 		 * the authentication method was used, and it succeeded.
 		 *
 		 * @since 4.4.0
+		 * @since 5.3.0 Added the `$request` argument.
 		 *
-		 * @param WP_Error|null|bool WP_Error if authentication error, null if authentication
-		 *                              method wasn't used, true if authentication succeeded.
+		 * @param WP_Error|null|bool $result  WP_Error if authentication error, null if authentication
+		 *                                    method wasn't used, true if authentication succeeded.
+		 * @param WP_REST_Request    $request Full data about the request.
 		 */
-		return apply_filters( 'rest_authentication_errors', null );
+		return apply_filters( 'rest_authentication_errors', null, $request );
 	}
 
 	/**
@@ -310,7 +314,7 @@ class WP_REST_Server {
 		$request->set_body_params( wp_unslash( $_POST ) );
 		$request->set_file_params( $_FILES );
 		$request->set_headers( $this->get_headers( wp_unslash( $_SERVER ) ) );
-		$request->set_body( $this->get_raw_data() );
+		$request->set_body( self::get_raw_data() );
 
 		/*
 		 * HTTP method override for clients that can't use PUT/PATCH/DELETE. First, we check
@@ -323,7 +327,7 @@ class WP_REST_Server {
 			$request->set_method( $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] );
 		}
 
-		$result = $this->check_authentication();
+		$result = $this->check_authentication( $request );
 
 		if ( ! is_wp_error( $result ) ) {
 			$result = $this->dispatch( $request );
@@ -401,6 +405,11 @@ class WP_REST_Server {
 			 */
 			$result = apply_filters( 'rest_pre_echo_response', $result, $this, $request );
 
+			// The 204 response shouldn't have a body.
+			if ( 204 === $code || null === $result ) {
+				return null;
+			}
+
 			$result = wp_json_encode( $result );
 
 			$json_error_message = $this->get_json_last_error();
@@ -437,7 +446,7 @@ class WP_REST_Server {
 	 */
 	public function response_to_data( $response, $embed ) {
 		$data  = $response->get_data();
-		$links = $this->get_compact_response_links( $response );
+		$links = self::get_compact_response_links( $response );
 
 		if ( ! empty( $links ) ) {
 			// Convert links to part of the data.
@@ -1279,19 +1288,7 @@ class WP_REST_Server {
 	 * @param string $key Header key.
 	 */
 	public function remove_header( $key ) {
-		if ( function_exists( 'header_remove' ) ) {
-			// In PHP 5.3+ there is a way to remove an already set header.
-			header_remove( $key );
-		} else {
-			// In PHP 5.2, send an empty header, but only as a last resort to
-			// override a header already sent.
-			foreach ( headers_list() as $header ) {
-				if ( 0 === stripos( $header, "$key:" ) ) {
-					$this->send_header( $key, '' );
-					break;
-				}
-			}
-		}
+		header_remove( $key );
 	}
 
 	/**

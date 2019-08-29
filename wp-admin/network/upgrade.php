@@ -28,8 +28,8 @@ get_current_screen()->add_help_tab(
 
 get_current_screen()->set_help_sidebar(
 	'<p><strong>' . __( 'For more information:' ) . '</strong></p>' .
-	'<p>' . __( '<a href="https://codex.wordpress.org/Network_Admin_Updates_Screen">Documentation on Upgrade Network</a>' ) . '</p>' .
-	'<p>' . __( '<a href="https://wordpress.org/support/">Support Forums</a>' ) . '</p>'
+	'<p>' . __( '<a href="https://wordpress.org/support/article/network-admin-updates-screen/">Documentation on Upgrade Network</a>' ) . '</p>' .
+	'<p>' . __( '<a href="https://wordpress.org/support/">Support</a>' ) . '</p>'
 );
 
 require_once( ABSPATH . 'wp-admin/admin-header.php' );
@@ -49,7 +49,7 @@ switch ( $action ) {
 
 		if ( $n < 5 ) {
 			/**
-			 * @global string $wp_db_version
+			 * @global int $wp_db_version WordPress database version.
 			 */
 			global $wp_db_version;
 			update_site_option( 'wpmu_upgrade_site', $wp_db_version );
@@ -57,15 +57,16 @@ switch ( $action ) {
 
 		$site_ids = get_sites(
 			array(
-				'spam'       => 0,
-				'deleted'    => 0,
-				'archived'   => 0,
-				'network_id' => get_current_network_id(),
-				'number'     => 5,
-				'offset'     => $n,
-				'fields'     => 'ids',
-				'order'      => 'DESC',
-				'orderby'    => 'id',
+				'spam'                   => 0,
+				'deleted'                => 0,
+				'archived'               => 0,
+				'network_id'             => get_current_network_id(),
+				'number'                 => 5,
+				'offset'                 => $n,
+				'fields'                 => 'ids',
+				'order'                  => 'DESC',
+				'orderby'                => 'id',
+				'update_site_meta_cache' => false,
 			)
 		);
 		if ( empty( $site_ids ) ) {

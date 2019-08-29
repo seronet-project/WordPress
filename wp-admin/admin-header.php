@@ -6,7 +6,7 @@
  * @subpackage Administration
  */
 
-@header( 'Content-Type: ' . get_option( 'html_type' ) . '; charset=' . get_option( 'blog_charset' ) );
+header( 'Content-Type: ' . get_option( 'html_type' ) . '; charset=' . get_option( 'blog_charset' ) );
 if ( ! defined( 'WP_ADMIN' ) ) {
 	require_once( dirname( __FILE__ ) . '/admin.php' );
 }
@@ -16,8 +16,8 @@ if ( ! defined( 'WP_ADMIN' ) ) {
  *
  * @global string    $title
  * @global string    $hook_suffix
- * @global WP_Screen $current_screen
- * @global WP_Locale $wp_locale
+ * @global WP_Screen $current_screen     WordPress current screen object.
+ * @global WP_Locale $wp_locale          WordPress date and time locale object.
  * @global string    $pagenow
  * @global string    $update_title
  * @global int       $total_update_count
@@ -50,6 +50,11 @@ if ( $admin_title == $title ) {
 } else {
 	/* translators: Admin screen title. 1: Admin screen name, 2: Network or site name */
 	$admin_title = sprintf( __( '%1$s &lsaquo; %2$s &#8212; WordPress' ), $title, $admin_title );
+}
+
+if ( wp_is_recovery_mode() ) {
+	/* translators: %s: Admin screen title. */
+	$admin_title = sprintf( __( 'Recovery Mode &#8212; %s' ), $admin_title );
 }
 
 /**
@@ -103,7 +108,7 @@ do_action( 'admin_enqueue_scripts', $hook_suffix );
  *
  * @since 2.6.0
  */
-do_action( "admin_print_styles-{$hook_suffix}" );
+do_action( "admin_print_styles-{$hook_suffix}" ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 
 /**
  * Fires when styles are printed for all admin pages.
@@ -117,7 +122,7 @@ do_action( 'admin_print_styles' );
  *
  * @since 2.1.0
  */
-do_action( "admin_print_scripts-{$hook_suffix}" );
+do_action( "admin_print_scripts-{$hook_suffix}" ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 
 /**
  * Fires when scripts are printed for all admin pages.
@@ -134,7 +139,7 @@ do_action( 'admin_print_scripts' );
  *
  * @since 2.1.0
  */
-do_action( "admin_head-{$hook_suffix}" );
+do_action( "admin_head-{$hook_suffix}" ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 
 /**
  * Fires in head section for all admin pages.
@@ -185,6 +190,15 @@ if ( is_network_admin() ) {
 }
 
 $admin_body_class .= ' no-customize-support no-svg';
+
+if ( $current_screen->is_block_editor() ) {
+	// Default to is-fullscreen-mode to avoid jumps in the UI.
+	$admin_body_class .= ' block-editor-page is-fullscreen-mode wp-embed-responsive';
+
+	if ( current_theme_supports( 'editor-styles' ) && current_theme_supports( 'dark-editor-style' ) ) {
+		$admin_body_class .= ' is-dark-theme';
+	}
+}
 
 ?>
 </head>
@@ -239,7 +253,7 @@ $current_screen->set_parentage( $parent_file );
 
 ?>
 
-<div id="wpbody-content" aria-label="<?php esc_attr_e( 'Main content' ); ?>" tabindex="0">
+<div id="wpbody-content">
 <?php
 
 $current_screen->render_screen_meta();

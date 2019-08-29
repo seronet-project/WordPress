@@ -333,10 +333,10 @@ final class WP_Customize_Widgets {
 	 */
 	public function customize_controls_init() {
 		/** This action is documented in wp-admin/includes/ajax-actions.php */
-		do_action( 'load-widgets.php' );
+		do_action( 'load-widgets.php' ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 
 		/** This action is documented in wp-admin/includes/ajax-actions.php */
-		do_action( 'widgets.php' );
+		do_action( 'widgets.php' ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 
 		/** This action is documented in wp-admin/widgets.php */
 		do_action( 'sidebar_admin_setup' );
@@ -643,7 +643,7 @@ final class WP_Customize_Widgets {
 	 */
 	public function print_styles() {
 		/** This action is documented in wp-admin/admin-header.php */
-		do_action( 'admin_print_styles-widgets.php' );
+		do_action( 'admin_print_styles-widgets.php' ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 
 		/** This action is documented in wp-admin/admin-header.php */
 		do_action( 'admin_print_styles' );
@@ -657,7 +657,7 @@ final class WP_Customize_Widgets {
 	 */
 	public function print_scripts() {
 		/** This action is documented in wp-admin/admin-header.php */
-		do_action( 'admin_print_scripts-widgets.php' );
+		do_action( 'admin_print_scripts-widgets.php' ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 
 		/** This action is documented in wp-admin/admin-header.php */
 		do_action( 'admin_print_scripts' );
@@ -777,7 +777,7 @@ final class WP_Customize_Widgets {
 				'saveBtnLabel'     => __( 'Apply' ),
 				'saveBtnTooltip'   => __( 'Save and preview changes before publishing them.' ),
 				'removeBtnLabel'   => __( 'Remove' ),
-				'removeBtnTooltip' => __( 'Trash widget by moving it to the inactive widgets sidebar.' ),
+				'removeBtnTooltip' => __( 'Keep widget settings and move it to the inactive widgets' ),
 				'error'            => __( 'An error has occurred. Please reload the page and try again.' ),
 				'widgetMovedUp'    => __( 'Widget moved up' ),
 				'widgetMovedDown'  => __( 'Widget moved down' ),
@@ -860,13 +860,13 @@ final class WP_Customize_Widgets {
 	 */
 	public function print_footer_scripts() {
 		/** This action is documented in wp-admin/admin-footer.php */
-		do_action( 'admin_print_footer_scripts-widgets.php' );
+		do_action( 'admin_print_footer_scripts-widgets.php' ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 
 		/** This action is documented in wp-admin/admin-footer.php */
 		do_action( 'admin_print_footer_scripts' );
 
 		/** This action is documented in wp-admin/admin-footer.php */
-		do_action( 'admin_footer-widgets.php' );
+		do_action( 'admin_footer-widgets.php' ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 	}
 
 	/**
@@ -949,7 +949,7 @@ final class WP_Customize_Widgets {
 		}
 
 		global $wp_registered_widgets, $wp_registered_widget_controls;
-		require_once ABSPATH . '/wp-admin/includes/widgets.php'; // for next_widget_id_number()
+		require_once ABSPATH . 'wp-admin/includes/widgets.php'; // for next_widget_id_number()
 
 		$sort = $wp_registered_widgets;
 		usort( $sort, array( $this, '_sort_name_callback' ) );
@@ -1151,8 +1151,8 @@ final class WP_Customize_Widgets {
 		<style>
 		.widget-customizer-highlighted-widget {
 			outline: none;
-			-webkit-box-shadow: 0 0 2px rgba(30,140,190,0.8);
-			box-shadow: 0 0 2px rgba(30,140,190,0.8);
+			-webkit-box-shadow: 0 0 2px rgba(30, 140, 190, 0.8);
+			box-shadow: 0 0 2px rgba(30, 140, 190, 0.8);
 			position: relative;
 			z-index: 1;
 		}
@@ -1438,11 +1438,13 @@ final class WP_Customize_Widgets {
 				$value                         = array();
 				$value[ $parsed_id['number'] ] = $instance;
 				$key                           = 'widget-' . $parsed_id['id_base'];
-				$_REQUEST[ $key ]              = $_POST[ $key ] = wp_slash( $value );
+				$_REQUEST[ $key ]              = wp_slash( $value );
+				$_POST[ $key ]                 = $_REQUEST[ $key ];
 				$added_input_vars[]            = $key;
 			} else {
 				foreach ( $instance as $key => $value ) {
-					$_REQUEST[ $key ]   = $_POST[ $key ] = wp_slash( $value );
+					$_REQUEST[ $key ]   = wp_slash( $value );
+					$_POST[ $key ]      = $_REQUEST[ $key ];
 					$added_input_vars[] = $key;
 				}
 			}
@@ -1536,10 +1538,10 @@ final class WP_Customize_Widgets {
 		}
 
 		/** This action is documented in wp-admin/includes/ajax-actions.php */
-		do_action( 'load-widgets.php' );
+		do_action( 'load-widgets.php' ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 
 		/** This action is documented in wp-admin/includes/ajax-actions.php */
-		do_action( 'widgets.php' );
+		do_action( 'widgets.php' ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 
 		/** This action is documented in wp-admin/widgets.php */
 		do_action( 'sidebar_admin_setup' );
@@ -1738,7 +1740,7 @@ final class WP_Customize_Widgets {
 	 * The current request's sidebar_instance_number context.
 	 *
 	 * @since 4.5.0
-	 * @var int
+	 * @var int|null
 	 */
 	protected $context_sidebar_instance_number;
 
@@ -1790,7 +1792,7 @@ final class WP_Customize_Widgets {
 	 * Current sidebar being rendered.
 	 *
 	 * @since 4.5.0
-	 * @var string
+	 * @var string|null
 	 */
 	protected $rendering_widget_id;
 
@@ -1798,7 +1800,7 @@ final class WP_Customize_Widgets {
 	 * Current widget being rendered.
 	 *
 	 * @since 4.5.0
-	 * @var string
+	 * @var string|null
 	 */
 	protected $rendering_sidebar_id;
 
@@ -1856,8 +1858,9 @@ final class WP_Customize_Widgets {
 
 		// Render the widget.
 		ob_start();
-		dynamic_sidebar( $this->rendering_sidebar_id = $context['sidebar_id'] );
-		$container                                   = ob_get_clean();
+		$this->rendering_sidebar_id = $context['sidebar_id'];
+		dynamic_sidebar( $this->rendering_sidebar_id );
+		$container = ob_get_clean();
 
 		// Reset variables for next partial render.
 		remove_filter( 'sidebars_widgets', $filter_callback, 1000 );
@@ -1968,7 +1971,7 @@ final class WP_Customize_Widgets {
 	 */
 	public function capture_filter_pre_update_option( $new_value, $option_name, $old_value ) {
 		if ( $this->is_option_capture_ignored( $option_name ) ) {
-			return;
+			return $new_value;
 		}
 
 		if ( ! isset( $this->_captured_options[ $option_name ] ) ) {

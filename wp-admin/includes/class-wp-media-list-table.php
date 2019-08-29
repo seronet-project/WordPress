@@ -61,7 +61,7 @@ class WP_Media_List_Table extends WP_List_Table {
 	}
 
 	/**
-	 * @global WP_Query $wp_query
+	 * @global WP_Query $wp_query              WordPress Query object.
 	 * @global array    $post_mime_types
 	 * @global array    $avail_post_mime_types
 	 * @global string   $mode
@@ -151,7 +151,7 @@ class WP_Media_List_Table extends WP_List_Table {
 				$actions['untrash'] = __( 'Restore' );
 				$actions['delete']  = __( 'Delete Permanently' );
 			} else {
-				$actions['trash'] = _x( 'Trash', 'verb' );
+				$actions['trash'] = __( 'Move to Trash' );
 			}
 		} else {
 			$actions['delete'] = __( 'Delete Permanently' );
@@ -356,9 +356,7 @@ class WP_Media_List_Table extends WP_List_Table {
 		if ( current_user_can( 'edit_post', $post->ID ) ) {
 			?>
 			<label class="screen-reader-text" for="cb-select-<?php echo $post->ID; ?>">
-																		<?php
-																		echo sprintf( __( 'Select %s' ), _draft_or_post_title() );
-																		?>
+				<?php printf( __( 'Select %s' ), _draft_or_post_title() ); ?>
 			</label>
 			<input type="checkbox" name="media[]" id="cb-select-<?php echo $post->ID; ?>" value="<?php echo $post->ID; ?>" />
 			<?php
@@ -377,7 +375,8 @@ class WP_Media_List_Table extends WP_List_Table {
 
 		$title      = _draft_or_post_title();
 		$thumb      = wp_get_attachment_image( $post->ID, array( 60, 60 ), true, array( 'alt' => '' ) );
-		$link_start = $link_end = '';
+		$link_start = '';
+		$link_end   = '';
 
 		if ( current_user_can( 'edit_post', $post->ID ) && ! $this->is_trash ) {
 			$link_start = sprintf(
@@ -452,7 +451,8 @@ class WP_Media_List_Table extends WP_List_Table {
 		} else {
 			$m_time = $post->post_date;
 			$time   = get_post_time( 'G', true, $post, false );
-			if ( ( abs( $t_diff = time() - $time ) ) < DAY_IN_SECONDS ) {
+			$t_diff = time() - $time;
+			if ( ( abs( $t_diff ) ) < DAY_IN_SECONDS ) {
 				if ( $t_diff < 0 ) {
 					$h_time = sprintf( __( '%s from now' ), human_time_diff( $time ) );
 				} else {
@@ -611,7 +611,7 @@ class WP_Media_List_Table extends WP_List_Table {
 	}
 
 	/**
-	 * @global WP_Post $post
+	 * @global WP_Post $post Global post object.
 	 */
 	public function display_rows() {
 		global $post, $wp_query;

@@ -76,22 +76,33 @@ if ( isset( $_GET['action'] ) ) {
 
 								$userfunction = 'all_spam';
 								$blogs        = get_blogs_of_user( $user_id, true );
+
 								foreach ( (array) $blogs as $details ) {
 									if ( $details->userblog_id != get_network()->site_id ) { // main blog not a spam !
 										update_blog_status( $details->userblog_id, 'spam', '1' );
 									}
 								}
-								update_user_status( $user_id, 'spam', '1' );
+
+								$user_data         = $user->to_array();
+								$user_data['spam'] = '1';
+
+								wp_update_user( $user_data );
 								break;
 
 							case 'notspam':
+								$user = get_userdata( $user_id );
+
 								$userfunction = 'all_notspam';
 								$blogs        = get_blogs_of_user( $user_id, true );
+
 								foreach ( (array) $blogs as $details ) {
 									update_blog_status( $details->userblog_id, 'spam', '0' );
 								}
 
-								update_user_status( $user_id, 'spam', '0' );
+								$user_data         = $user->to_array();
+								$user_data['spam'] = '0';
+
+								wp_update_user( $user_data );
 								break;
 						}
 					}
@@ -102,7 +113,7 @@ if ( isset( $_GET['action'] ) ) {
 
 					$user_ids = (array) $_POST['allusers'];
 					/** This action is documented in wp-admin/network/site-themes.php */
-					$sendback = apply_filters( 'handle_network_bulk_actions-' . get_current_screen()->id, $sendback, $doaction, $user_ids );
+					$sendback = apply_filters( 'handle_network_bulk_actions-' . get_current_screen()->id, $sendback, $doaction, $user_ids ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 
 					wp_safe_redirect( $sendback );
 					exit();
