@@ -9,10 +9,16 @@ applications:
   - wpdb
   - wpvol
   routes:
-  - route: "wp.cf.sero.network"
+  - route: "wp.sero.network"
   
 # echo -e "<?php\n" > wp-keys.php
 # wget https://api.wordpress.org/secret-key/1.1/salt/ -O - >> wp-keys.php
 # cf push --no-start
 # 
 # cf bs wp wpvol -c '{\"uid\":\"1000\",\"gid\":\"1000\",\"mount\":\"/home/vcap/app/files\"}'
+
+# cf create-service smb Existing wpvol -c "{\"share\": \"//10.0.0.21/vol1\"}"
+# (default: vol1-vol3 available)
+#
+## See deloyment for smb-username and smb-password
+# cf bind-service contentserver wpvol -c "{\"username\": \"*****\", \"password\":\"******\",\"mount\":\"/home/vcap/app/files\"}"
