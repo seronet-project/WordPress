@@ -1,4 +1,6 @@
 {
+    "WEB_SERVER": "nginx",
+    "ADMIN_EMAIL": "admin@sero.network",
     "WEBDIR": "wordpress",
-    "PHP_VERSION": "{PHP_72_LATEST}"
+    "PHP_VERSION": "{PHP_73_LATEST}"
 }
