@@ -7,3 +7,7 @@ cf cs nfs Existing wpvol -c '{\"share\":\"...\"}'
 cf bs wp wpvol -c '{\"uid\":\"1000\",\"gid\":\"1000\",\"mount\":\"/home/vcap/app/files\"}'
 cf wp start
 
+### Plugins
+- https://github.com/daggerhart/openid-connect-generic
+- WP Multilang
+
