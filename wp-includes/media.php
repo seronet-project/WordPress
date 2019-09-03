@@ -2011,7 +2011,7 @@ function wp_underscore_playlist_templates() {
 	<div class="wp-playlist-caption">
 		<span class="wp-playlist-item-meta wp-playlist-item-title">
 		<?php
-			/* translators: playlist item title */
+			/* translators: %s: Playlist item title. */
 			printf( _x( '&#8220;%s&#8221;', 'playlist item title' ), '{{ data.title }}' );
 		?>
 		</span>
@@ -2028,7 +2028,7 @@ function wp_underscore_playlist_templates() {
 			<# } else { #>
 				<span class="wp-playlist-item-title">
 				<?php
-					/* translators: playlist item title */
+					/* translators: %s: Playlist item title. */
 					printf( _x( '&#8220;%s&#8221;', 'playlist item title' ), '{{{ data.title }}}' );
 				?>
 				</span>
@@ -3705,7 +3705,12 @@ function wp_enqueue_media( $args = array() ) {
 		);
 	}
 	foreach ( $months as $month_year ) {
-		$month_year->text = sprintf( __( '%1$s %2$d' ), $wp_locale->get_month( $month_year->month ), $month_year->year );
+		$month_year->text = sprintf(
+			/* translators: 1: Month, 2: Year. */
+			__( '%1$s %2$d' ),
+			$wp_locale->get_month( $month_year->month ),
+			$month_year->year
+		);
 	}
 
 	$settings = array(
@@ -3764,6 +3769,7 @@ function wp_enqueue_media( $args = array() ) {
 
 	$strings = array(
 		// Generic
+		'mediaFrameDefaultTitle'      => __( 'Media' ),
 		'url'                         => __( 'URL' ),
 		'addMedia'                    => __( 'Add Media' ),
 		'search'                      => __( 'Search' ),
@@ -3847,7 +3853,7 @@ function wp_enqueue_media( $args = array() ) {
 		'cropImage'                   => __( 'Crop Image' ),
 		'cropYourImage'               => __( 'Crop your image' ),
 		'cropping'                    => __( 'Cropping&hellip;' ),
-		/* translators: 1: suggested width number, 2: suggested height number. */
+		/* translators: 1: Suggested width number, 2: Suggested height number. */
 		'suggestedDimensions'         => __( 'Suggested image dimensions: %1$s by %2$s pixels.' ),
 		'cropError'                   => __( 'There has been an error cropping your image.' ),
 

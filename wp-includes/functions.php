@@ -163,8 +163,12 @@ function wp_timezone() {
  * @return string The date, translated if locale specifies it.
  */
 function date_i18n( $format, $timestamp_with_offset = false, $gmt = false ) {
+	$timestamp = $timestamp_with_offset;
+
 	// If timestamp is omitted it should be current time (summed with offset, unless `$gmt` is true).
-	$timestamp = $timestamp_with_offset ? $timestamp_with_offset : current_time( 'timestamp', $gmt );
+	if ( ! is_numeric( $timestamp ) ) {
+		$timestamp = current_time( 'timestamp', $gmt );
+	}
 
 	/*
 	 * This is a legacy implementation quirk that the returned timestamp is also with offset.
@@ -218,13 +222,15 @@ function date_i18n( $format, $timestamp_with_offset = false, $gmt = false ) {
  * @param int          $timestamp Optional. Unix timestamp. Defaults to current time.
  * @param DateTimeZone $timezone  Optional. Timezone to output result in. Defaults to timezone
  *                                from site settings.
- * @return string The date, translated if locale specifies it.
+ * @return string|false The date, translated if locale specifies it. False on invalid timestamp input.
  */
 function wp_date( $format, $timestamp = null, $timezone = null ) {
 	global $wp_locale;
 
-	if ( ! $timestamp ) {
+	if ( null === $timestamp ) {
 		$timestamp = time();
+	} elseif ( ! is_numeric( $timestamp ) ) {
+		return false;
 	}
 
 	if ( ! $timezone ) {
@@ -320,7 +326,8 @@ function wp_maybe_decline_date( $date ) {
 		return $date;
 	}
 
-	/* translators: If months in your language require a genitive case,
+	/*
+	 * translators: If months in your language require a genitive case,
 	 * translate this to 'on'. Do not translate into your own language.
 	 */
 	if ( 'on' === _x( 'off', 'decline months names: on or off' ) ) {
@@ -493,19 +500,19 @@ function human_readable_duration( $duration = '' ) {
 
 	// Add the hour part to the string.
 	if ( is_numeric( $hour ) ) {
-		/* translators: Time duration in hour or hours. */
+		/* translators: %s: Time duration in hour or hours. */
 		$human_readable_duration[] = sprintf( _n( '%s hour', '%s hours', $hour ), (int) $hour );
 	}
 
 	// Add the minute part to the string.
 	if ( is_numeric( $minute ) ) {
-		/* translators: Time duration in minute or minutes. */
+		/* translators: %s: Time duration in minute or minutes. */
 		$human_readable_duration[] = sprintf( _n( '%s minute', '%s minutes', $minute ), (int) $minute );
 	}
 
 	// Add the second part to the string.
 	if ( is_numeric( $second ) ) {
-		/* translators: Time duration in second or seconds. */
+		/* translators: %s: Time duration in second or seconds. */
 		$human_readable_duration[] = sprintf( _n( '%s second', '%s seconds', $second ), (int) $second );
 	}
 
@@ -1576,6 +1583,8 @@ function do_feed_atom( $for_comments ) {
  * Displays the default robots.txt file content.
  *
  * @since 2.1.0
+ * @since 5.3.0 Remove the "Disallow: /" output if search engine visiblity is
+ *              discouraged in favor of robots meta HTML tag in wp_no_robots().
  */
 function do_robots() {
 	header( 'Content-Type: text/plain; charset=utf-8' );
@@ -1589,14 +1598,11 @@ function do_robots() {
 
 	$output = "User-agent: *\n";
 	$public = get_option( 'blog_public' );
-	if ( '0' == $public ) {
-		$output .= "Disallow: /\n";
-	} else {
-		$site_url = parse_url( site_url() );
-		$path     = ( ! empty( $site_url['path'] ) ) ? $site_url['path'] : '';
-		$output  .= "Disallow: $path/wp-admin/\n";
-		$output  .= "Allow: $path/wp-admin/admin-ajax.php\n";
-	}
+
+	$site_url = parse_url( site_url() );
+	$path     = ( ! empty( $site_url['path'] ) ) ? $site_url['path'] : '';
+	$output  .= "Disallow: $path/wp-admin/\n";
+	$output  .= "Allow: $path/wp-admin/admin-ajax.php\n";
 
 	/**
 	 * Filters the robots.txt output.
@@ -1690,7 +1696,7 @@ function is_blog_installed() {
 
 		// Die with a DB error.
 		$wpdb->error = sprintf(
-			/* translators: %s: database repair URL */
+			/* translators: %s: Database repair URL. */
 			__( 'One or more database tables are unavailable. The database may need to be <a href="%s">repaired</a>.' ),
 			'maint/repair.php?referrer=is_blog_installed'
 		);
@@ -2224,7 +2230,7 @@ function wp_upload_dir( $time = null, $create_dir = true, $refresh_cache = false
 				}
 
 				$uploads['error'] = sprintf(
-					/* translators: %s: directory path */
+					/* translators: %s: Directory path. */
 					__( 'Unable to create directory %s. Is its parent directory writable by the server?' ),
 					esc_html( $error_path )
 				);
@@ -2510,7 +2516,7 @@ function wp_upload_bits( $name, $deprecated, $bits, $time = null ) {
 		}
 
 		$message = sprintf(
-			/* translators: %s: directory path */
+			/* translators: %s: Directory path. */
 			__( 'Unable to create directory %s. Is its parent directory writable by the server?' ),
 			$error_path
 		);
@@ -2519,7 +2525,10 @@ function wp_upload_bits( $name, $deprecated, $bits, $time = null ) {
 
 	$ifp = @fopen( $new_file, 'wb' );
 	if ( ! $ifp ) {
-		return array( 'error' => sprintf( __( 'Could not write file %s' ), $new_file ) );
+		return array(
+			/* translators: %s: File name. */
+			'error' => sprintf( __( 'Could not write file %s' ), $new_file ),
+		);
 	}
 
 	fwrite( $ifp, $bits );
@@ -3025,14 +3034,14 @@ function get_allowed_mime_types( $user = null ) {
 function wp_nonce_ays( $action ) {
 	if ( 'log-out' == $action ) {
 		$html = sprintf(
-			/* translators: %s: site name */
+			/* translators: %s: Site title. */
 			__( 'You are attempting to log out of %s' ),
 			get_bloginfo( 'name' )
 		);
 		$html       .= '</p><p>';
 		$redirect_to = isset( $_REQUEST['redirect_to'] ) ? $_REQUEST['redirect_to'] : '';
 		$html       .= sprintf(
-			/* translators: %s: logout URL */
+			/* translators: %s: Logout URL. */
 			__( 'Do you really want to <a href="%s">log out</a>?' ),
 			wp_logout_url( $redirect_to )
 		);
@@ -4562,10 +4571,10 @@ function _deprecated_function( $function, $version, $replacement = null ) {
 	if ( WP_DEBUG && apply_filters( 'deprecated_function_trigger_error', true ) ) {
 		if ( function_exists( '__' ) ) {
 			if ( ! is_null( $replacement ) ) {
-				/* translators: 1: PHP function name, 2: version number, 3: alternative function name */
+				/* translators: 1: PHP function name, 2: Version number, 3: Alternative function name. */
 				trigger_error( sprintf( __( '%1$s is <strong>deprecated</strong> since version %2$s! Use %3$s instead.' ), $function, $version, $replacement ) );
 			} else {
-				/* translators: 1: PHP function name, 2: version number */
+				/* translators: 1: PHP function name, 2: Version number. */
 				trigger_error( sprintf( __( '%1$s is <strong>deprecated</strong> since version %2$s with no alternative available.' ), $function, $version ) );
 			}
 		} else {
@@ -4624,9 +4633,9 @@ function _deprecated_constructor( $class, $version, $parent_class = '' ) {
 	if ( WP_DEBUG && apply_filters( 'deprecated_constructor_trigger_error', true ) ) {
 		if ( function_exists( '__' ) ) {
 			if ( ! empty( $parent_class ) ) {
-				/* translators: 1: PHP class name, 2: PHP parent class name, 3: version number, 4: __construct() method */
 				trigger_error(
 					sprintf(
+						/* translators: 1: PHP class name, 2: PHP parent class name, 3: Version number, 4: __construct() method. */
 						__( 'The called constructor method for %1$s in %2$s is <strong>deprecated</strong> since version %3$s! Use %4$s instead.' ),
 						$class,
 						$parent_class,
@@ -4635,9 +4644,9 @@ function _deprecated_constructor( $class, $version, $parent_class = '' ) {
 					)
 				);
 			} else {
-				/* translators: 1: PHP class name, 2: version number, 3: __construct() method */
 				trigger_error(
 					sprintf(
+						/* translators: 1: PHP class name, 2: Version number, 3: __construct() method. */
 						__( 'The called constructor method for %1$s is <strong>deprecated</strong> since version %2$s! Use %3$s instead.' ),
 						$class,
 						$version,
@@ -4716,10 +4725,10 @@ function _deprecated_file( $file, $version, $replacement = null, $message = '' )
 		$message = empty( $message ) ? '' : ' ' . $message;
 		if ( function_exists( '__' ) ) {
 			if ( ! is_null( $replacement ) ) {
-				/* translators: 1: PHP file name, 2: version number, 3: alternative file name */
+				/* translators: 1: PHP file name, 2: Version number, 3: Alternative file name. */
 				trigger_error( sprintf( __( '%1$s is <strong>deprecated</strong> since version %2$s! Use %3$s instead.' ), $file, $version, $replacement ) . $message );
 			} else {
-				/* translators: 1: PHP file name, 2: version number */
+				/* translators: 1: PHP file name, 2: Version number. */
 				trigger_error( sprintf( __( '%1$s is <strong>deprecated</strong> since version %2$s with no alternative available.' ), $file, $version ) . $message );
 			}
 		} else {
@@ -4779,10 +4788,10 @@ function _deprecated_argument( $function, $version, $message = null ) {
 	if ( WP_DEBUG && apply_filters( 'deprecated_argument_trigger_error', true ) ) {
 		if ( function_exists( '__' ) ) {
 			if ( ! is_null( $message ) ) {
-				/* translators: 1: PHP function name, 2: version number, 3: optional message regarding the change */
+				/* translators: 1: PHP function name, 2: Version number, 3: Optional message regarding the change. */
 				trigger_error( sprintf( __( '%1$s was called with an argument that is <strong>deprecated</strong> since version %2$s! %3$s' ), $function, $version, $message ) );
 			} else {
-				/* translators: 1: PHP function name, 2: version number */
+				/* translators: 1: PHP function name, 2: Version number. */
 				trigger_error( sprintf( __( '%1$s was called with an argument that is <strong>deprecated</strong> since version %2$s with no alternative available.' ), $function, $version ) );
 			}
 		} else {
@@ -4838,10 +4847,10 @@ function _deprecated_hook( $hook, $version, $replacement = null, $message = null
 	if ( WP_DEBUG && apply_filters( 'deprecated_hook_trigger_error', true ) ) {
 		$message = empty( $message ) ? '' : ' ' . $message;
 		if ( ! is_null( $replacement ) ) {
-			/* translators: 1: WordPress hook name, 2: version number, 3: alternative hook name */
+			/* translators: 1: WordPress hook name, 2: Version number, 3: Alternative hook name. */
 			trigger_error( sprintf( __( '%1$s is <strong>deprecated</strong> since version %2$s! Use %3$s instead.' ), $hook, $version, $replacement ) . $message );
 		} else {
-			/* translators: 1: WordPress hook name, 2: version number */
+			/* translators: 1: WordPress hook name, 2: Version number. */
 			trigger_error( sprintf( __( '%1$s is <strong>deprecated</strong> since version %2$s with no alternative available.' ), $hook, $version ) . $message );
 		}
 	}
@@ -4892,15 +4901,15 @@ function _doing_it_wrong( $function, $message, $version ) {
 			if ( is_null( $version ) ) {
 				$version = '';
 			} else {
-				/* translators: %s: version number */
+				/* translators: %s: Version number. */
 				$version = sprintf( __( '(This message was added in version %s.)' ), $version );
 			}
-			/* translators: %s: Documentation URL */
 			$message .= ' ' . sprintf(
+				/* translators: %s: Documentation URL. */
 				__( 'Please see <a href="%s">Debugging in WordPress</a> for more information.' ),
 				__( 'https://wordpress.org/support/article/debugging-in-wordpress/' )
 			);
-			/* translators: Developer debugging message. 1: PHP function name, 2: Explanatory message, 3: Version information message */
+			/* translators: Developer debugging message. 1: PHP function name, 2: Explanatory message, 3: Version information message. */
 			trigger_error( sprintf( __( '%1$s was called <strong>incorrectly</strong>. %2$s %3$s' ), $function, $message, $version ) );
 		} else {
 			if ( is_null( $version ) ) {
@@ -5678,11 +5687,11 @@ function wp_scheduled_delete() {
 /**
  * Retrieve metadata from a file.
  *
- * Searches for metadata in the first 8kiB of a file, such as a plugin or theme.
+ * Searches for metadata in the first 8 KB of a file, such as a plugin or theme.
  * Each piece of metadata must be on its own line. Fields can not span multiple
  * lines, the value will get cut at the end of the first line.
  *
- * If the file data is not within that first 8kiB, then the author should correct
+ * If the file data is not within that first 8 KB, then the author should correct
  * their plugin file and move the data headers to the top.
  *
  * @link https://codex.wordpress.org/File_Header
@@ -5690,7 +5699,7 @@ function wp_scheduled_delete() {
  * @since 2.9.0
  *
  * @param string $file            Absolute path to the file.
- * @param array  $default_headers List of headers, in the format `array('HeaderKey' => 'Header Name')`.
+ * @param array  $default_headers List of headers, in the format `array( 'HeaderKey' => 'Header Name' )`.
  * @param string $context         Optional. If specified adds filter hook {@see 'extra_$context_headers'}.
  *                                Default empty.
  * @return array Array of file headers in `HeaderKey => Header Value` format.
@@ -5699,7 +5708,7 @@ function get_file_data( $file, $default_headers, $context = '' ) {
 	// We don't need to write to the file, so just open for reading.
 	$fp = fopen( $file, 'r' );
 
-	// Pull only the first 8kiB of the file in.
+	// Pull only the first 8 KB of the file in.
 	$file_data = fread( $fp, 8 * KB_IN_BYTES );
 
 	// PHP will close file handle, but we are good citizens.
@@ -6745,11 +6754,12 @@ All at ###SITENAME###
 
 	$email_change_email = array(
 		'to'      => $old_email,
-		/* translators: Site admin email change notification email subject. %s: Site title */
+		/* translators: Site admin email change notification email subject. %s: Site title. */
 		'subject' => __( '[%s] Admin Email Changed' ),
 		'message' => $email_change_text,
 		'headers' => '',
 	);
+
 	// get site name
 	$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 
@@ -6887,11 +6897,11 @@ function wp_privacy_anonymize_data( $type, $data = '' ) {
 			$anonymous = '0000-00-00 00:00:00';
 			break;
 		case 'text':
-			/* translators: deleted text */
+			/* translators: Deleted text. */
 			$anonymous = __( '[deleted]' );
 			break;
 		case 'longtext':
-			/* translators: deleted long text */
+			/* translators: Deleted long text. */
 			$anonymous = __( 'This content was deleted by the author.' );
 			break;
 		default:
@@ -7107,7 +7117,7 @@ function wp_get_update_php_annotation() {
 	}
 
 	$annotation = sprintf(
-		/* translators: %s: default Update PHP page URL */
+		/* translators: %s: Default Update PHP page URL. */
 		__( 'This resource is provided by your web host, and is specific to your site. For more information, <a href="%s" target="_blank">see the official WordPress documentation</a>.' ),
 		esc_url( $default_url )
 	);
@@ -7166,7 +7176,7 @@ function wp_direct_php_update_button() {
 		'<a class="button button-primary" href="%1$s" target="_blank" rel="noopener noreferrer">%2$s <span class="screen-reader-text">%3$s</span><span aria-hidden="true" class="dashicons dashicons-external"></span></a>',
 		esc_url( $direct_update_url ),
 		__( 'Update PHP' ),
-		/* translators: accessibility text */
+		/* translators: Accessibility text. */
 		__( '(opens in a new tab)' )
 	);
 	echo '</p>';

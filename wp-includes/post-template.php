@@ -123,6 +123,9 @@ function get_the_title( $post = 0 ) {
 	if ( ! is_admin() ) {
 		if ( ! empty( $post->post_password ) ) {
 
+			/* translators: %s: Protected post title. */
+			$prepend = __( 'Protected: %s' );
+
 			/**
 			 * Filters the text prepended to the post title for protected posts.
 			 *
@@ -134,9 +137,12 @@ function get_the_title( $post = 0 ) {
 			 *                         Default 'Protected: %s'.
 			 * @param WP_Post $post    Current post object.
 			 */
-			$protected_title_format = apply_filters( 'protected_title_format', __( 'Protected: %s' ), $post );
+			$protected_title_format = apply_filters( 'protected_title_format', $prepend, $post );
 			$title                  = sprintf( $protected_title_format, $title );
 		} elseif ( isset( $post->post_status ) && 'private' == $post->post_status ) {
+
+			/* translators: %s: Private post title. */
+			$prepend = __( 'Private: %s' );
 
 			/**
 			 * Filters the text prepended to the post title of private posts.
@@ -149,7 +155,7 @@ function get_the_title( $post = 0 ) {
 			 *                         Default 'Private: %s'.
 			 * @param WP_Post $post    Current post object.
 			 */
-			$private_title_format = apply_filters( 'private_title_format', __( 'Private: %s' ), $post );
+			$private_title_format = apply_filters( 'private_title_format', $prepend, $post );
 			$title                = sprintf( $private_title_format, $title );
 		}
 	}
@@ -286,7 +292,7 @@ function get_the_content( $more_link_text = null, $strip_teaser = false, $post =
 		$more_link_text = sprintf(
 			'<span aria-label="%1$s">%2$s</span>',
 			sprintf(
-				/* translators: %s: Name of current post */
+				/* translators: %s: Post title. */
 				__( 'Continue reading %s' ),
 				the_title_attribute(
 					array(
@@ -1109,7 +1115,7 @@ function the_meta() {
 
 			$html = sprintf(
 				"<li><span class='post-meta-key'>%s</span> %s</li>\n",
-				/* translators: %s: Post custom field name */
+				/* translators: %s: Post custom field name. */
 				sprintf( _x( '%s:', 'Post custom field name' ), $key ),
 				$value
 			);
@@ -1819,11 +1825,11 @@ function wp_post_revision_title( $revision, $link = true ) {
 		return false;
 	}
 
-	/* translators: revision date format, see https://secure.php.net/date */
+	/* translators: Revision date format, see https://secure.php.net/date */
 	$datef = _x( 'F j, Y @ H:i:s', 'revision date format' );
-	/* translators: %s: revision date */
+	/* translators: %s: Revision date. */
 	$autosavef = __( '%s [Autosave]' );
-	/* translators: %s: revision date */
+	/* translators: %s: Revision date. */
 	$currentf = __( '%s [Current Revision]' );
 
 	$date      = date_i18n( $datef, strtotime( $revision->post_modified ) );
@@ -1861,7 +1867,7 @@ function wp_post_revision_title_expanded( $revision, $link = true ) {
 	}
 
 	$author = get_the_author_meta( 'display_name', $revision->post_author );
-	/* translators: revision date format, see https://secure.php.net/date */
+	/* translators: Revision date format, see https://secure.php.net/date */
 	$datef = _x( 'F j, Y @ H:i:s', 'revision date format' );
 
 	$gravatar = get_avatar( $revision->post_author, 24 );
@@ -1873,7 +1879,7 @@ function wp_post_revision_title_expanded( $revision, $link = true ) {
 	}
 
 	$revision_date_author = sprintf(
-		/* translators: post revision title: 1: author avatar, 2: author name, 3: time ago, 4: date */
+		/* translators: Post revision title. 1: Author avatar, 2: Author name, 3: Time ago, 4: Date. */
 		__( '%1$s %2$s, %3$s ago (%4$s)' ),
 		$gravatar,
 		$author,
@@ -1881,9 +1887,9 @@ function wp_post_revision_title_expanded( $revision, $link = true ) {
 		$date
 	);
 
-	/* translators: %s: revision date with author avatar */
+	/* translators: %s: Revision date with author avatar. */
 	$autosavef = __( '%s [Autosave]' );
-	/* translators: %s: revision date with author avatar */
+	/* translators: %s: Revision date with author avatar. */
 	$currentf = __( '%s [Current Revision]' );
 
 	if ( ! wp_is_post_revision( $revision ) ) {

@@ -94,27 +94,27 @@ function wptexturize( $text, $reset = false ) {
 			return $text;
 		}
 
-		/* translators: opening curly double quote */
+		/* translators: Opening curly double quote. */
 		$opening_quote = _x( '&#8220;', 'opening curly double quote' );
-		/* translators: closing curly double quote */
+		/* translators: Closing curly double quote. */
 		$closing_quote = _x( '&#8221;', 'closing curly double quote' );
 
-		/* translators: apostrophe, for example in 'cause or can't */
+		/* translators: Apostrophe, for example in 'cause or can't. */
 		$apos = _x( '&#8217;', 'apostrophe' );
 
-		/* translators: prime, for example in 9' (nine feet) */
+		/* translators: Prime, for example in 9' (nine feet). */
 		$prime = _x( '&#8242;', 'prime' );
-		/* translators: double prime, for example in 9" (nine inches) */
+		/* translators: Double prime, for example in 9" (nine inches). */
 		$double_prime = _x( '&#8243;', 'double prime' );
 
-		/* translators: opening curly single quote */
+		/* translators: Opening curly single quote. */
 		$opening_single_quote = _x( '&#8216;', 'opening curly single quote' );
-		/* translators: closing curly single quote */
+		/* translators: Closing curly single quote. */
 		$closing_single_quote = _x( '&#8217;', 'closing curly single quote' );
 
-		/* translators: en dash */
+		/* translators: En dash. */
 		$en_dash = _x( '&#8211;', 'en dash' );
-		/* translators: em dash */
+		/* translators: Em dash. */
 		$em_dash = _x( '&#8212;', 'em dash' );
 
 		$default_no_texturize_tags       = array( 'pre', 'code', 'kbd', 'style', 'script', 'tt' );
@@ -125,7 +125,8 @@ function wptexturize( $text, $reset = false ) {
 			$cockney        = array_keys( $wp_cockneyreplace );
 			$cockneyreplace = array_values( $wp_cockneyreplace );
 		} else {
-			/* translators: This is a comma-separated list of words that defy the syntax of quotations in normal use,
+			/*
+			 * translators: This is a comma-separated list of words that defy the syntax of quotations in normal use,
 			 * for example...  'We do not have enough words yet' ... is a typical quoted phrase.  But when we write
 			 * lines of code 'til we have enough of 'em, then we need to insert apostrophes instead of quotes.
 			 */
@@ -2429,7 +2430,7 @@ function convert_invalid_entities( $content ) {
  * @return string Balanced text
  */
 function balanceTags( $text, $force = false ) {  // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.FunctionNameInvalid
-	if ( $force || get_option( 'use_balanceTags' ) == 1 ) {
+	if ( $force || (int) get_option( 'use_balanceTags' ) === 1 ) {
 		return force_balance_tags( $text );
 	} else {
 		return $text;
@@ -2440,6 +2441,7 @@ function balanceTags( $text, $force = false ) {  // phpcs:ignore WordPress.Namin
  * Balances tags of string using a modified stack.
  *
  * @since 2.0.4
+ * @since 5.3.0 Improve accuracy and add support for custom element tags.
  *
  * @author Leonard Lin <leonard@acm.org>
  * @license GPL
@@ -2469,32 +2471,74 @@ function force_balance_tags( $text ) {
 	// WP bug fix for LOVE <3 (and other situations with '<' before a number)
 	$text = preg_replace( '#<([0-9]{1})#', '&lt;$1', $text );
 
-	while ( preg_match( '/<(\/?[\w:]*)\s*([^>]*)>/', $text, $regex ) ) {
+	/**
+	 * Matches supported tags.
+	 *
+	 * To get the pattern as a string without the comments paste into a PHP
+	 * REPL like `php -a`.
+	 *
+	 * @see https://html.spec.whatwg.org/#elements-2
+	 * @see https://w3c.github.io/webcomponents/spec/custom/#valid-custom-element-name
+	 *
+	 * @example
+	 * ~# php -a
+	 * php > $s = [paste copied contents of expression below including parentheses];
+	 * php > echo $s;
+	 */
+	$tag_pattern = (
+		'#<' . // Start with an opening bracket.
+		'(/?)' . // Group 1 - If it's a closing tag it'll have a leading slash.
+		'(' . // Group 2 - Tag name.
+			// Custom element tags have more lenient rules than HTML tag names.
+			'(?:[a-z](?:[a-z0-9._]*)-(?:[a-z0-9._-]+)+)' .
+				'|' .
+			// Traditional tag rules approximate HTML tag names.
+			'(?:[\w:]+)' .
+		')' .
+		'(?:' .
+			// We either immediately close the tag with its '>' and have nothing here.
+			'\s*' .
+			'(/?)' . // Group 3 - "attributes" for empty tag.
+				'|' .
+			// Or we must start with space characters to separate the tag name from the attributes (or whitespace).
+			'(\s+)' . // Group 4 - Pre-attribute whitespace.
+			'([^>]*)' . // Group 5 - Attributes.
+		')' .
+		'>#' // End with a closing bracket.
+	);
+
+	while ( preg_match( $tag_pattern, $text, $regex ) ) {
+		$full_match        = $regex[0];
+		$has_leading_slash = ! empty( $regex[1] );
+		$tag_name          = $regex[2];
+		$tag               = strtolower( $tag_name );
+		$is_single_tag     = in_array( $tag, $single_tags, true );
+		$pre_attribute_ws  = isset( $regex[4] ) ? $regex[4] : '';
+		$attributes        = trim( isset( $regex[5] ) ? $regex[5] : $regex[3] );
+		$has_self_closer   = '/' === substr( $attributes, -1 );
+
 		$newtext .= $tagqueue;
 
-		$i = strpos( $text, $regex[0] );
-		$l = strlen( $regex[0] );
+		$i = strpos( $text, $full_match );
+		$l = strlen( $full_match );
 
-		// clear the shifter
+		// Clear the shifter.
 		$tagqueue = '';
-		// Pop or Push
-		if ( isset( $regex[1][0] ) && '/' == $regex[1][0] ) { // End Tag
-			$tag = strtolower( substr( $regex[1], 1 ) );
-			// if too many closing tags
+		if ( $has_leading_slash ) { // End Tag.
+			// If too many closing tags.
 			if ( $stacksize <= 0 ) {
 				$tag = '';
-				// or close to be safe $tag = '/' . $tag;
+				// Or close to be safe $tag = '/' . $tag.
 
-				// if stacktop value = tag close value then pop
-			} elseif ( $tagstack[ $stacksize - 1 ] == $tag ) { // found closing tag
-				$tag = '</' . $tag . '>'; // Close Tag
-				// Pop
+				// If stacktop value = tag close value, then pop.
+			} elseif ( $tagstack[ $stacksize - 1 ] === $tag ) { // Found closing tag.
+				$tag = '</' . $tag . '>'; // Close Tag.
 				array_pop( $tagstack );
 				$stacksize--;
-			} else { // closing tag not at top, search for it
+			} else { // Closing tag not at top, search for it.
 				for ( $j = $stacksize - 1; $j >= 0; $j-- ) {
-					if ( $tagstack[ $j ] == $tag ) {
-						// add tag to tagqueue
+					if ( $tagstack[ $j ] === $tag ) {
+						// Add tag to tagqueue.
 						for ( $k = $stacksize - 1; $k >= $j; $k-- ) {
 							$tagqueue .= '</' . array_pop( $tagstack ) . '>';
 							$stacksize--;
@@ -2504,39 +2548,33 @@ function force_balance_tags( $text ) {
 				}
 				$tag = '';
 			}
-		} else { // Begin Tag
-			$tag = strtolower( $regex[1] );
-
-			// Tag Cleaning
-
-			// If it's an empty tag "< >", do nothing
-			if ( '' == $tag ) {
-				// do nothing
-			} elseif ( substr( $regex[2], -1 ) == '/' ) { // ElseIf it presents itself as a self-closing tag...
+		} else { // Begin Tag.
+			if ( $has_self_closer ) { // If it presents itself as a self-closing tag...
 				// ...but it isn't a known single-entity self-closing tag, then don't let it be treated as such and
 				// immediately close it with a closing tag (the tag will encapsulate no text as a result)
-				if ( ! in_array( $tag, $single_tags ) ) {
-					$regex[2] = trim( substr( $regex[2], 0, -1 ) ) . "></$tag";
+				if ( ! $is_single_tag ) {
+					$attributes = trim( substr( $attributes, 0, -1 ) ) . "></$tag";
 				}
-			} elseif ( in_array( $tag, $single_tags ) ) { // ElseIf it's a known single-entity tag but it doesn't close itself, do so
-				$regex[2] .= '/';
-			} else { // Else it's not a single-entity tag
-				// If the top of the stack is the same as the tag we want to push, close previous tag
-				if ( $stacksize > 0 && ! in_array( $tag, $nestable_tags ) && $tagstack[ $stacksize - 1 ] == $tag ) {
+			} elseif ( $is_single_tag ) { // ElseIf it's a known single-entity tag but it doesn't close itself, do so
+				$pre_attribute_ws = ' ';
+				$attributes      .= '/';
+			} else { // It's not a single-entity tag.
+				// If the top of the stack is the same as the tag we want to push, close previous tag.
+				if ( $stacksize > 0 && ! in_array( $tag, $nestable_tags, true ) && $tagstack[ $stacksize - 1 ] === $tag ) {
 					$tagqueue = '</' . array_pop( $tagstack ) . '>';
 					$stacksize--;
 				}
 				$stacksize = array_push( $tagstack, $tag );
 			}
 
-			// Attributes
-			$attributes = $regex[2];
-			if ( ! empty( $attributes ) && $attributes[0] != '>' ) {
-				$attributes = ' ' . $attributes;
+			// Attributes.
+			if ( $has_self_closer && $is_single_tag ) {
+				// We need some space - avoid <br/> and prefer <br />.
+				$pre_attribute_ws = ' ';
 			}
 
-			$tag = '<' . $tag . $attributes . '>';
-			//If already queuing a close tag, then put this tag on, too
+			$tag = '<' . $tag . $pre_attribute_ws . $attributes . '>';
+			// If already queuing a close tag, then put this tag on too.
 			if ( ! empty( $tagqueue ) ) {
 				$tagqueue .= $tag;
 				$tag       = '';
@@ -2546,18 +2584,17 @@ function force_balance_tags( $text ) {
 		$text     = substr( $text, $i + $l );
 	}
 
-	// Clear Tag Queue
+	// Clear Tag Queue.
 	$newtext .= $tagqueue;
 
-	// Add Remaining text
+	// Add remaining text.
 	$newtext .= $text;
 
-	// Empty Stack
 	while ( $x = array_pop( $tagstack ) ) {
-		$newtext .= '</' . $x . '>'; // Add remaining tags to close
+		$newtext .= '</' . $x . '>'; // Add remaining tags to close.
 	}
 
-	// WP fix for the bug with HTML comments
+	// WP fix for the bug with HTML comments.
 	$newtext = str_replace( '< !--', '<!--', $newtext );
 	$newtext = str_replace( '<    !--', '< !--', $newtext );
 
@@ -3602,49 +3639,49 @@ function human_time_diff( $from, $to = 0 ) {
 		if ( $secs <= 1 ) {
 			$secs = 1;
 		}
-		/* translators: Time difference between two dates, in seconds. %s: Number of seconds */
+		/* translators: Time difference between two dates, in seconds. %s: Number of seconds. */
 		$since = sprintf( _n( '%s second', '%s seconds', $secs ), $secs );
 	} elseif ( $diff < HOUR_IN_SECONDS && $diff >= MINUTE_IN_SECONDS ) {
 		$mins = round( $diff / MINUTE_IN_SECONDS );
 		if ( $mins <= 1 ) {
 			$mins = 1;
 		}
-		/* translators: Time difference between two dates, in minutes (min=minute). %s: Number of minutes */
+		/* translators: Time difference between two dates, in minutes (min=minute). %s: Number of minutes. */
 		$since = sprintf( _n( '%s min', '%s mins', $mins ), $mins );
 	} elseif ( $diff < DAY_IN_SECONDS && $diff >= HOUR_IN_SECONDS ) {
 		$hours = round( $diff / HOUR_IN_SECONDS );
 		if ( $hours <= 1 ) {
 			$hours = 1;
 		}
-		/* translators: Time difference between two dates, in hours. %s: Number of hours */
+		/* translators: Time difference between two dates, in hours. %s: Number of hours. */
 		$since = sprintf( _n( '%s hour', '%s hours', $hours ), $hours );
 	} elseif ( $diff < WEEK_IN_SECONDS && $diff >= DAY_IN_SECONDS ) {
 		$days = round( $diff / DAY_IN_SECONDS );
 		if ( $days <= 1 ) {
 			$days = 1;
 		}
-		/* translators: Time difference between two dates, in days. %s: Number of days */
+		/* translators: Time difference between two dates, in days. %s: Number of days. */
 		$since = sprintf( _n( '%s day', '%s days', $days ), $days );
 	} elseif ( $diff < MONTH_IN_SECONDS && $diff >= WEEK_IN_SECONDS ) {
 		$weeks = round( $diff / WEEK_IN_SECONDS );
 		if ( $weeks <= 1 ) {
 			$weeks = 1;
 		}
-		/* translators: Time difference between two dates, in weeks. %s: Number of weeks */
+		/* translators: Time difference between two dates, in weeks. %s: Number of weeks. */
 		$since = sprintf( _n( '%s week', '%s weeks', $weeks ), $weeks );
 	} elseif ( $diff < YEAR_IN_SECONDS && $diff >= MONTH_IN_SECONDS ) {
 		$months = round( $diff / MONTH_IN_SECONDS );
 		if ( $months <= 1 ) {
 			$months = 1;
 		}
-		/* translators: Time difference between two dates, in months. %s: Number of months */
+		/* translators: Time difference between two dates, in months. %s: Number of months. */
 		$since = sprintf( _n( '%s month', '%s months', $months ), $months );
 	} elseif ( $diff >= YEAR_IN_SECONDS ) {
 		$years = round( $diff / YEAR_IN_SECONDS );
 		if ( $years <= 1 ) {
 			$years = 1;
 		}
-		/* translators: Time difference between two dates, in years. %s: Number of years */
+		/* translators: Time difference between two dates, in years. %s: Number of years. */
 		$since = sprintf( _n( '%s year', '%s years', $years ), $years );
 	}
 
@@ -4663,7 +4700,7 @@ function sanitize_option( $option, $value ) {
 
 			if ( 'permalink_structure' === $option && '' !== $value && ! preg_match( '/%[^\/%]+%/', $value ) ) {
 				$error = sprintf(
-					/* translators: %s: Documentation URL */
+					/* translators: %s: Documentation URL. */
 					__( 'A structure tag is required when using custom permalinks. <a href="%s">Learn more</a>' ),
 					__( 'https://wordpress.org/support/article/using-permalinks/#choosing-your-permalink-structure' )
 				);
@@ -4904,11 +4941,11 @@ function wp_sprintf_l( $pattern, $args ) {
 	$l = apply_filters(
 		'wp_sprintf_l',
 		array(
-			/* translators: used to join items in a list with more than 2 items */
+			/* translators: Used to join items in a list with more than 2 items. */
 			'between'          => sprintf( __( '%1$s, %2$s' ), '', '' ),
-			/* translators: used to join last two items in a list with more than 2 times */
+			/* translators: Used to join last two items in a list with more than 2 times. */
 			'between_last_two' => sprintf( __( '%1$s, and %2$s' ), '', '' ),
-			/* translators: used to join items in a list with only 2 items */
+			/* translators: Used to join items in a list with only 2 items. */
 			'between_only_two' => sprintf( __( '%1$s and %2$s' ), '', '' ),
 		)
 	);
