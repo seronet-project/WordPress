@@ -1,0 +1,123 @@
+resource_types:
+- name: slack-notification
+  type: docker-image
+  source:
+    repository: cfcommunity/slack-notification-resource
+    tag: v1.4.2
+
+resources:
+- name: wordpress-staging
+  type: cf
+  icon: cloud-upload
+  source:
+    api: ((cf.api))
+    username: ((cf.username))
+    password: ((cf.password))
+    organization: ((cf.org))
+    space: ((cf.space))
+    skip_cert_check: false
+
+- name: seronet-wordpress
+  type: git
+  icon: github-face
+  source:
+    uri: git@github.com:seronet-project/WordPress.git
+    branch: master
+    depth: 5
+    disable_ci_skip: false
+    private_key: ((github-private-key))
+
+- name: wordpress-wordpress
+  type: git
+  icon: github-face
+  source:
+    uri: https://github.com/WordPress/WordPress.git
+    branch: master
+    depth: 30
+
+- name: notify
+  type: slack-notification
+  icon: chat-alert
+  source:
+    url: ((slack-webhook))
+
+- name: merge-timer
+  type: time
+  source:
+    start: 3:30 AM
+    stop: 4:30 AM
+    location: Europe/Berlin
+
+jobs:
+- name: merge-wordpress
+  public: false
+  serial_groups: ["wordpress"]
+  plan:
+  - get: merge-timer
+    trigger: true
+  - get: wordpress-wordpress
+#    trigger: true
+  - get: seronet-wordpress
+  - task: merge-wordpress-master
+    config:
+      platform: linux
+      inputs:
+      - name: seronet-wordpress
+      outputs:
+      - name: seronet-wordpress
+      image_resource:
+        type: docker-image
+        source:
+          repository: cloudfoundry/cflinuxfs3
+      run:
+        path: bash
+        args:
+        - -exc
+        - |
+          cd seronet-wordpress
+          git config user.email "concourse@sero.network"
+          git config user.name "SeRoNet Concourse"
+          git remote add wordpress https://github.com/WordPress/WordPress.git
+          git fetch wordpress master
+          git merge --no-edit wordpress/master
+  - put: seronet-wordpress
+    params:
+      repository: seronet-wordpress
+
+- name : deploy-wordpress
+  serial_groups: ["wordpress"]
+  plan:
+    - get: seronet-wordpress
+      trigger: true
+    - task: wordpress-configure
+      params:
+        wp_keys: ((keys))
+      config:
+        platform: linux
+        inputs:
+          - name: seronet-wordpress
+        outputs:
+          - name: wordpress-out
+        image_resource:
+          type: docker-image
+          source:
+            repository: cloudfoundry/cflinuxfs3
+        run:
+          path: bash
+          args:
+          - -exc
+          - |
+            cd seronet-wordpress
+            echo "$wp_keys" > wp-keys.php
+            cd ..
+            cp -a seronet-wordpress/. wordpress-out/
+            ls wordpress-out
+    - put: wordpress-staging
+      params:
+        manifest: wordpress-out/manifest.yml
+        path: wordpress-out
+#        environment_variables:
+      on_success:
+        put: notify
+        params:
+          text: WordPress deployed to ((cf.space)) in ((cf.org)).
