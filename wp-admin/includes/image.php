@@ -164,7 +164,7 @@ function wp_update_image_subsizes( $attachment_id ) {
  * @since 5.3.0
  * @access private
  *
- * @param array  $saved_data    The data retirned from WP_Image_Editor after successfully saving an image.
+ * @param array  $saved_data    The data returned from WP_Image_Editor after successfully saving an image.
  * @param string $original_file Path to the original file.
  * @param array  $image_meta    The image meta data.
  * @param int    $attachment_id The attachment post ID.
@@ -1033,41 +1033,4 @@ function _copy_image_file( $attachment_id ) {
 	}
 
 	return $dst_file;
-}
-
-/**
- * Retrieves the path to an uploaded image.
- *
- * Similar to `get_attached_file()` however some images may have been
- * processed after uploading to make them "web ready".
- * In this case this function returns the path to the originally uploaded image file.
- *
- * @since 5.3.0
- *
- * @param int $attachment_id Attachment ID.
- * @return string|false Path to the original image file or false if the attachment is not an image.
- */
-function wp_get_original_image_path( $attachment_id ) {
-	if ( ! wp_attachment_is_image( $attachment_id ) ) {
-		return false;
-	}
-
-	$image_meta = wp_get_attachment_metadata( $attachment_id );
-	$image_file = get_attached_file( $attachment_id );
-
-	if ( empty( $image_meta['original_image'] ) ) {
-		$original_image = $image_file;
-	} else {
-		$original_image = path_join( dirname( $image_file ), $image_meta['original_image'] );
-	}
-
-	/**
-	 * Filters the path to the original image.
-	 *
-	 * @since 5.3.0
-	 *
-	 * @param string $original_image Path to original image file.
-	 * @param int    $attachment_id  Attachment ID.
-	 */
-	return apply_filters( 'wp_get_original_image_path', $original_image, $attachment_id );
 }
