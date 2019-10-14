@@ -1001,6 +1001,19 @@ function update_core( $from, $to ) {
 		);
 	}
 
+	// Add a warning when the JSON PHP extension is missing.
+	if ( ! extension_loaded( 'json' ) ) {
+		return new WP_Error(
+			'php_not_compatible',
+			sprintf(
+				/* translators: 1: WordPress version number, 2: The PHP extension name needed. */
+				__( 'The update cannot be installed because WordPress %1$s requires the %2$s PHP extension.' ),
+				$wp_version,
+				'JSON'
+			)
+		);
+	}
+
 	/** This filter is documented in wp-admin/includes/update-core.php */
 	apply_filters( 'update_feedback', __( 'Preparing to install the latest version&#8230;' ) );
 
@@ -1312,7 +1325,7 @@ function _copy_dir( $from, $to, $skip_list = array() ) {
 	$to   = trailingslashit( $to );
 
 	foreach ( (array) $dirlist as $filename => $fileinfo ) {
-		if ( in_array( $filename, $skip_list ) ) {
+		if ( in_array( $filename, $skip_list, true ) ) {
 			continue;
 		}
 

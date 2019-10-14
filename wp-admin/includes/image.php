@@ -235,6 +235,7 @@ function wp_create_image_subsizes( $file, $attachment_id ) {
 	 *
 	 * @since 5.3.0
 	 *
+	 * @param int    $threshold     The threshold value in pixels. Default 2560.
 	 * @param array  $imagesize     Indexed array of the image width and height (in that order).
 	 * @param string $file          Full path to the uploaded image file.
 	 * @param int    $attachment_id Attachment post ID.
@@ -273,6 +274,8 @@ function wp_create_image_subsizes( $file, $attachment_id ) {
 				if ( true === $rotated && ! empty( $image_meta['image_meta']['orientation'] ) ) {
 					$image_meta['image_meta']['orientation'] = 1;
 				}
+
+				wp_update_attachment_metadata( $attachment_id, $image_meta );
 			} else {
 				// TODO: handle errors.
 			}
@@ -303,6 +306,8 @@ function wp_create_image_subsizes( $file, $attachment_id ) {
 				if ( ! empty( $image_meta['image_meta']['orientation'] ) ) {
 					$image_meta['image_meta']['orientation'] = 1;
 				}
+
+				wp_update_attachment_metadata( $attachment_id, $image_meta );
 			} else {
 				// TODO: handle errors.
 			}
@@ -576,13 +581,18 @@ function wp_generate_attachment_metadata( $attachment_id, $file ) {
 
 				// Resize based on the full size image, rather than the source.
 				if ( ! is_wp_error( $uploaded ) ) {
-					$editor = wp_get_image_editor( $uploaded['path'] );
+					$image_file = $uploaded['path'];
 					unset( $uploaded['path'] );
 
-					if ( ! is_wp_error( $editor ) ) {
-						$metadata['sizes']         = $editor->multi_resize( $merged_sizes );
-						$metadata['sizes']['full'] = $uploaded;
-					}
+					$metadata['sizes'] = array(
+						'full' => $uploaded,
+					);
+
+					// Save the meta data before any image post-processing errors could happen.
+					wp_update_attachment_metadata( $attachment_id, $metadata );
+
+					// Create sub-sizes saving the image meta after each.
+					$metadata = _wp_make_subsizes( $merged_sizes, $image_file, $metadata, $attachment_id );
 				}
 			}
 		}

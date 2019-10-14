@@ -184,7 +184,7 @@ function get_approved_comments( $post_id, $args = array() ) {
  *
  * @since 2.0.0
  *
- * @global WP_Comment $comment
+ * @global WP_Comment $comment Global comment object.
  *
  * @param WP_Comment|string|int $comment Comment to retrieve.
  * @param string                $output  Optional. The required return type. One of OBJECT, ARRAY_A, or ARRAY_N, which correspond to
@@ -2681,7 +2681,7 @@ function do_all_pings() {
 
 	foreach ( $enclosures as $enclosure ) {
 		delete_post_meta( $enclosure, '_encloseme' );
-		do_enclose( null, $enclosure->ID );
+		do_enclose( null, $enclosure );
 	}
 
 	// Do trackbacks.

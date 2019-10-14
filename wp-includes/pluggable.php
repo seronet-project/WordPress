@@ -571,6 +571,7 @@ if ( ! function_exists( 'wp_logout' ) ) :
 	function wp_logout() {
 		wp_destroy_current_session();
 		wp_clear_auth_cookie();
+		wp_set_current_user( 0 );
 
 		/**
 		 * Fires after a user is logged-out.
@@ -1280,6 +1281,9 @@ if ( ! function_exists( 'wp_sanitize_redirect' ) ) :
 	 * @return string Redirect-sanitized URL.
 	 */
 	function wp_sanitize_redirect( $location ) {
+		// Encode spaces.
+		$location = str_replace( ' ', '%20', $location );
+
 		$regex    = '/
 		(
 			(?: [\xC2-\xDF][\x80-\xBF]        # double-byte sequences   110xxxxx 10xxxxxx
@@ -1296,7 +1300,7 @@ if ( ! function_exists( 'wp_sanitize_redirect' ) ) :
 		$location = preg_replace( '|[^a-z0-9-~+_.?#=&;,/:%!*\[\]()@]|i', '', $location );
 		$location = wp_kses_no_null( $location );
 
-		// remove %0d and %0a from location
+		// Remove %0D and %0A from location.
 		$strip = array( '%0d', '%0a', '%0D', '%0A' );
 		return _deep_replace( $strip, $location );
 	}

@@ -713,7 +713,7 @@ function validate_file_to_edit( $file, $allowed_files = array() ) {
  * @param string         $time      Time formatted in 'yyyy/mm'.
  * @param string         $action    Expected value for `$_POST['action']`.
  * @return string[] On success, returns an associative array of file attributes. On failure, returns
- *               `$overrides['upload_error_handler'](&$file, $message )` or `array( 'error'=>$message )`.
+ *                  `$overrides['upload_error_handler']( &$file, $message )` or `array( 'error' => $message )`.
  */
 function _wp_handle_upload( &$file, $overrides, $time, $action ) {
 	// The default error handler.
@@ -979,64 +979,6 @@ function wp_handle_sideload( &$file, $overrides = false, $time = null ) {
 		$action = $overrides['action'];
 	}
 	return _wp_handle_upload( $file, $overrides, $time, $action );
-}
-
-/**
- * Temporarily stores the client upload reference in a transient.
- *
- * @since 5.3.0
- * @access private
- *
- * @param string $upload_ref    The upload reference sent by the client.
- * @param int    $attachment_id Attachment post ID.
- * @return bool Whether the transient was set.
- */
-function _wp_set_upload_ref( $upload_ref, $attachment_id ) {
-	$upload_ref = preg_replace( '/[^a-zA-Z0-9_]/', '', $upload_ref );
-
-	if ( ! empty( $upload_ref ) ) {
-		return set_transient( '_wp_temp_image_ref:' . $upload_ref, $attachment_id, HOUR_IN_SECONDS );
-	}
-
-	return false;
-}
-
-/**
- * Get attachment post ID from an upload reference.
- *
- * @since 5.3.0
- * @access private
- *
- * @param string $upload_ref    The upload reference sent by the client.
- * @return int The attachemtn post ID. Zero if the upload reference has expired or doesn't exist.
- */
-function _wp_get_upload_ref_attachment_id( $upload_ref ) {
-	$upload_ref = preg_replace( '/[^a-zA-Z0-9_]/', '', $upload_ref );
-
-	if ( ! empty( $upload_ref ) ) {
-		return (int) get_transient( '_wp_temp_image_ref:' . $upload_ref );
-	}
-
-	return 0;
-}
-
-/**
- * Remove the transient that stores a temporary upload reference.
- *
- * @since 5.3.0
- * @access private
- *
- * @param string $upload_ref    The upload reference sent by the client.
- * @return bool Whether the transient was removed.
- */
-function _wp_clear_upload_ref( $upload_ref ) {
-	$upload_ref = preg_replace( '/[^a-zA-Z0-9_]/', '', $upload_ref );
-
-	if ( ! empty( $upload_ref ) ) {
-		return delete_transient( '_wp_temp_image_ref:' . $upload_ref );
-	}
-
-	return false;
 }
 
 /**
@@ -1763,7 +1705,7 @@ function copy_dir( $from, $to, $skip_list = array() ) {
 	$to   = trailingslashit( $to );
 
 	foreach ( (array) $dirlist as $filename => $fileinfo ) {
-		if ( in_array( $filename, $skip_list ) ) {
+		if ( in_array( $filename, $skip_list, true ) ) {
 			continue;
 		}
 

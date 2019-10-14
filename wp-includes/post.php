@@ -1829,6 +1829,8 @@ function _add_post_type_submenus() {
  *     ) );
  *
  * @since 3.0.0
+ * @since 5.3.0 Formalized the existing and already documented `...$args` parameter
+ *              by adding it to the function signature.
  *
  * @global array $_wp_post_type_features
  *
@@ -2751,7 +2753,7 @@ function get_post_mime_types() {
 			),
 		),
 		'archive'     => array(
-			__( 'Archives' ),
+			_x( 'Archives', 'file type group' ),
 			__( 'Manage Archives' ),
 			/* translators: %s: Number of archives. */
 			_n_noop(
@@ -6800,9 +6802,9 @@ function _publish_post_hook( $post_id ) {
 	}
 
 	if ( get_option( 'default_pingback_flag' ) ) {
-		add_post_meta( $post_id, '_pingme', '1' );
+		add_post_meta( $post_id, '_pingme', '1', true );
 	}
-	add_post_meta( $post_id, '_encloseme', '1' );
+	add_post_meta( $post_id, '_encloseme', '1', true );
 
 	$to_ping = get_to_ping( $post_id );
 	if ( ! empty( $to_ping ) ) {
