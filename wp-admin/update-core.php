@@ -24,6 +24,10 @@ if ( ! current_user_can( 'update_core' ) && ! current_user_can( 'update_themes' 
 }
 
 /**
+ * Lists available core updates.
+ *
+ * @since 2.7.0
+ *
  * @global string $wp_local_package
  * @global wpdb   $wpdb             WordPress database abstraction object.
  *
@@ -158,7 +162,7 @@ function list_core_update( $update ) {
 	}
 	echo '</p>';
 	if ( 'en_US' != $update->locale && ( ! isset( $wp_local_package ) || $wp_local_package != $update->locale ) ) {
-		echo '<p class="hint">' . __( 'This localized version contains both the translation and various other localization fixes. You can skip upgrading if you want to keep your current translation.' ) . '</p>';
+		echo '<p class="hint">' . __( 'This localized version contains both the translation and various other localization fixes.' ) . '</p>';
 	} elseif ( 'en_US' == $update->locale && get_locale() != 'en_US' && ( ! $update->packages->partial && $wp_version == $update->partial_version ) ) {
 		// Partial builds don't need language-specific warnings.
 		echo '<p class="hint">' . sprintf(

@@ -162,6 +162,24 @@ function has_shortcode( $content, $tag ) {
 /**
  * Search content for shortcodes and filter shortcodes through their hooks.
  *
+ * This function is an alias for do_shortcode().
+ *
+ * @since 5.4.0
+ *
+ * @see do_shortcode()
+ *
+ * @param string $content     Content to search for shortcodes.
+ * @param bool   $ignore_html When true, shortcodes inside HTML elements will be skipped.
+ *                            Default false.
+ * @return string Content with shortcodes filtered out.
+ */
+function apply_shortcodes( $content, $ignore_html = false ) {
+	return do_shortcode( $content, $ignore_html );
+}
+
+/**
+ * Search content for shortcodes and filter shortcodes through their hooks.
+ *
  * If there are no shortcode tags defined, then the content will be returned
  * without any filtering. This might cause issues when plugins are disabled but
  * the shortcode will still show up in the post or content.
@@ -170,8 +188,9 @@ function has_shortcode( $content, $tag ) {
  *
  * @global array $shortcode_tags List of shortcode tags and their callback hooks.
  *
- * @param string $content Content to search for shortcodes.
- * @param bool $ignore_html When true, shortcodes inside HTML elements will be skipped.
+ * @param string $content     Content to search for shortcodes.
+ * @param bool   $ignore_html When true, shortcodes inside HTML elements will be skipped.
+ *                            Default false.
  * @return string Content with shortcodes filtered out.
  */
 function do_shortcode( $content, $ignore_html = false ) {
@@ -558,21 +577,22 @@ function shortcode_atts( $pairs, $atts, $shortcode = '' ) {
 			$out[ $name ] = $default;
 		}
 	}
-	/**
-	 * Filters a shortcode's default attributes.
-	 *
-	 * If the third parameter of the shortcode_atts() function is present then this filter is available.
-	 * The third parameter, $shortcode, is the name of the shortcode.
-	 *
-	 * @since 3.6.0
-	 * @since 4.4.0 Added the `$shortcode` parameter.
-	 *
-	 * @param array  $out       The output array of shortcode attributes.
-	 * @param array  $pairs     The supported attributes and their defaults.
-	 * @param array  $atts      The user defined shortcode attributes.
-	 * @param string $shortcode The shortcode name.
-	 */
+
 	if ( $shortcode ) {
+		/**
+		 * Filters a shortcode's default attributes.
+		 *
+		 * If the third parameter of the shortcode_atts() function is present then this filter is available.
+		 * The third parameter, $shortcode, is the name of the shortcode.
+		 *
+		 * @since 3.6.0
+		 * @since 4.4.0 Added the `$shortcode` parameter.
+		 *
+		 * @param array  $out       The output array of shortcode attributes.
+		 * @param array  $pairs     The supported attributes and their defaults.
+		 * @param array  $atts      The user defined shortcode attributes.
+		 * @param string $shortcode The shortcode name.
+		 */
 		$out = apply_filters( "shortcode_atts_{$shortcode}", $out, $pairs, $atts, $shortcode );
 	}
 

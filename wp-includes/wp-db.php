@@ -742,7 +742,12 @@ class wpdb {
 	 *
 	 * @param string $charset The character set to check.
 	 * @param string $collate The collation to check.
-	 * @return array The most appropriate character set and collation to use.
+	 * @return array {
+	 *     The most appropriate character set and collation to use.
+	 *
+	 *     @type string $charset Character set.
+	 *     @type string $collate Collation.
+	 * }
 	 */
 	public function determine_charset( $charset, $collate ) {
 		if ( ( $this->use_mysqli && ! ( $this->dbh instanceof mysqli ) ) || empty( $this->dbh ) ) {
@@ -1430,10 +1435,10 @@ class wpdb {
 	 * Print SQL/DB error.
 	 *
 	 * @since 0.71
-	 * @global array $EZSQL_ERROR Stores error information of query and error string
+	 * @global array $EZSQL_ERROR Stores error information of query and error string.
 	 *
-	 * @param string $str The error to display
-	 * @return false|void False if the showing of errors is disabled.
+	 * @param string $str The error to display.
+	 * @return void|false Void if the showing of errors is enabled, false if disabled.
 	 */
 	public function print_error( $str = '' ) {
 		global $EZSQL_ERROR;
@@ -3406,7 +3411,7 @@ class wpdb {
 	 *
 	 * @since 1.5.0
 	 *
-	 * @return float Total time spent on the query, in seconds
+	 * @return float Total time spent on the query, in seconds.
 	 */
 	public function timer_stop() {
 		return ( microtime( true ) - $this->time_start );
@@ -3419,9 +3424,9 @@ class wpdb {
 	 *
 	 * @since 1.5.0
 	 *
-	 * @param string $message    The Error message
-	 * @param string $error_code Optional. A Computer readable string to identify the error.
-	 * @return false|void
+	 * @param string $message    The error message.
+	 * @param string $error_code Optional. A computer-readable string to identify the error.
+	 * @return void|false Void if the showing of errors is enabled, false if disabled.
 	 */
 	public function bail( $message, $error_code = '500' ) {
 		if ( $this->show_errors ) {
@@ -3494,7 +3499,7 @@ class wpdb {
 	 * @global string $wp_version
 	 * @global string $required_mysql_version
 	 *
-	 * @return WP_Error|void
+	 * @return void|WP_Error
 	 */
 	public function check_database_version() {
 		global $wp_version, $required_mysql_version;

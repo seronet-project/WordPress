@@ -93,11 +93,11 @@ class WP_Terms_List_Table extends WP_List_Table {
 			 * Filters the number of terms displayed per page for the Tags list table.
 			 *
 			 * @since 2.7.0
-			 * @deprecated 2.8.0 Use edit_tags_per_page instead.
+			 * @deprecated 2.8.0 Use {@see 'edit_tags_per_page'} instead.
 			 *
 			 * @param int $tags_per_page Number of tags to be displayed. Default 20.
 			 */
-			$tags_per_page = apply_filters( 'tagsperpage', $tags_per_page );
+			$tags_per_page = apply_filters_deprecated( 'tagsperpage', array( $tags_per_page ), '2.8.0', 'edit_tags_per_page' );
 		} elseif ( 'category' === $this->screen->taxonomy ) {
 			/**
 			 * Filters the number of terms displayed per page for the Categories list table.
@@ -446,7 +446,8 @@ class WP_Terms_List_Table extends WP_List_Table {
 	 * @param WP_Term $tag         Tag being acted upon.
 	 * @param string  $column_name Current column name.
 	 * @param string  $primary     Primary column name.
-	 * @return string Row actions output for terms.
+	 * @return string Row actions output for terms, or an empty string
+	 *                if the current column is not the primary column.
 	 */
 	protected function handle_row_actions( $tag, $column_name, $primary ) {
 		if ( $primary !== $column_name ) {
@@ -502,13 +503,13 @@ class WP_Terms_List_Table extends WP_List_Table {
 		 * Filters the action links displayed for each term in the Tags list table.
 		 *
 		 * @since 2.8.0
-		 * @deprecated 3.0.0 Use {$taxonomy}_row_actions instead.
+		 * @deprecated 3.0.0 Use {@see '{$taxonomy}_row_actions'} instead.
 		 *
 		 * @param string[] $actions An array of action links to be displayed. Default
 		 *                          'Edit', 'Quick Edit', 'Delete', and 'View'.
 		 * @param WP_Term  $tag     Term object.
 		 */
-		$actions = apply_filters( 'tag_row_actions', $actions, $tag );
+		$actions = apply_filters_deprecated( 'tag_row_actions', array( $actions, $tag ), '3.0.0', '{$taxonomy}_row_actions' );
 
 		/**
 		 * Filters the action links displayed for each term in the terms list table.

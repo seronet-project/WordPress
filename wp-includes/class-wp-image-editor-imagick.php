@@ -453,8 +453,15 @@ class WP_Image_Editor_Imagick extends WP_Image_Editor {
 	 *
 	 * @since 5.3.0
 	 *
-	 * @param array $size_data Array of width, height, and whether to crop.
-	 * @return WP_Error|array WP_Error on error, or the image data array for inclusion in the `sizes` array in the image meta.
+	 * @param array $size_data {
+	 *     Array of size data.
+	 *
+	 *     @type int  $width  The maximum width in pixels.
+	 *     @type int  $height The maximum height in pixels.
+	 *     @type bool $crop   Whether to crop the image to exact dimensions.
+	 * }
+	 * @return array|WP_Error The image data array for inclusion in the `sizes` array in the image meta,
+	 *                        WP_Error object on error.
 	 */
 	public function make_subsize( $size_data ) {
 		if ( ! isset( $size_data['width'] ) && ! isset( $size_data['height'] ) ) {

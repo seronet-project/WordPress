@@ -35,7 +35,14 @@ if ( ! function_exists( 'wp_install' ) ) :
 	 * @param string $deprecated    Optional. Not used.
 	 * @param string $user_password Optional. User's chosen password. Default empty (random password).
 	 * @param string $language      Optional. Language chosen. Default empty.
-	 * @return array Array keys 'url', 'user_id', 'password', and 'password_message'.
+	 * @return array {
+	 *     Data for the newly installed site.
+	 *
+	 *     @type string $url              The URL of the site.
+	 *     @type int    $user_id          The ID of the site owner.
+	 *     @type string $password         The password of the site owner, if their user account didn't already exist.
+	 *     @type string $password_message The explanatory message regarding the password.
+	 * }
 	 */
 	function wp_install( $blog_title, $user_name, $user_email, $public, $deprecated = '', $user_password = '', $language = '' ) {
 		if ( ! empty( $deprecated ) ) {
@@ -75,22 +82,31 @@ if ( ! function_exists( 'wp_install' ) ) :
 		$user_id        = username_exists( $user_name );
 		$user_password  = trim( $user_password );
 		$email_password = false;
+		$user_created   = false;
+
 		if ( ! $user_id && empty( $user_password ) ) {
 			$user_password = wp_generate_password( 12, false );
 			$message       = __( '<strong><em>Note that password</em></strong> carefully! It is a <em>random</em> password that was generated just for you.' );
 			$user_id       = wp_create_user( $user_name, $user_password, $user_email );
 			update_user_option( $user_id, 'default_password_nag', true, true );
 			$email_password = true;
+			$user_created   = true;
 		} elseif ( ! $user_id ) {
-			// Password has been provided
-			$message = '<em>' . __( 'Your chosen password.' ) . '</em>';
-			$user_id = wp_create_user( $user_name, $user_password, $user_email );
+			// Password has been provided.
+			$message      = '<em>' . __( 'Your chosen password.' ) . '</em>';
+			$user_id      = wp_create_user( $user_name, $user_password, $user_email );
+			$user_created = true;
 		} else {
 			$message = __( 'User already exists. Password inherited.' );
 		}
 
 		$user = new WP_User( $user_id );
 		$user->set_role( 'administrator' );
+
+		if ( $user_created ) {
+			$user->user_url = $guessurl;
+			wp_update_user( $user );
+		}
 
 		wp_install_defaults( $user_id );
 
@@ -1955,11 +1971,10 @@ function upgrade_430() {
  * @ignore
  * @since 4.3.0
  *
- * @global int  $wp_current_db_version The old (current) database version.
- * @global wpdb $wpdb                  WordPress database abstraction object.
+ * @global wpdb $wpdb WordPress database abstraction object.
  */
 function upgrade_430_fix_comments() {
-	global $wp_current_db_version, $wpdb;
+	global $wpdb;
 
 	$content_length = $wpdb->get_col_length( $wpdb->comments, 'comment_content' );
 
@@ -3046,7 +3061,7 @@ function make_site_theme_from_oldschool( $theme_name, $template ) {
  *
  * @param string $theme_name The name of the theme.
  * @param string $template   The directory name of the theme.
- * @return false|void
+ * @return void|false
  */
 function make_site_theme_from_default( $theme_name, $template ) {
 	$site_dir    = WP_CONTENT_DIR . "/themes/$template";
@@ -3121,7 +3136,7 @@ function make_site_theme_from_default( $theme_name, $template ) {
  *
  * @since 1.5.0
  *
- * @return false|string
+ * @return string|false
  */
 function make_site_theme() {
 	// Name the theme after the blog.

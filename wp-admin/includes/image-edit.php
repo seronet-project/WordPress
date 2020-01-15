@@ -11,7 +11,7 @@
  *
  * @since 2.9.0
  *
- * @param int         $post_id Post ID.
+ * @param int         $post_id Attachment post ID.
  * @param bool|object $msg     Optional. Message to display for image editor updates or errors.
  *                             Default false.
  */
@@ -287,12 +287,12 @@ function wp_stream_image( $image, $mime_type, $attachment_id ) {
 		 * Filters the GD image resource to be streamed to the browser.
 		 *
 		 * @since 2.9.0
-		 * @deprecated 3.5.0 Use image_editor_save_pre instead.
+		 * @deprecated 3.5.0 Use {@see 'image_editor_save_pre'} instead.
 		 *
 		 * @param resource $image         Image resource to be streamed.
 		 * @param int      $attachment_id The attachment post ID.
 		 */
-		$image = apply_filters( 'image_save_pre', $image, $attachment_id );
+		$image = apply_filters_deprecated( 'image_save_pre', array( $image, $attachment_id ), '3.5.0', 'image_editor_save_pre' );
 
 		switch ( $mime_type ) {
 			case 'image/jpeg':
@@ -315,11 +315,11 @@ function wp_stream_image( $image, $mime_type, $attachment_id ) {
  *
  * @since 2.9.0
  *
- * @param string $filename
- * @param WP_Image_Editor $image
- * @param string $mime_type
- * @param int $post_id
- * @return bool
+ * @param string          $filename  Name of the file to be saved.
+ * @param WP_Image_Editor $image     The image editor instance.
+ * @param string          $mime_type The mime type of the image.
+ * @param int             $post_id   Attachment post ID.
+ * @return bool True on success, false on failure.
  */
 function wp_save_image_file( $filename, $image, $mime_type, $post_id ) {
 	if ( $image instanceof WP_Image_Editor ) {
@@ -337,9 +337,9 @@ function wp_save_image_file( $filename, $image, $mime_type, $post_id ) {
 		 *
 		 * @param mixed           $override  Value to return instead of saving. Default null.
 		 * @param string          $filename  Name of the file to be saved.
-		 * @param WP_Image_Editor $image     WP_Image_Editor instance.
-		 * @param string          $mime_type Image mime type.
-		 * @param int             $post_id   Post ID.
+		 * @param WP_Image_Editor $image     The image editor instance.
+		 * @param string          $mime_type The mime type of the image.
+		 * @param int             $post_id   Attachment post ID.
 		 */
 		$saved = apply_filters( 'wp_save_image_editor_file', null, $filename, $image, $mime_type, $post_id );
 
@@ -353,7 +353,7 @@ function wp_save_image_file( $filename, $image, $mime_type, $post_id ) {
 		_deprecated_argument( __FUNCTION__, '3.5.0', sprintf( __( '%1$s needs to be a %2$s object.' ), '$image', 'WP_Image_Editor' ) );
 
 		/** This filter is documented in wp-admin/includes/image-edit.php */
-		$image = apply_filters( 'image_save_pre', $image, $post_id );
+		$image = apply_filters_deprecated( 'image_save_pre', array( $image, $post_id ), '3.5.0', 'image_editor_save_pre' );
 
 		/**
 		 * Filters whether to skip saving the image file.
@@ -362,15 +362,15 @@ function wp_save_image_file( $filename, $image, $mime_type, $post_id ) {
 		 * returning that value instead.
 		 *
 		 * @since 2.9.0
-		 * @deprecated 3.5.0 Use wp_save_image_editor_file instead.
+		 * @deprecated 3.5.0 Use {@see 'wp_save_image_editor_file'} instead.
 		 *
 		 * @param mixed           $override  Value to return instead of saving. Default null.
 		 * @param string          $filename  Name of the file to be saved.
-		 * @param WP_Image_Editor $image     WP_Image_Editor instance.
-		 * @param string          $mime_type Image mime type.
-		 * @param int             $post_id   Post ID.
+		 * @param WP_Image_Editor $image     The image editor instance.
+		 * @param string          $mime_type The mime type of the image.
+		 * @param int             $post_id   Attachment post ID.
 		 */
-		$saved = apply_filters( 'wp_save_image_file', null, $filename, $image, $mime_type, $post_id );
+		$saved = apply_filters_deprecated( 'wp_save_image_file', array( null, $filename, $image, $mime_type, $post_id ), '3.5.0', 'wp_save_image_editor_file' );
 
 		if ( null !== $saved ) {
 			return $saved;
@@ -469,7 +469,7 @@ function _flip_image_resource( $img, $horz, $vert ) {
  * @ignore
  * @param resource $img Image resource.
  * @param float    $x   Source point x-coordinate.
- * @param float    $y   Source point y-cooredinate.
+ * @param float    $y   Source point y-coordinate.
  * @param float    $w   Source width.
  * @param float    $h   Source height.
  * @return resource (maybe) cropped image resource.
@@ -565,12 +565,12 @@ function image_edit_apply_changes( $image, $changes ) {
 		 * Filters the GD image resource before applying changes to the image.
 		 *
 		 * @since 2.9.0
-		 * @deprecated 3.5.0 Use wp_image_editor_before_change instead.
+		 * @deprecated 3.5.0 Use {@see 'wp_image_editor_before_change'} instead.
 		 *
 		 * @param resource $image   GD image resource.
 		 * @param array    $changes Array of change operations.
 		 */
-		$image = apply_filters( 'image_edit_before_change', $image, $changes );
+		$image = apply_filters_deprecated( 'image_edit_before_change', array( $image, $changes ), '3.5.0', 'wp_image_editor_before_change' );
 	}
 
 	foreach ( $changes as $operation ) {
@@ -617,12 +617,12 @@ function image_edit_apply_changes( $image, $changes ) {
 
 /**
  * Streams image in post to browser, along with enqueued changes
- * in $_REQUEST['history']
+ * in `$_REQUEST['history']`.
  *
  * @since 2.9.0
  *
- * @param int $post_id
- * @return bool
+ * @param int $post_id Attachment post ID.
+ * @return bool True on success, false on failure.
  */
 function stream_preview_image( $post_id ) {
 	$post = get_post( $post_id );
@@ -747,13 +747,13 @@ function wp_restore_image( $post_id ) {
 }
 
 /**
- * Saves image to post along with enqueued changes
- * in $_REQUEST['history']
+ * Saves image to post, along with enqueued changes
+ * in `$_REQUEST['history']`.
  *
  * @since 2.9.0
  *
- * @param int $post_id
- * @return \stdClass
+ * @param int $post_id Attachment post ID.
+ * @return stdClass
  */
 function wp_save_image( $post_id ) {
 	$_wp_additional_image_sizes = wp_get_additional_image_sizes();

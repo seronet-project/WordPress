@@ -82,7 +82,7 @@ this["wp"] = this["wp"] || {}; this["wp"]["nux"] =
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 361);
+/******/ 	return __webpack_require__(__webpack_require__.s = 382);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -101,29 +101,7 @@ this["wp"] = this["wp"] || {}; this["wp"]["nux"] =
 
 /***/ }),
 
-/***/ 10:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return _defineProperty; });
-function _defineProperty(obj, key, value) {
-  if (key in obj) {
-    Object.defineProperty(obj, key, {
-      value: value,
-      enumerable: true,
-      configurable: true,
-      writable: true
-    });
-  } else {
-    obj[key] = value;
-  }
-
-  return obj;
-}
-
-/***/ }),
-
-/***/ 17:
+/***/ 18:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -139,7 +117,7 @@ function _arrayWithoutHoles(arr) {
   }
 }
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/esm/iterableToArray.js
-var iterableToArray = __webpack_require__(30);
+var iterableToArray = __webpack_require__(32);
 
 // CONCATENATED MODULE: ./node_modules/@babel/runtime/helpers/esm/nonIterableSpread.js
 function _nonIterableSpread() {
@@ -163,16 +141,20 @@ function _toConsumableArray(arr) {
 
 /***/ }),
 
-/***/ 23:
+/***/ 22:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/esm/arrayWithHoles.js
-var arrayWithHoles = __webpack_require__(38);
+var arrayWithHoles = __webpack_require__(33);
 
 // CONCATENATED MODULE: ./node_modules/@babel/runtime/helpers/esm/iterableToArrayLimit.js
 function _iterableToArrayLimit(arr, i) {
+  if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) {
+    return;
+  }
+
   var _arr = [];
   var _n = true;
   var _d = false;
@@ -198,7 +180,7 @@ function _iterableToArrayLimit(arr, i) {
   return _arr;
 }
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/esm/nonIterableRest.js
-var nonIterableRest = __webpack_require__(39);
+var nonIterableRest = __webpack_require__(34);
 
 // CONCATENATED MODULE: ./node_modules/@babel/runtime/helpers/esm/slicedToArray.js
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return _slicedToArray; });
@@ -218,7 +200,7 @@ function _slicedToArray(arr, i) {
 
 /***/ }),
 
-/***/ 30:
+/***/ 32:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -229,7 +211,29 @@ function _iterableToArray(iter) {
 
 /***/ }),
 
-/***/ 36:
+/***/ 33:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return _arrayWithHoles; });
+function _arrayWithHoles(arr) {
+  if (Array.isArray(arr)) return arr;
+}
+
+/***/ }),
+
+/***/ 34:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return _nonIterableRest; });
+function _nonIterableRest() {
+  throw new TypeError("Invalid attempt to destructure non-iterable instance");
+}
+
+/***/ }),
+
+/***/ 38:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -511,7 +515,7 @@ function isShallowEqual( a, b, fromIndex ) {
 
 /***/ }),
 
-/***/ 361:
+/***/ 382:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -532,13 +536,13 @@ __webpack_require__.d(selectors_namespaceObject, "areTipsEnabled", function() { 
 var external_this_wp_data_ = __webpack_require__(4);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/esm/defineProperty.js
-var defineProperty = __webpack_require__(10);
+var defineProperty = __webpack_require__(9);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/esm/objectSpread.js
 var objectSpread = __webpack_require__(7);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/esm/toConsumableArray.js + 2 modules
-var toConsumableArray = __webpack_require__(17);
+var toConsumableArray = __webpack_require__(18);
 
 // CONCATENATED MODULE: ./node_modules/@wordpress/nux/build-module/store/reducer.js
 
@@ -681,13 +685,13 @@ function enableTips() {
 }
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/esm/slicedToArray.js + 1 modules
-var slicedToArray = __webpack_require__(23);
+var slicedToArray = __webpack_require__(22);
 
 // EXTERNAL MODULE: ./node_modules/rememo/es/rememo.js
-var rememo = __webpack_require__(36);
+var rememo = __webpack_require__(38);
 
-// EXTERNAL MODULE: external "lodash"
-var external_lodash_ = __webpack_require__(2);
+// EXTERNAL MODULE: external {"this":"lodash"}
+var external_this_lodash_ = __webpack_require__(2);
 
 // CONCATENATED MODULE: ./node_modules/@wordpress/nux/build-module/store/selectors.js
 
@@ -700,7 +704,7 @@ var external_lodash_ = __webpack_require__(2);
 /**
  * An object containing information about a guide.
  *
- * @typedef {Object} NUX.GuideInfo
+ * @typedef {Object} NUXGuideInfo
  * @property {string[]} tipIds       Which tips the guide contains.
  * @property {?string}  currentTipId The guide's currently showing tip.
  * @property {?string}  nextTipId    The guide's next tip to show.
@@ -713,7 +717,7 @@ var external_lodash_ = __webpack_require__(2);
  * @param {Object} state Global application state.
  * @param {string} tipId The tip to query.
  *
- * @return {?NUX.GuideInfo} Information about the associated guide.
+ * @return {?NUXGuideInfo} Information about the associated guide.
  */
 
 var getAssociatedGuide = Object(rememo["a" /* default */])(function (state, tipId) {
@@ -725,8 +729,8 @@ var getAssociatedGuide = Object(rememo["a" /* default */])(function (state, tipI
     for (var _iterator = state.guides[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
       var tipIds = _step.value;
 
-      if (Object(external_lodash_["includes"])(tipIds, tipId)) {
-        var nonDismissedTips = Object(external_lodash_["difference"])(tipIds, Object(external_lodash_["keys"])(state.preferences.dismissedTips));
+      if (Object(external_this_lodash_["includes"])(tipIds, tipId)) {
+        var nonDismissedTips = Object(external_this_lodash_["difference"])(tipIds, Object(external_this_lodash_["keys"])(state.preferences.dismissedTips));
 
         var _nonDismissedTips = Object(slicedToArray["a" /* default */])(nonDismissedTips, 2),
             _nonDismissedTips$ = _nonDismissedTips[0],
@@ -776,7 +780,7 @@ function isTipVisible(state, tipId) {
     return false;
   }
 
-  if (Object(external_lodash_["has"])(state.preferences.dismissedTips, [tipId])) {
+  if (Object(external_this_lodash_["has"])(state.preferences.dismissedTips, [tipId])) {
     return false;
   }
 
@@ -844,13 +848,6 @@ var external_this_wp_i18n_ = __webpack_require__(1);
 
 
 
-function getAnchorRect(anchor) {
-  // The default getAnchorRect() excludes an element's top and bottom padding
-  // from its calculation. We want tips to point to the outer margin of an
-  // element, so we override getAnchorRect() to include all padding.
-  return anchor.parentNode.getBoundingClientRect();
-}
-
 function onClick(event) {
   // Tips are often nested within buttons. We stop propagation so that clicking
   // on a tip doesn't result in the button being clicked.
@@ -866,10 +863,6 @@ function DotTip(_ref) {
       onDismiss = _ref.onDismiss,
       onDisable = _ref.onDisable;
   var anchorParent = Object(external_this_wp_element_["useRef"])(null);
-  var getAnchorRectCallback = Object(external_this_wp_element_["useCallback"])(function (anchor) {
-    anchorParent.current = anchor.parentNode;
-    return getAnchorRect(anchor);
-  }, [anchorParent]);
   var onFocusOutsideCallback = Object(external_this_wp_element_["useCallback"])(function (event) {
     if (!anchorParent.current) {
       return;
@@ -891,7 +884,7 @@ function DotTip(_ref) {
     position: position,
     noArrow: true,
     focusOnMount: "container",
-    getAnchorRect: getAnchorRectCallback,
+    shouldAnchorIncludePadding: true,
     role: "dialog",
     "aria-label": Object(external_this_wp_i18n_["__"])('Editor tips'),
     onClick: onClick,
@@ -946,28 +939,6 @@ function DotTip(_ref) {
 
 /***/ }),
 
-/***/ 38:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return _arrayWithHoles; });
-function _arrayWithHoles(arr) {
-  if (Array.isArray(arr)) return arr;
-}
-
-/***/ }),
-
-/***/ 39:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return _nonIterableRest; });
-function _nonIterableRest() {
-  throw new TypeError("Invalid attempt to destructure non-iterable instance");
-}
-
-/***/ }),
-
 /***/ 4:
 /***/ (function(module, exports) {
 
@@ -980,12 +951,12 @@ function _nonIterableRest() {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return _objectSpread; });
-/* harmony import */ var _defineProperty__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(10);
+/* harmony import */ var _defineProperty__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(9);
 
 function _objectSpread(target) {
   for (var i = 1; i < arguments.length; i++) {
     var source = arguments[i] != null ? arguments[i] : {};
-    var ownKeys = Object.keys(source);
+    var ownKeys = Object.keys(Object(source));
 
     if (typeof Object.getOwnPropertySymbols === 'function') {
       ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) {
@@ -1007,6 +978,28 @@ function _objectSpread(target) {
 /***/ (function(module, exports) {
 
 (function() { module.exports = this["wp"]["compose"]; }());
+
+/***/ }),
+
+/***/ 9:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return _defineProperty; });
+function _defineProperty(obj, key, value) {
+  if (key in obj) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj[key] = value;
+  }
+
+  return obj;
+}
 
 /***/ })
 

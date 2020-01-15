@@ -166,7 +166,6 @@ function get_permalink( $post = 0, $leavename = false ) {
 	$permalink = apply_filters( 'pre_post_link', $permalink, $post, $leavename );
 
 	if ( '' != $permalink && ! in_array( $post->post_status, array( 'draft', 'pending', 'auto-draft', 'future' ) ) ) {
-		$unixtime = strtotime( $post->post_date );
 
 		$category = '';
 		if ( strpos( $permalink, '%category%' ) !== false ) {
@@ -212,9 +211,11 @@ function get_permalink( $post = 0, $leavename = false ) {
 			$author     = $authordata->user_nicename;
 		}
 
-		$date           = explode( ' ', gmdate( 'Y m d H i s', $unixtime ) );
-		$rewritereplace =
-		array(
+		// This is not an API call because the permalink is based on the stored post_date value,
+		// which should be parsed as local time regardless of the default PHP timezone.
+		$date = explode( ' ', str_replace( array( '-', ':' ), ' ', $post->post_date ) );
+
+		$rewritereplace = array(
 			$date[0],
 			$date[1],
 			$date[2],
@@ -227,8 +228,10 @@ function get_permalink( $post = 0, $leavename = false ) {
 			$author,
 			$post->post_name,
 		);
-		$permalink      = home_url( str_replace( $rewritecode, $rewritereplace, $permalink ) );
-		$permalink      = user_trailingslashit( $permalink, 'single' );
+
+		$permalink = home_url( str_replace( $rewritecode, $rewritereplace, $permalink ) );
+		$permalink = user_trailingslashit( $permalink, 'single' );
+
 	} else { // if they're not using the fancy permalink option
 		$permalink = home_url( '?p=' . $post->ID );
 	}
@@ -464,7 +467,7 @@ function get_attachment_link( $post = null, $leavename = false ) {
  *
  * @global WP_Rewrite $wp_rewrite WordPress rewrite component.
  *
- * @param int|bool $year False for current year or year for permalink.
+ * @param int|false $year Integer of year. False for current year.
  * @return string The permalink for the specified year archive.
  */
 function get_year_link( $year ) {
@@ -498,8 +501,8 @@ function get_year_link( $year ) {
  *
  * @global WP_Rewrite $wp_rewrite WordPress rewrite component.
  *
- * @param bool|int $year  False for current year. Integer of year.
- * @param bool|int $month False for current month. Integer of month.
+ * @param int|false $year  Integer of year. False for current year.
+ * @param int|false $month Integer of month. False for current month.
  * @return string The permalink for the specified month and year archive.
  */
 function get_month_link( $year, $month ) {
@@ -538,9 +541,9 @@ function get_month_link( $year, $month ) {
  *
  * @global WP_Rewrite $wp_rewrite WordPress rewrite component.
  *
- * @param bool|int $year  False for current year. Integer of year.
- * @param bool|int $month False for current month. Integer of month.
- * @param bool|int $day   False for current day. Integer of day.
+ * @param int|false $year  Integer of year. False for current year.
+ * @param int|false $month Integer of month. False for current month.
+ * @param int|false $day   Integer of day. False for current day.
  * @return string The permalink for the specified day, month, and year archive.
  */
 function get_day_link( $year, $month, $day ) {
@@ -1037,11 +1040,11 @@ function get_edit_term_link( $term_id, $taxonomy = '', $object_type = '' ) {
  *
  * @since 3.1.0
  *
- * @param string $link   Optional. Anchor text. If empty, default is 'Edit This'. Default empty.
- * @param string $before Optional. Display before edit link. Default empty.
- * @param string $after  Optional. Display after edit link. Default empty.
- * @param object $term   Optional. Term object. If null, the queried object will be inspected. Default null.
- * @param bool   $echo   Optional. Whether or not to echo the return. Default true.
+ * @param string  $link   Optional. Anchor text. If empty, default is 'Edit This'. Default empty.
+ * @param string  $before Optional. Display before edit link. Default empty.
+ * @param string  $after  Optional. Display after edit link. Default empty.
+ * @param WP_Term $term   Optional. Term object. If null, the queried object will be inspected. Default null.
+ * @param bool    $echo   Optional. Whether or not to echo the return. Default true.
  * @return string|void HTML content.
  */
 function edit_term_link( $link = '', $before = '', $after = '', $term = null, $echo = true ) {
@@ -2965,7 +2968,10 @@ function previous_comments_link( $label = '' ) {
  * @global WP_Rewrite $wp_rewrite WordPress rewrite component.
  *
  * @param string|array $args Optional args. See paginate_links(). Default empty array.
- * @return string|array|void Markup for comment page links or array of comment page links.
+ * @return void|string|array Void if 'echo' argument is true and 'type' is not an array,
+ *                           or if the query is not for an existing single post of any post type.
+ *                           Otherwise, markup for comment page links or array of comment page links,
+ *                           depending on 'type' argument.
  */
 function paginate_comments_links( $args = array() ) {
 	global $wp_rewrite;
@@ -4008,7 +4014,7 @@ function the_shortlink( $text = '', $title = '', $before = '', $after = '' ) {
  *     @type array  $processed_args When the function returns, the value will be the processed/sanitized $args
  *                                  plus a "found_avatar" guess. Pass as a reference. Default null.
  * }
- * @return false|string The URL of the avatar we found, or false if we couldn't find an avatar.
+ * @return string|false The URL of the avatar on success, false on failure.
  */
 function get_avatar_url( $id_or_email, $args = null ) {
 	$args = get_avatar_data( $id_or_email, $args );

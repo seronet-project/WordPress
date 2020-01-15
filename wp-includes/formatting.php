@@ -8,7 +8,10 @@
  */
 
 /**
- * Replaces common plain text characters into formatted entities
+ * Replaces common plain text characters with formatted entities.
+ *
+ * Returns given text with transformations of quotes into smart quotes, apostrophes,
+ * dashes, ellipses, the trademark symbol, and the multiplication symbol.
  *
  * As an example,
  *
@@ -18,13 +21,13 @@
  *
  *     &#8217;cause today&#8217;s effort makes it worth tomorrow&#8217;s &#8220;holiday&#8221; &#8230;
  *
- * Code within certain html blocks are skipped.
+ * Code within certain HTML blocks are skipped.
  *
  * Do not use this function before the {@see 'init'} action hook; everything will break.
  *
  * @since 0.71
  *
- * @global array $wp_cockneyreplace Array of formatted entities for certain common phrases
+ * @global array $wp_cockneyreplace Array of formatted entities for certain common phrases.
  * @global array $shortcode_tags
  * @staticvar array  $static_characters
  * @staticvar array  $static_replacements
@@ -44,9 +47,9 @@
  * @staticvar string $open_sq_flag
  * @staticvar string $apos_flag
  *
- * @param string $text The text to be formatted
+ * @param string $text  The text to be formatted.
  * @param bool   $reset Set to true for unit testing. Translated patterns will reset.
- * @return string The string replaced with html entities
+ * @return string The string replaced with HTML entities.
  */
 function wptexturize( $text, $reset = false ) {
 	global $wp_cockneyreplace, $shortcode_tags;
@@ -227,7 +230,7 @@ function wptexturize( $text, $reset = false ) {
 	 *
 	 * @since 2.8.0
 	 *
-	 * @param array $default_no_texturize_tags An array of HTML element names.
+	 * @param string[] $default_no_texturize_tags An array of HTML element names.
 	 */
 	$no_texturize_tags = apply_filters( 'no_texturize_tags', $default_no_texturize_tags );
 	/**
@@ -235,7 +238,7 @@ function wptexturize( $text, $reset = false ) {
 	 *
 	 * @since 2.8.0
 	 *
-	 * @param array $default_no_texturize_shortcodes An array of shortcode names.
+	 * @param string[] $default_no_texturize_shortcodes An array of shortcode names.
 	 */
 	$no_texturize_shortcodes = apply_filters( 'no_texturize_shortcodes', $default_no_texturize_shortcodes );
 
@@ -394,9 +397,9 @@ function wptexturize_primes( $haystack, $needle, $prime, $open_quote, $close_quo
  * @since 2.9.0
  * @access private
  *
- * @param string $text Text to check. Must be a tag like `<html>` or `[shortcode]`.
- * @param array  $stack List of open tag elements.
- * @param array  $disabled_elements The tag names to match against. Spaces are not allowed in tag names.
+ * @param string   $text              Text to check. Must be a tag like `<html>` or `[shortcode]`.
+ * @param string[] $stack             Array of open tag elements.
+ * @param string[] $disabled_elements Array of tag names to match against. Spaces are not allowed in tag names.
  */
 function _wptexturize_pushpop_element( $text, &$stack, $disabled_elements ) {
 	// Is it an opening tag or closing tag?
@@ -619,7 +622,7 @@ function wpautop( $pee, $br = true ) {
  * @since 4.2.4
  *
  * @param string $input The text which has to be formatted.
- * @return array The formatted text.
+ * @return string[] Array of the formatted text.
  */
 function wp_html_split( $input ) {
 	return preg_split( get_html_split_regex(), $input, -1, PREG_SPLIT_DELIM_CAPTURE );
@@ -733,10 +736,9 @@ function _get_wptexturize_split_regex( $shortcode_regex = '' ) {
  *
  * @access private
  * @ignore
- * @internal This function will be removed in 4.5.0 per Shortcode API Roadmap.
  * @since 4.4.0
  *
- * @param array $tagnames List of shortcodes to find.
+ * @param string[] $tagnames Array of shortcodes to find.
  * @return string The regular expression
  */
 function _get_wptexturize_shortcode_regex( $tagnames ) {
@@ -1997,8 +1999,8 @@ function remove_accents( $string ) {
  *
  * @since 2.1.0
  *
- * @param string $filename The filename to be sanitized
- * @return string The sanitized filename
+ * @param string $filename The filename to be sanitized.
+ * @return string The sanitized filename.
  */
 function sanitize_file_name( $filename ) {
 	$filename_raw  = $filename;
@@ -2008,8 +2010,8 @@ function sanitize_file_name( $filename ) {
 	 *
 	 * @since 2.8.0
 	 *
-	 * @param array  $special_chars Characters to remove.
-	 * @param string $filename_raw  Filename as it was passed into sanitize_file_name().
+	 * @param string[] $special_chars Array of characters to remove.
+	 * @param string   $filename_raw  The original filename to be sanitized.
 	 */
 	$special_chars = apply_filters( 'sanitize_file_name_chars', $special_chars, $filename_raw );
 	$filename      = preg_replace( "#\x{00a0}#siu", ' ', $filename );
@@ -3146,9 +3148,25 @@ function wp_rel_ugc( $text ) {
  */
 function wp_targeted_link_rel( $text ) {
 	// Don't run (more expensive) regex if no links with targets.
-	if ( stripos( $text, 'target' ) !== false && stripos( $text, '<a ' ) !== false ) {
-		if ( ! is_serialized( $text ) ) {
-			$text = preg_replace_callback( '|<a\s([^>]*target\s*=[^>]*)>|i', 'wp_targeted_link_rel_callback', $text );
+	if ( stripos( $text, 'target' ) === false || stripos( $text, '<a ' ) === false || is_serialized( $text ) ) {
+		return $text;
+	}
+
+	$script_and_style_regex = '/<(script|style).*?<\/\\1>/si';
+
+	preg_match_all( $script_and_style_regex, $text, $matches );
+	$extra_parts = $matches[0];
+	$html_parts  = preg_split( $script_and_style_regex, $text );
+
+	foreach ( $html_parts as &$part ) {
+		$part = preg_replace_callback( '|<a\s([^>]*target\s*=[^>]*)>|i', 'wp_targeted_link_rel_callback', $part );
+	}
+
+	$text = '';
+	for ( $i = 0; $i < count( $html_parts ); $i++ ) {
+		$text .= $html_parts[ $i ];
+		if ( isset( $extra_parts[ $i ] ) ) {
+			$text .= $extra_parts[ $i ];
 		}
 	}
 
@@ -3167,8 +3185,17 @@ function wp_targeted_link_rel( $text ) {
  * @return string HTML A Element with rel noreferrer noopener in addition to any existing values
  */
 function wp_targeted_link_rel_callback( $matches ) {
-	$link_html = $matches[1];
-	$rel_match = array();
+	$link_html          = $matches[1];
+	$original_link_html = $link_html;
+
+	// Consider the html escaped if there are no unescaped quotes
+	$is_escaped = ! preg_match( '/(^|[^\\\\])[\'"]/', $link_html );
+	if ( $is_escaped ) {
+		// Replace only the quotes so that they are parsable by wp_kses_hair, leave the rest as is
+		$link_html = preg_replace( '/\\\\([\'"])/', '$1', $link_html );
+	}
+
+	$atts = wp_kses_hair( $link_html, wp_allowed_protocols() );
 
 	/**
 	 * Filters the rel values that are added to links with `target` attribute.
@@ -3180,35 +3207,21 @@ function wp_targeted_link_rel_callback( $matches ) {
 	 */
 	$rel = apply_filters( 'wp_targeted_link_rel', 'noopener noreferrer', $link_html );
 
-	// Avoid additional regex if the filter removes rel values.
-	if ( ! $rel ) {
-		return "<a $link_html>";
+	// Return early if no rel values to be added or if no actual target attribute
+	if ( ! $rel || ! isset( $atts['target'] ) ) {
+		return "<a $original_link_html>";
 	}
 
-	// Value with delimiters, spaces around are optional.
-	$attr_regex = '|rel\s*=\s*?(\\\\{0,1}["\'])(.*?)\\1|i';
-	preg_match( $attr_regex, $link_html, $rel_match );
-
-	if ( empty( $rel_match[0] ) ) {
-		// No delimiters, try with a single value and spaces, because `rel =  va"lue` is totally fine...
-		$attr_regex = '|rel\s*=(\s*)([^\s]*)|i';
-		preg_match( $attr_regex, $link_html, $rel_match );
+	if ( isset( $atts['rel'] ) ) {
+		$all_parts = preg_split( '/\s/', "{$atts['rel']['value']} $rel", -1, PREG_SPLIT_NO_EMPTY );
+		$rel       = implode( ' ', array_unique( $all_parts ) );
 	}
 
-	if ( ! empty( $rel_match[0] ) ) {
-		$parts     = preg_split( '|\s+|', strtolower( $rel_match[2] ) );
-		$parts     = array_map( 'esc_attr', $parts );
-		$needed    = explode( ' ', $rel );
-		$parts     = array_unique( array_merge( $parts, $needed ) );
-		$delimiter = trim( $rel_match[1] ) ? $rel_match[1] : '"';
-		$rel       = 'rel=' . $delimiter . trim( implode( ' ', $parts ) ) . $delimiter;
-		$link_html = str_replace( $rel_match[0], $rel, $link_html );
-	} elseif ( preg_match( '|target\s*=\s*?\\\\"|', $link_html ) ) {
-		$link_html .= " rel=\\\"$rel\\\"";
-	} elseif ( preg_match( '#(target|href)\s*=\s*?\'#', $link_html ) ) {
-		$link_html .= " rel='$rel'";
-	} else {
-		$link_html .= " rel=\"$rel\"";
+	$atts['rel']['whole'] = 'rel="' . esc_attr( $rel ) . '"';
+	$link_html            = join( ' ', array_column( $atts, 'whole' ) );
+
+	if ( $is_escaped ) {
+		$link_html = preg_replace( '/[\'"]/', '\\\\$0', $link_html );
 	}
 
 	return "<a $link_html>";
@@ -3484,16 +3497,16 @@ function _wp_iso_convert( $match ) {
 }
 
 /**
- * Returns a date in the GMT equivalent.
+ * Given a date in the timezone of the site, returns that date in UTC timezone.
  *
  * Requires and returns a date in the Y-m-d H:i:s format.
  * Return format can be overridden using the $format parameter.
  *
  * @since 1.2.0
  *
- * @param string $string The date to be converted.
+ * @param string $string The date to be converted, in the timezone of the site.
  * @param string $format The format string for the returned date. Default 'Y-m-d H:i:s'.
- * @return string GMT version of the date provided.
+ * @return string Formatted version of the date, in UTC timezone.
  */
 function get_gmt_from_date( $string, $format = 'Y-m-d H:i:s' ) {
 	$datetime = date_create( $string, wp_timezone() );
@@ -3506,16 +3519,16 @@ function get_gmt_from_date( $string, $format = 'Y-m-d H:i:s' ) {
 }
 
 /**
- * Converts a GMT date into the correct format for the blog.
+ * Given a date in UTC timezone, returns that date in the timezone of the site.
  *
  * Requires and returns a date in the Y-m-d H:i:s format.
  * Return format can be overridden using the $format parameter.
  *
  * @since 1.2.0
  *
- * @param string $string The date to be converted.
+ * @param string $string The date to be converted, in UTC timezone.
  * @param string $format The format string for the returned date. Default 'Y-m-d H:i:s'.
- * @return string Formatted date relative to the timezone.
+ * @return string Formatted version of the date, in the site's timezone.
  */
 function get_date_from_gmt( $string, $format = 'Y-m-d H:i:s' ) {
 	$datetime = date_create( $string, new DateTimeZone( 'UTC' ) );
@@ -4265,10 +4278,10 @@ function esc_sql( $data ) {
  *
  * @since 2.8.0
  *
- * @param string $url       The URL to be cleaned.
- * @param array  $protocols Optional. An array of acceptable protocols.
- *                          Defaults to return value of wp_allowed_protocols()
- * @param string $_context  Private. Use esc_url_raw() for database usage.
+ * @param string   $url       The URL to be cleaned.
+ * @param string[] $protocols Optional. An array of acceptable protocols.
+ *                            Defaults to return value of wp_allowed_protocols()
+ * @param string   $_context  Private. Use esc_url_raw() for database usage.
  * @return string The cleaned $url after the {@see 'clean_url'} filter is applied.
  */
 function esc_url( $url, $protocols = null, $_context = 'display' ) {
@@ -4373,8 +4386,8 @@ function esc_url( $url, $protocols = null, $_context = 'display' ) {
  *
  * @since 2.8.0
  *
- * @param string $url       The URL to be cleaned.
- * @param array  $protocols An array of acceptable protocols.
+ * @param string   $url       The URL to be cleaned.
+ * @param string[] $protocols An array of acceptable protocols.
  * @return string The cleaned URL.
  */
 function esc_url_raw( $url, $protocols = null ) {
@@ -4892,6 +4905,31 @@ function wp_pre_kses_less_than_callback( $matches ) {
 }
 
 /**
+ * Remove non-allowable HTML from parsed block attribute values when filtering
+ * in the post context.
+ *
+ * @since 5.3.1
+ *
+ * @param string         $string            Content to be run through KSES.
+ * @param array[]|string $allowed_html      An array of allowed HTML elements
+ *                                          and attributes, or a context name
+ *                                          such as 'post'.
+ * @param string[]       $allowed_protocols Array of allowed URL protocols.
+ * @return string Filtered text to run through KSES.
+ */
+function wp_pre_kses_block_attributes( $string, $allowed_html, $allowed_protocols ) {
+	/*
+	 * `filter_block_content` is expected to call `wp_kses`. Temporarily remove
+	 * the filter to avoid recursion.
+	 */
+	remove_filter( 'pre_kses', 'wp_pre_kses_block_attributes', 10 );
+	$string = filter_block_content( $string, $allowed_html, $allowed_protocols );
+	add_filter( 'pre_kses', 'wp_pre_kses_block_attributes', 10, 3 );
+
+	return $string;
+}
+
+/**
  * WordPress implementation of PHP sprintf() with filters.
  *
  * @since 2.5.0
@@ -5117,9 +5155,9 @@ function _links_add_base( $m ) {
  *
  * @global string $_links_add_target
  *
- * @param string $content String to search for links in.
- * @param string $target  The Target to add to the links.
- * @param array  $tags    An array of tags to apply to.
+ * @param string   $content String to search for links in.
+ * @param string   $target  The Target to add to the links.
+ * @param string[] $tags    An array of tags to apply to.
  * @return string The processed content.
  */
 function links_add_target( $content, $target = '_blank', $tags = array( 'a' ) ) {
@@ -5582,7 +5620,7 @@ function _print_emoji_detection_script() {
 		 *
 		 * @since 4.2.0
 		 *
-		 * @param string The emoji base URL for png images.
+		 * @param string $url The emoji base URL for png images.
 		 */
 		'baseUrl' => apply_filters( 'emoji_url', 'https://s.w.org/images/core/emoji/12.0.0-1/72x72/' ),
 
@@ -5591,7 +5629,7 @@ function _print_emoji_detection_script() {
 		 *
 		 * @since 4.2.0
 		 *
-		 * @param string The emoji extension for png files. Default .png.
+		 * @param string $extension The emoji extension for png files. Default .png.
 		 */
 		'ext'     => apply_filters( 'emoji_ext', '.png' ),
 
@@ -5600,7 +5638,7 @@ function _print_emoji_detection_script() {
 		 *
 		 * @since 4.6.0
 		 *
-		 * @param string The emoji base URL for svg images.
+		 * @param string $url The emoji base URL for svg images.
 		 */
 		'svgUrl'  => apply_filters( 'emoji_svg_url', 'https://s.w.org/images/core/emoji/12.0.0-1/svg/' ),
 
@@ -5609,7 +5647,7 @@ function _print_emoji_detection_script() {
 		 *
 		 * @since 4.6.0
 		 *
-		 * @param string The emoji extension for svg files. Default .svg.
+		 * @param string $extension The emoji extension for svg files. Default .svg.
 		 */
 		'svgExt'  => apply_filters( 'emoji_svg_ext', '.svg' ),
 	);
@@ -5650,6 +5688,7 @@ function _print_emoji_detection_script() {
 		?>
 		<script<?php echo $type_attr; ?>>
 			window._wpemojiSettings = <?php echo wp_json_encode( $settings ); ?>;
+			/*! This file is auto-generated */
 			!function(e,a,t){var r,n,o,i,p=a.createElement("canvas"),s=p.getContext&&p.getContext("2d");function c(e,t){var a=String.fromCharCode;s.clearRect(0,0,p.width,p.height),s.fillText(a.apply(this,e),0,0);var r=p.toDataURL();return s.clearRect(0,0,p.width,p.height),s.fillText(a.apply(this,t),0,0),r===p.toDataURL()}function l(e){if(!s||!s.fillText)return!1;switch(s.textBaseline="top",s.font="600 32px Arial",e){case"flag":return!c([127987,65039,8205,9895,65039],[127987,65039,8203,9895,65039])&&(!c([55356,56826,55356,56819],[55356,56826,8203,55356,56819])&&!c([55356,57332,56128,56423,56128,56418,56128,56421,56128,56430,56128,56423,56128,56447],[55356,57332,8203,56128,56423,8203,56128,56418,8203,56128,56421,8203,56128,56430,8203,56128,56423,8203,56128,56447]));case"emoji":return!c([55357,56424,55356,57342,8205,55358,56605,8205,55357,56424,55356,57340],[55357,56424,55356,57342,8203,55358,56605,8203,55357,56424,55356,57340])}return!1}function d(e){var t=a.createElement("script");t.src=e,t.defer=t.type="text/javascript",a.getElementsByTagName("head")[0].appendChild(t)}for(i=Array("flag","emoji"),t.supports={everything:!0,everythingExceptFlag:!0},o=0;o<i.length;o++)t.supports[i[o]]=l(i[o]),t.supports.everything=t.supports.everything&&t.supports[i[o]],"flag"!==i[o]&&(t.supports.everythingExceptFlag=t.supports.everythingExceptFlag&&t.supports[i[o]]);t.supports.everythingExceptFlag=t.supports.everythingExceptFlag&&!t.supports.flag,t.DOMReady=!1,t.readyCallback=function(){t.DOMReady=!0},t.supports.everything||(n=function(){t.readyCallback()},a.addEventListener?(a.addEventListener("DOMContentLoaded",n,!1),e.addEventListener("load",n,!1)):(e.attachEvent("onload",n),a.attachEvent("onreadystatechange",function(){"complete"===a.readyState&&t.readyCallback()})),(r=t.source||{}).concatemoji?d(r.concatemoji):r.wpemoji&&r.twemoji&&(d(r.twemoji),d(r.wpemoji)))}(window,document,window._wpemojiSettings);
 		</script>
 		<?php

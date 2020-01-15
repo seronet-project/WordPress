@@ -129,8 +129,8 @@ class WP_REST_Server {
 		 *
 		 * @since 4.4.0
 		 *
-		 * @param WP_Error|null|bool WP_Error if authentication error, null if authentication
-		 *                              method wasn't used, true if authentication succeeded.
+		 * @param WP_Error|null|true $errors WP_Error if authentication error, null if authentication
+		 *                                   method wasn't used, true if authentication succeeded.
 		 */
 		return apply_filters( 'rest_authentication_errors', null );
 	}
@@ -217,7 +217,7 @@ class WP_REST_Server {
 	 *
 	 * @param string $path Optional. The request route. If not set, `$_SERVER['PATH_INFO']` will be used.
 	 *                     Default null.
-	 * @return false|null Null if not served and a HEAD request, false otherwise.
+	 * @return null|false Null if not served and a HEAD request, false otherwise.
 	 */
 	public function serve_request( $path = null ) {
 		$content_type = isset( $_GET['_jsonp'] ) ? 'application/javascript' : 'application/json';
@@ -260,7 +260,8 @@ class WP_REST_Server {
 		 * Filters whether the REST API is enabled.
 		 *
 		 * @since 4.4.0
-		 * @deprecated 4.7.0 Use the rest_authentication_errors filter to restrict access to the API
+		 * @deprecated 4.7.0 Use the {@see 'rest_authentication_errors'} filter to
+		 *                   restrict access to the API.
 		 *
 		 * @param bool $rest_enabled Whether the REST API is enabled. Default true.
 		 */
@@ -269,7 +270,11 @@ class WP_REST_Server {
 			array( true ),
 			'4.7.0',
 			'rest_authentication_errors',
-			__( 'The REST API can no longer be completely disabled, the rest_authentication_errors filter can be used to restrict access to the API, instead.' )
+			sprintf(
+				/* translators: %s: rest_authentication_errors */
+				__( 'The REST API can no longer be completely disabled, the %s filter can be used to restrict access to the API, instead.' ),
+				'rest_authentication_errors'
+			)
 		);
 
 		/**
@@ -780,7 +785,7 @@ class WP_REST_Server {
 	 *
 	 * @since 4.4.0
 	 *
-	 * @return array List of registered namespaces.
+	 * @return string[] List of registered namespaces.
 	 */
 	public function get_namespaces() {
 		return array_keys( $this->namespaces );
@@ -1017,7 +1022,7 @@ class WP_REST_Server {
 	 *
 	 *     @type string $context Context.
 	 * }
-	 * @return array Index entity
+	 * @return WP_REST_Response The API root index data.
 	 */
 	public function get_index( $request ) {
 		// General site data.
@@ -1100,7 +1105,7 @@ class WP_REST_Server {
 	 *
 	 * @param array  $routes  Routes to get data for.
 	 * @param string $context Optional. Context for data. Accepts 'view' or 'help'. Default 'view'.
-	 * @return array Route data to expose in indexes.
+	 * @return array[] Route data to expose in indexes, keyed by route.
 	 */
 	public function get_data_for_routes( $routes, $context = 'view' ) {
 		$available = array();
@@ -1131,8 +1136,8 @@ class WP_REST_Server {
 		 *
 		 * @since 4.4.0
 		 *
-		 * @param array $available Map of route to route data.
-		 * @param array $routes    Internal route data as an associative array.
+		 * @param array[] $available Route data to expose in indexes, keyed by route.
+		 * @param array   $routes    Internal route data as an associative array.
 		 */
 		return apply_filters( 'rest_route_data', $available, $routes );
 	}

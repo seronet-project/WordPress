@@ -76,7 +76,7 @@ class WP_Upgrader {
 	 *
 	 * @since 2.8.0
 	 *
-	 * @var WP_Error|array $result {
+	 * @var array|WP_Error $result {
 	 *      @type string $source             The full path to the source the files were installed from.
 	 *      @type string $source_files       List of all the files in the source directory.
 	 *      @type string $destination        The full path to the installation destination folder.
@@ -175,11 +175,11 @@ class WP_Upgrader {
 	 *
 	 * @global WP_Filesystem_Base $wp_filesystem WordPress filesystem subclass.
 	 *
-	 * @param array $directories                  Optional. A list of directories. If any of these do
-	 *                                            not exist, a WP_Error object will be returned.
-	 *                                            Default empty array.
-	 * @param bool  $allow_relaxed_file_ownership Whether to allow relaxed file ownership.
-	 *                                            Default false.
+	 * @param string[] $directories                  Optional. Array of directories. If any of these do
+	 *                                               not exist, a WP_Error object will be returned.
+	 *                                               Default empty array.
+	 * @param bool     $allow_relaxed_file_ownership Whether to allow relaxed file ownership.
+	 *                                               Default false.
 	 * @return bool|WP_Error True if able to connect, false or a WP_Error otherwise.
 	 */
 	public function fs_connect( $directories = array(), $allow_relaxed_file_ownership = false ) {
@@ -348,7 +348,7 @@ class WP_Upgrader {
 	 *
 	 * @param  array  $nested_files  Array of files as returned by WP_Filesystem::dirlist()
 	 * @param  string $path          Relative path to prepend to child nodes. Optional.
-	 * @return array $files A flattened array of the $nested_files specified.
+	 * @return array A flattened array of the $nested_files specified.
 	 */
 	protected function flatten_dirlist( $nested_files, $path = '' ) {
 		$files = array();
@@ -557,10 +557,10 @@ class WP_Upgrader {
 			 *
 			 * @since 2.8.0
 			 *
-			 * @param mixed  $removed            Whether the destination was cleared. true on success, WP_Error on failure
-			 * @param string $local_destination  The local package destination.
-			 * @param string $remote_destination The remote package destination.
-			 * @param array  $hook_extra         Extra arguments passed to hooked filters.
+			 * @param true|WP_Error $removed            Whether the destination was cleared. true upon success, WP_Error on failure.
+			 * @param string        $local_destination  The local package destination.
+			 * @param string        $remote_destination The remote package destination.
+			 * @param array         $hook_extra         Extra arguments passed to hooked filters.
 			 */
 			$removed = apply_filters( 'upgrader_clear_destination', $removed, $local_destination, $remote_destination, $args['hook_extra'] );
 

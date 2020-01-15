@@ -189,7 +189,7 @@ function show_blog_form( $blogname = '', $blog_title = '', $errors = '' ) {
 
 		$blog_public_on_checked  = '';
 		$blog_public_off_checked = '';
-	if ( isset( $_POST['blog_public'] ) && '0' == $_POST['blog_public'] ) {
+	if ( isset( $_POST['blog_public'] ) && '0' === $_POST['blog_public'] ) {
 		$blog_public_off_checked = 'checked="checked"';
 	} else {
 		$blog_public_on_checked = 'checked="checked"';
@@ -457,7 +457,7 @@ function validate_another_blog_signup() {
 	 *
 	 * @param array $blog_meta_defaults An array of default blog meta variables.
 	 */
-	$meta_defaults = apply_filters( 'signup_create_blog_meta', $blog_meta_defaults );
+	$meta_defaults = apply_filters_deprecated( 'signup_create_blog_meta', array( $blog_meta_defaults ), '3.0.0', 'add_signup_meta' );
 
 	/**
 	 * Filters the new default site meta variables.
@@ -641,7 +641,7 @@ function validate_user_signup() {
 		return false;
 	}
 
-	if ( 'blog' == $_POST['signup_for'] ) {
+	if ( 'blog' === $_POST['signup_for'] ) {
 		signup_blog( $user_name, $user_email );
 		return false;
 	}

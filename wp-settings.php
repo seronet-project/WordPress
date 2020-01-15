@@ -63,9 +63,6 @@ wp_unregister_GLOBALS();
 // Standardize $_SERVER variables across setups.
 wp_fix_server_vars();
 
-// Check if we have received a request due to missing favicon.ico
-wp_favicon_request();
-
 // Check if we're in maintenance mode.
 wp_maintenance();
 
@@ -353,6 +350,12 @@ if ( ! is_multisite() ) {
 	// Handle users requesting a recovery mode link and initiating recovery mode.
 	wp_recovery_mode()->initialize();
 }
+
+// Create an instance of WP_Site_Health so that Cron events may fire.
+if ( ! class_exists( 'WP_Site_Health' ) ) {
+	require_once( ABSPATH . 'wp-admin/includes/class-wp-site-health.php' );
+}
+WP_Site_Health::initialize();
 
 // Load active plugins.
 foreach ( wp_get_active_and_valid_plugins() as $plugin ) {

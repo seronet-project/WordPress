@@ -57,7 +57,7 @@ class Core_Upgrader extends WP_Upgrader {
 	 *        @type bool $do_rollback      Whether to perform this "upgrade" as a rollback.
 	 *                                     Default false.
 	 * }
-	 * @return null|false|WP_Error False or WP_Error on failure, null on success.
+	 * @return null|false|WP_Error Null on success, false or WP_Error on failure.
 	 */
 	public function upgrade( $current, $args = array() ) {
 		global $wp_filesystem;
@@ -127,6 +127,7 @@ class Core_Upgrader extends WP_Upgrader {
 		// WARNING: This may be removed in the future.
 		if ( is_wp_error( $download ) && $download->get_error_data( 'softfail-filename' ) ) {
 			// Outout the failure error as a normal feedback, and not as an error:
+			/** This filter is documented in wp-admin/includes/update-core.php */
 			apply_filters( 'update_feedback', $download->get_error_message() );
 
 			// Report this failure back to WordPress.org for debugging purposes.

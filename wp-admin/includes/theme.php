@@ -112,14 +112,14 @@ function delete_theme( $stylesheet, $redirect = '' ) {
 }
 
 /**
- * Get the Page Templates available in this theme
+ * Gets the page templates available in this theme.
  *
  * @since 1.5.0
  * @since 4.7.0 Added the `$post_type` parameter.
  *
  * @param WP_Post|null $post      Optional. The post being edited, provided for context.
  * @param string       $post_type Optional. Post type to get the templates for. Default 'page'.
- * @return array Key is the template name, value is the filename of the template
+ * @return string[] Array of template file names keyed by the template header name.
  */
 function get_page_templates( $post = null, $post_type = 'page' ) {
 	return array_flip( wp_get_theme()->get_page_templates( $post, $post_type ) );
@@ -163,7 +163,7 @@ function theme_update_available( $theme ) {
  * @staticvar object $themes_update
  *
  * @param WP_Theme $theme WP_Theme object.
- * @return false|string HTML for the update link, or false if invalid info was passed.
+ * @return string|false HTML for the update link, or false if invalid info was passed.
  */
 function get_theme_update_available( $theme ) {
 	static $themes_update = null;

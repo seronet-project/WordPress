@@ -391,6 +391,14 @@ class WP_Query {
 	public $is_robots = false;
 
 	/**
+	 * Signifies whether the current query is for the favicon.ico file.
+	 *
+	 * @since 5.4.0
+	 * @var bool
+	 */
+	public $is_favicon = false;
+
+	/**
 	 * Signifies whether the current query is for the page_for_posts page.
 	 *
 	 * Basically, the homepage if the option isn't set for the static homepage.
@@ -478,6 +486,7 @@ class WP_Query {
 		$this->is_attachment        = false;
 		$this->is_singular          = false;
 		$this->is_robots            = false;
+		$this->is_favicon           = false;
 		$this->is_posts_page        = false;
 		$this->is_post_type_archive = false;
 	}
@@ -685,10 +694,11 @@ class WP_Query {
 	 *     @type string       $pagename                Page slug.
 	 *     @type string       $perm                    Show posts if user has the appropriate capability.
 	 *     @type string       $ping_status             Ping status.
-	 *     @type array        $post__in                An array of post IDs to retrieve, sticky posts will be included
-	 *     @type string       $post_mime_type          The mime type of the post. Used for 'attachment' post_type.
+	 *     @type array        $post__in                An array of post IDs to retrieve, sticky posts will be included.
 	 *     @type array        $post__not_in            An array of post IDs not to retrieve. Note: a string of comma-
 	 *                                                 separated IDs will NOT work.
+	 *     @type string       $post_mime_type          The mime type of the post. Used for 'attachment' post_type.
+	 *     @type array        $post_name__in           An array of post slugs that results must match.
 	 *     @type int          $post_parent             Page ID to retrieve child pages for. Use 0 to only retrieve
 	 *                                                 top-level pages.
 	 *     @type array        $post_parent__in         An array containing parent page IDs to query child pages from.
@@ -699,7 +709,6 @@ class WP_Query {
 	 *     @type int          $posts_per_page          The number of posts to query for. Use -1 to request all posts.
 	 *     @type int          $posts_per_archive_page  The number of posts to query for by archive page. Overrides
 	 *                                                 'posts_per_page' when is_archive(), or is_search() are true.
-	 *     @type array        $post_name__in           An array of post slugs that results must match.
 	 *     @type string       $s                       Search keyword(s). Prepending a term with a hyphen will
 	 *                                                 exclude posts matching that term. Eg, 'pillow -sofa' will
 	 *                                                 return posts containing 'pillow' but not 'sofa'. The
@@ -744,6 +753,8 @@ class WP_Query {
 
 		if ( ! empty( $qv['robots'] ) ) {
 			$this->is_robots = true;
+		} elseif ( ! empty( $qv['favicon'] ) ) {
+			$this->is_favicon = true;
 		}
 
 		if ( ! is_scalar( $qv['p'] ) || $qv['p'] < 0 ) {
@@ -957,7 +968,9 @@ class WP_Query {
 			$this->is_comment_feed = true;
 		}
 
-		if ( ! ( $this->is_singular || $this->is_archive || $this->is_search || $this->is_feed || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || $this->is_trackback || $this->is_404 || $this->is_admin || $this->is_robots ) ) {
+		if ( ! ( $this->is_singular || $this->is_archive || $this->is_search || $this->is_feed
+				|| ( defined( 'REST_REQUEST' ) && REST_REQUEST )
+				|| $this->is_trackback || $this->is_404 || $this->is_admin || $this->is_robots || $this->is_favicon ) ) {
 			$this->is_home = true;
 		}
 
@@ -1402,7 +1415,7 @@ class WP_Query {
 	 * @since 3.7.0
 	 *
 	 * @param string[] $terms Array of terms to check.
-	 * @return array Terms that are not stopwords.
+	 * @return string[] Terms that are not stopwords.
 	 */
 	protected function parse_search_terms( $terms ) {
 		$strtolower = function_exists( 'mb_strtolower' ) ? 'mb_strtolower' : 'strtolower';
@@ -1438,7 +1451,7 @@ class WP_Query {
 	 *
 	 * @since 3.7.0
 	 *
-	 * @return array Stopwords.
+	 * @return string[] Stopwords.
 	 */
 	protected function get_search_stopwords() {
 		if ( isset( $this->stopwords ) ) {
@@ -3585,7 +3598,7 @@ class WP_Query {
 	 *
 	 * @since 3.1.0
 	 *
-	 * @param mixed $post_types Optional. Post type or array of posts types to check against.
+	 * @param string|string[] $post_types Optional. Post type or array of posts types to check against.
 	 * @return bool
 	 */
 	public function is_post_type_archive( $post_types = '' ) {
@@ -4007,7 +4020,7 @@ class WP_Query {
 	}
 
 	/**
-	 * Is the query for the robots file?
+	 * Is the query for the robots.txt file?
 	 *
 	 * @since 3.1.0
 	 *
@@ -4015,6 +4028,17 @@ class WP_Query {
 	 */
 	public function is_robots() {
 		return (bool) $this->is_robots;
+	}
+
+	/**
+	 * Is the query for the favicon.ico file?
+	 *
+	 * @since 5.4.0
+	 *
+	 * @return bool
+	 */
+	public function is_favicon() {
+		return (bool) $this->is_favicon;
 	}
 
 	/**

@@ -118,7 +118,7 @@ class WP_REST_Comments_Controller extends WP_REST_Controller {
 	 * @since 4.7.0
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_Error|bool True if the request has read access, error object otherwise.
+	 * @return true|WP_Error True if the request has read access, error object otherwise.
 	 */
 	public function get_items_permissions_check( $request ) {
 
@@ -175,7 +175,7 @@ class WP_REST_Comments_Controller extends WP_REST_Controller {
 	 * @since 4.7.0
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_Error|WP_REST_Response Response object on success, or error object on failure.
+	 * @return WP_REST_Response|WP_Error Response object on success, or error object on failure.
 	 */
 	public function get_items( $request ) {
 
@@ -349,7 +349,7 @@ class WP_REST_Comments_Controller extends WP_REST_Controller {
 	 * @since 4.7.0
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_Error|bool True if the request has read access for the item, error object otherwise.
+	 * @return true|WP_Error True if the request has read access for the item, error object otherwise.
 	 */
 	public function get_item_permissions_check( $request ) {
 		$comment = $this->get_comment( $request['id'] );
@@ -380,7 +380,7 @@ class WP_REST_Comments_Controller extends WP_REST_Controller {
 	 * @since 4.7.0
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_Error|WP_REST_Response Response object on success, or error object on failure.
+	 * @return WP_REST_Response|WP_Error Response object on success, or error object on failure.
 	 */
 	public function get_item( $request ) {
 		$comment = $this->get_comment( $request['id'] );
@@ -400,7 +400,7 @@ class WP_REST_Comments_Controller extends WP_REST_Controller {
 	 * @since 4.7.0
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_Error|bool True if the request has access to create items, error object otherwise.
+	 * @return true|WP_Error True if the request has access to create items, error object otherwise.
 	 */
 	public function create_item_permissions_check( $request ) {
 		if ( ! is_user_logged_in() ) {
@@ -490,7 +490,7 @@ class WP_REST_Comments_Controller extends WP_REST_Controller {
 	 * @since 4.7.0
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_Error|WP_REST_Response Response object on success, or error object on failure.
+	 * @return WP_REST_Response|WP_Error Response object on success, or error object on failure.
 	 */
 	public function create_item( $request ) {
 		if ( ! empty( $request['id'] ) ) {
@@ -667,7 +667,7 @@ class WP_REST_Comments_Controller extends WP_REST_Controller {
 	 * @since 4.7.0
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_Error|bool True if the request has access to update the item, error object otherwise.
+	 * @return true|WP_Error True if the request has access to update the item, error object otherwise.
 	 */
 	public function update_item_permissions_check( $request ) {
 		$comment = $this->get_comment( $request['id'] );
@@ -688,7 +688,7 @@ class WP_REST_Comments_Controller extends WP_REST_Controller {
 	 * @since 4.7.0
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_Error|WP_REST_Response Response object on success, or error object on failure.
+	 * @return WP_REST_Response|WP_Error Response object on success, or error object on failure.
 	 */
 	public function update_item( $request ) {
 		$comment = $this->get_comment( $request['id'] );
@@ -787,7 +787,7 @@ class WP_REST_Comments_Controller extends WP_REST_Controller {
 	 * @since 4.7.0
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_Error|bool True if the request has access to delete the item, error object otherwise.
+	 * @return true|WP_Error True if the request has access to delete the item, error object otherwise.
 	 */
 	public function delete_item_permissions_check( $request ) {
 		$comment = $this->get_comment( $request['id'] );
@@ -807,7 +807,7 @@ class WP_REST_Comments_Controller extends WP_REST_Controller {
 	 * @since 4.7.0
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_Error|WP_REST_Response Response object on success, or error object on failure.
+	 * @return WP_REST_Response|WP_Error Response object on success, or error object on failure.
 	 */
 	public function delete_item( $request ) {
 		$comment = $this->get_comment( $request['id'] );
@@ -1592,7 +1592,13 @@ class WP_REST_Comments_Controller extends WP_REST_Controller {
 	 * @return bool Whether post can be read.
 	 */
 	protected function check_read_post_permission( $post, $request ) {
-		$post_type        = get_post_type_object( $post->post_type );
+		$post_type = get_post_type_object( $post->post_type );
+
+		// Return false if custom post type doesn't exist
+		if ( ! $post_type ) {
+			return false;
+		}
+
 		$posts_controller = $post_type->get_rest_controller();
 
 		// Ensure the posts controller is specifically a WP_REST_Posts_Controller instance
@@ -1664,7 +1670,7 @@ class WP_REST_Comments_Controller extends WP_REST_Controller {
 	 *
 	 * @since 4.7.0
 	 *
-	 * @param object $comment Comment object.
+	 * @param WP_Comment $comment Comment object.
 	 * @return bool Whether the comment can be edited or deleted.
 	 */
 	protected function check_edit_permission( $comment ) {
@@ -1691,7 +1697,7 @@ class WP_REST_Comments_Controller extends WP_REST_Controller {
 	 * @param string          $value   Author email value submitted.
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @param string          $param   The parameter name.
-	 * @return WP_Error|string The sanitized email address, if valid,
+	 * @return string|WP_Error The sanitized email address, if valid,
 	 *                         otherwise an error.
 	 */
 	public function check_comment_author_email( $value, $request, $param ) {

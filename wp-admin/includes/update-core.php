@@ -807,7 +807,7 @@ $_old_files = array(
  * @since 4.7.0 New themes were not automatically installed for 4.4-4.6 on
  *              upgrade. New themes are now installed again. To disable new
  *              themes from being installed on upgrade, explicitly define
- *              CORE_UPGRADE_SKIP_NEW_BUNDLED as false.
+ *              CORE_UPGRADE_SKIP_NEW_BUNDLED as true.
  * @global array $_new_bundled_files
  * @var array
  * @name $_new_bundled_files
@@ -880,7 +880,7 @@ $_new_bundled_files = array(
  *
  * @param string $from New release unzipped path.
  * @param string $to   Path to old WordPress installation.
- * @return WP_Error|null WP_Error on failure, null on success.
+ * @return null|WP_Error Null on success, WP_Error on failure.
  */
 function update_core( $from, $to ) {
 	global $wp_filesystem, $_old_files, $_new_bundled_files, $wpdb;
@@ -1311,10 +1311,10 @@ function update_core( $from, $to ) {
  *
  * @global WP_Filesystem_Base $wp_filesystem
  *
- * @param string $from     source directory
- * @param string $to       destination directory
- * @param array $skip_list a list of files/folders to skip copying
- * @return mixed WP_Error on failure, True on success.
+ * @param string   $from      Source directory.
+ * @param string   $to        Destination directory.
+ * @param string[] $skip_list Array of files/folders to skip copying.
+ * @return true|WP_Error True on success, WP_Error on failure.
  */
 function _copy_dir( $from, $to, $skip_list = array() ) {
 	global $wp_filesystem;

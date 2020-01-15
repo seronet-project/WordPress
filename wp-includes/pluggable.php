@@ -439,8 +439,6 @@ if ( ! function_exists( 'wp_mail' ) ) :
 			$charset = get_bloginfo( 'charset' );
 		}
 
-		// Set the content-type and charset
-
 		/**
 		 * Filters the default wp_mail() charset.
 		 *
@@ -547,15 +545,19 @@ if ( ! function_exists( 'wp_authenticate' ) ) :
 		$ignore_codes = array( 'empty_username', 'empty_password' );
 
 		if ( is_wp_error( $user ) && ! in_array( $user->get_error_code(), $ignore_codes ) ) {
+			$error = $user;
+
 			/**
 			 * Fires after a user login has failed.
 			 *
 			 * @since 2.5.0
 			 * @since 4.5.0 The value of `$username` can now be an email address.
+			 * @since 5.4.0 The `$error` parameter was added.
 			 *
-			 * @param string $username Username or email address.
+			 * @param string   $username Username or email address.
+			 * @param WP_Error $error    A WP_Error object with the authentication failure details.
 			 */
-			do_action( 'wp_login_failed', $username );
+			do_action( 'wp_login_failed', $username, $error );
 		}
 
 		return $user;
@@ -598,7 +600,7 @@ if ( ! function_exists( 'wp_validate_auth_cookie' ) ) :
 	 *
 	 * @param string $cookie Optional. If used, will validate contents instead of cookie's.
 	 * @param string $scheme Optional. The cookie scheme to use: 'auth', 'secure_auth', or 'logged_in'.
-	 * @return false|int False if invalid cookie, user ID if valid.
+	 * @return int|false User ID if valid cookie, false if invalid.
 	 */
 	function wp_validate_auth_cookie( $cookie = '', $scheme = '' ) {
 		$cookie_elements = wp_parse_auth_cookie( $cookie, $scheme );
@@ -635,7 +637,7 @@ if ( ! function_exists( 'wp_validate_auth_cookie' ) ) :
 			 *
 			 * @since 2.7.0
 			 *
-			 * @param array $cookie_elements An array of data for the authentication cookie.
+			 * @param string[] $cookie_elements An array of data for the authentication cookie.
 			 */
 			do_action( 'auth_cookie_expired', $cookie_elements );
 			return false;
@@ -648,7 +650,7 @@ if ( ! function_exists( 'wp_validate_auth_cookie' ) ) :
 			 *
 			 * @since 2.7.0
 			 *
-			 * @param array $cookie_elements An array of data for the authentication cookie.
+			 * @param string[] $cookie_elements An array of data for the authentication cookie.
 			 */
 			do_action( 'auth_cookie_bad_username', $cookie_elements );
 			return false;
@@ -668,7 +670,7 @@ if ( ! function_exists( 'wp_validate_auth_cookie' ) ) :
 			 *
 			 * @since 2.7.0
 			 *
-			 * @param array $cookie_elements An array of data for the authentication cookie.
+			 * @param string[] $cookie_elements An array of data for the authentication cookie.
 			 */
 			do_action( 'auth_cookie_bad_hash', $cookie_elements );
 			return false;
@@ -676,6 +678,13 @@ if ( ! function_exists( 'wp_validate_auth_cookie' ) ) :
 
 		$manager = WP_Session_Tokens::get_instance( $user->ID );
 		if ( ! $manager->verify( $token ) ) {
+			/**
+			 * Fires if a bad session token is encountered.
+			 *
+			 * @since 4.0.0
+			 *
+			 * @param string[] $cookie_elements An array of data for the authentication cookie.
+			 */
 			do_action( 'auth_cookie_bad_session_token', $cookie_elements );
 			return false;
 		}
@@ -690,8 +699,8 @@ if ( ! function_exists( 'wp_validate_auth_cookie' ) ) :
 		 *
 		 * @since 2.7.0
 		 *
-		 * @param array   $cookie_elements An array of data for the authentication cookie.
-		 * @param WP_User $user            User object.
+		 * @param string[] $cookie_elements An array of data for the authentication cookie.
+		 * @param WP_User  $user            User object.
 		 */
 		do_action( 'auth_cookie_valid', $cookie_elements, $user );
 
@@ -758,7 +767,7 @@ if ( ! function_exists( 'wp_parse_auth_cookie' ) ) :
 	 *
 	 * @param string $cookie Authentication cookie.
 	 * @param string $scheme Optional. The cookie scheme to use: 'auth', 'secure_auth', or 'logged_in'.
-	 * @return array|false Authentication cookie components.
+	 * @return string[]|false Authentication cookie components.
 	 */
 	function wp_parse_auth_cookie( $cookie = '', $scheme = '' ) {
 		if ( empty( $cookie ) ) {
@@ -1102,8 +1111,9 @@ if ( ! function_exists( 'check_admin_referer' ) ) :
 	 *
 	 * @param int|string $action    The nonce action.
 	 * @param string     $query_arg Optional. Key to check for nonce in `$_REQUEST`. Default '_wpnonce'.
-	 * @return false|int False if the nonce is invalid, 1 if the nonce is valid and generated between
-	 *                   0-12 hours ago, 2 if the nonce is valid and generated between 12-24 hours ago.
+	 * @return int|false 1 if the nonce is valid and generated between 0-12 hours ago,
+	 *                   2 if the nonce is valid and generated between 12-24 hours ago.
+	 *                   False if the nonce is invalid.
 	 */
 	function check_admin_referer( $action = -1, $query_arg = '_wpnonce' ) {
 		if ( -1 === $action ) {
@@ -1146,8 +1156,9 @@ if ( ! function_exists( 'check_ajax_referer' ) ) :
 	 *                                (in that order). Default false.
 	 * @param bool         $die       Optional. Whether to die early when the nonce cannot be verified.
 	 *                                Default true.
-	 * @return false|int False if the nonce is invalid, 1 if the nonce is valid and generated between
-	 *                   0-12 hours ago, 2 if the nonce is valid and generated between 12-24 hours ago.
+	 * @return int|false 1 if the nonce is valid and generated between 0-12 hours ago,
+	 *                   2 if the nonce is valid and generated between 12-24 hours ago.
+	 *                   False if the nonce is invalid.
 	 */
 	function check_ajax_referer( $action = -1, $query_arg = false, $die = true ) {
 		if ( -1 == $action ) {
@@ -1208,6 +1219,7 @@ if ( ! function_exists( 'wp_redirect' ) ) :
 	 *
 	 * @since 1.5.1
 	 * @since 5.1.0 The `$x_redirect_by` parameter was added.
+	 * @since 5.4.0 On invalid status codes, wp_die() is called.
 	 *
 	 * @global bool $is_IIS
 	 *
@@ -1241,6 +1253,10 @@ if ( ! function_exists( 'wp_redirect' ) ) :
 
 		if ( ! $location ) {
 			return false;
+		}
+
+		if ( $status < 300 || 399 < $status ) {
+			wp_die( __( 'HTTP redirect status code must be a redirection code, 3xx.' ) );
 		}
 
 		$location = wp_sanitize_redirect( $location );
@@ -1442,8 +1458,8 @@ if ( ! function_exists( 'wp_validate_redirect' ) ) :
 		 *
 		 * @since 2.3.0
 		 *
-		 * @param array       $hosts An array of allowed hosts.
-		 * @param bool|string $host  The parsed host; empty if not isset.
+		 * @param string[] $hosts An array of allowed host names.
+		 * @param string   $host  The host name of the redirect destination; empty string if not set.
 		 */
 		$allowed_hosts = (array) apply_filters( 'allowed_redirect_hosts', array( $wpp['host'] ), isset( $lp['host'] ) ? $lp['host'] : '' );
 
@@ -1492,8 +1508,8 @@ if ( ! function_exists( 'wp_notify_postauthor' ) ) :
 		 *
 		 * @since 3.7.0
 		 *
-		 * @param array $emails     An array of email addresses to receive a comment notification.
-		 * @param int   $comment_id The comment ID.
+		 * @param string[] $emails     An array of email addresses to receive a comment notification.
+		 * @param int      $comment_id The comment ID.
 		 */
 		$emails = apply_filters( 'comment_notification_recipients', $emails, $comment->comment_ID );
 		$emails = array_filter( $emails );
@@ -1727,7 +1743,7 @@ if ( ! function_exists( 'wp_notify_moderator' ) ) :
 			$comment_author_domain = gethostbyaddr( $comment->comment_author_IP );
 		}
 
-		$comments_waiting = $wpdb->get_var( "SELECT count(comment_ID) FROM $wpdb->comments WHERE comment_approved = '0'" );
+		$comments_waiting = $wpdb->get_var( "SELECT COUNT(*) FROM $wpdb->comments WHERE comment_approved = '0'" );
 
 		// The blogname option is escaped with esc_html on the way into the database in sanitize_option
 		// we want to reverse this for the plain text arena of emails.
@@ -1804,8 +1820,8 @@ if ( ! function_exists( 'wp_notify_moderator' ) ) :
 		 *
 		 * @since 3.7.0
 		 *
-		 * @param array $emails     List of email addresses to notify for comment moderation.
-		 * @param int   $comment_id Comment ID.
+		 * @param string[] $emails     List of email addresses to notify for comment moderation.
+		 * @param int      $comment_id Comment ID.
 		 */
 		$emails = apply_filters( 'comment_moderation_recipients', $emails, $comment_id );
 
@@ -2078,8 +2094,9 @@ if ( ! function_exists( 'wp_verify_nonce' ) ) :
 	 *
 	 * @param string     $nonce  Nonce value that was used for verification, usually via a form field.
 	 * @param string|int $action Should give context to what is taking place and be the same when nonce was created.
-	 * @return false|int False if the nonce is invalid, 1 if the nonce is valid and generated between
-	 *                   0-12 hours ago, 2 if the nonce is valid and generated between 12-24 hours ago.
+	 * @return int|false 1 if the nonce is valid and generated between 0-12 hours ago,
+	 *                   2 if the nonce is valid and generated between 12-24 hours ago.
+	 *                   False if the nonce is invalid.
 	 */
 	function wp_verify_nonce( $nonce, $action = -1 ) {
 		$nonce = (string) $nonce;
@@ -2566,7 +2583,7 @@ if ( ! function_exists( 'get_avatar' ) ) :
 	 *                                       Default false.
 	 *     @type string       $extra_attr    HTML attributes to insert in the IMG element. Is not sanitized. Default empty.
 	 * }
-	 * @return false|string `<img>` tag for the user's avatar. False on failure.
+	 * @return string|false `<img>` tag for the user's avatar. False on failure.
 	 */
 	function get_avatar( $id_or_email, $size = 96, $default = '', $alt = '', $args = null ) {
 		$defaults = array(

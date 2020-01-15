@@ -78,7 +78,6 @@ class WP_oEmbed {
 			'#https?://(.+\.)?imgur\.com/.*#i'             => array( 'https://api.imgur.com/oembed', true ),
 			'#https?://(www\.)?meetu(\.ps|p\.com)/.*#i'    => array( 'https://api.meetup.com/oembed', true ),
 			'#https?://(www\.)?issuu\.com/.+/docs/.+#i'    => array( 'https://issuu.com/oembed_wp', true ),
-			'#https?://(www\.)?collegehumor\.com/video/.*#i' => array( 'https://www.collegehumor.com/oembed.{format}', true ),
 			'#https?://(www\.)?mixcloud\.com/.*#i'         => array( 'https://www.mixcloud.com/oembed', true ),
 			'#https?://(www\.|embed\.)?ted\.com/talks/.*#i' => array( 'https://www.ted.com/services/v1/oembed.{format}', true ),
 			'#https?://(www\.)?(animoto|video214)\.com/play/.*#i' => array( 'https://animoto.com/oembeds/create', true ),
@@ -164,7 +163,6 @@ class WP_oEmbed {
 		 * | Meetup.com   | meetu.ps                                  | 3.9.0   |
 		 * | Animoto      | animoto.com                               | 4.0.0   |
 		 * | Animoto      | video214.com                              | 4.0.0   |
-		 * | CollegeHumor | collegehumor.com                          | 4.0.0   |
 		 * | Issuu        | issuu.com                                 | 4.0.0   |
 		 * | Mixcloud     | mixcloud.com                              | 4.0.0   |
 		 * | Crowdsignal  | poll.fm                                   | 4.0.0   |
@@ -211,6 +209,7 @@ class WP_oEmbed {
 		 * | Vine         | vine.co              | 4.1.0     | 4.9.0     |
 		 * | Photobucket  | photobucket.com      | 2.9.0     | 5.1.0     |
 		 * | Funny or Die | funnyordie.com       | 3.0.0     | 5.1.0     |
+		 * | CollegeHumor | collegehumor.com     | 4.0.0     | 5.3.1     |
 		 *
 		 * @see wp_oembed_add_provider()
 		 *
@@ -249,7 +248,7 @@ class WP_oEmbed {
 	 *
 	 * @param string        $url  The URL to the content.
 	 * @param string|array  $args Optional provider arguments.
-	 * @return false|string False on failure, otherwise the oEmbed provider URL.
+	 * @return string|false The oEmbed provider URL on success, false on failure.
 	 */
 	public function get_provider( $url, $args = '' ) {
 		$args = wp_parse_args( $args );
@@ -340,7 +339,7 @@ class WP_oEmbed {
 	 *
 	 * @param string       $url  The URL to the content that should be attempted to be embedded.
 	 * @param array|string $args Optional. Arguments, usually passed from a shortcode. Default empty.
-	 * @return false|object False on failure, otherwise the result in the form of an object.
+	 * @return object|false The result in the form of an object on success, false on failure.
 	 */
 	public function get_data( $url, $args = '' ) {
 		$args = wp_parse_args( $args );
@@ -370,7 +369,8 @@ class WP_oEmbed {
 	 *
 	 * @param string       $url  The URL to the content that should be attempted to be embedded.
 	 * @param array|string $args Optional. Arguments, usually passed from a shortcode. Default empty.
-	 * @return false|string False on failure, otherwise the UNSANITIZED (and potentially unsafe) HTML that should be used to embed.
+	 * @return string|false The UNSANITIZED (and potentially unsafe) HTML that should be used to embed on success,
+	 *                      false on failure.
 	 */
 	public function get_html( $url, $args = '' ) {
 		/**
@@ -418,7 +418,7 @@ class WP_oEmbed {
 	 * @since 2.9.0
 	 *
 	 * @param string $url The URL that should be inspected for discovery `<link>` tags.
-	 * @return false|string False on failure, otherwise the oEmbed provider URL.
+	 * @return string|false The oEmbed provider URL on success, false on failure.
 	 */
 	public function discover( $url ) {
 		$providers = array();
@@ -510,7 +510,7 @@ class WP_oEmbed {
 	 * @param string       $provider The URL to the oEmbed provider.
 	 * @param string       $url      The URL to the content that is desired to be embedded.
 	 * @param array|string $args     Optional. Arguments, usually passed from a shortcode. Default empty.
-	 * @return false|object False on failure, otherwise the result in the form of an object.
+	 * @return object|false The result in the form of an object on success, false on failure.
 	 */
 	public function fetch( $provider, $url, $args = '' ) {
 		$args = wp_parse_args( $args, wp_embed_defaults( $url ) );
@@ -548,8 +548,8 @@ class WP_oEmbed {
 	 * @since 3.0.0
 	 *
 	 * @param string $provider_url_with_args URL to the provider with full arguments list (url, maxheight, etc.)
-	 * @param string $format Format to use
-	 * @return false|object|WP_Error False on failure, otherwise the result in the form of an object.
+	 * @param string $format                 Format to use.
+	 * @return object|false|WP_Error The result in the form of an object on success, false on failure.
 	 */
 	private function _fetch_with_format( $provider_url_with_args, $format ) {
 		$provider_url_with_args = add_query_arg( 'format', $format, $provider_url_with_args );
@@ -654,8 +654,8 @@ class WP_oEmbed {
 	 * @since 2.9.0
 	 *
 	 * @param object $data A data object result from an oEmbed provider.
-	 * @param string $url The URL to the content that is desired to be embedded.
-	 * @return false|string False on error, otherwise the HTML needed to embed.
+	 * @param string $url  The URL to the content that is desired to be embedded.
+	 * @return string|false The HTML needed to embed on success, false on failure.
 	 */
 	public function data2html( $data, $url ) {
 		if ( ! is_object( $data ) || empty( $data->type ) ) {

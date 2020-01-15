@@ -199,17 +199,16 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 		}
 
 		if ( 'authors' === $request['who'] ) {
-			$can_view = false;
-			$types    = get_post_types( array( 'show_in_rest' => true ), 'objects' );
+			$types = get_post_types( array( 'show_in_rest' => true ), 'objects' );
+
 			foreach ( $types as $type ) {
 				if ( post_type_supports( $type->name, 'author' )
 					&& current_user_can( $type->cap->edit_posts ) ) {
-					$can_view = true;
+					return true;
 				}
 			}
-			if ( ! $can_view ) {
-				return new WP_Error( 'rest_forbidden_who', __( 'Sorry, you are not allowed to query users by this parameter.' ), array( 'status' => rest_authorization_required_code() ) );
-			}
+
+			return new WP_Error( 'rest_forbidden_who', __( 'Sorry, you are not allowed to query users by this parameter.' ), array( 'status' => rest_authorization_required_code() ) );
 		}
 
 		return true;
@@ -610,7 +609,7 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 			sort( $request_params );
 			// If only 'id' and 'roles' are specified (we are only trying to
 			// edit roles), then only the 'promote_user' cap is required.
-			if ( $request_params === array( 'id', 'roles' ) ) {
+			if ( array( 'id', 'roles' ) === $request_params ) {
 				return true;
 			}
 		}
@@ -961,7 +960,7 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 		 * @since 4.7.0
 		 *
 		 * @param WP_REST_Response $response The response object.
-		 * @param object           $user     User object used to create response.
+		 * @param WP_User          $user     User object used to create response.
 		 * @param WP_REST_Request  $request  Request object.
 		 */
 		return apply_filters( 'rest_prepare_user', $response, $user, $request );
@@ -1125,7 +1124,7 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 	 * @param mixed           $value   The username submitted in the request.
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @param string          $param   The parameter name.
-	 * @return WP_Error|string The sanitized username, if valid, otherwise an error.
+	 * @return string|WP_Error The sanitized username, if valid, otherwise an error.
 	 */
 	public function check_username( $value, $request, $param ) {
 		$username = (string) $value;
@@ -1137,7 +1136,7 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 		/** This filter is documented in wp-includes/user.php */
 		$illegal_logins = (array) apply_filters( 'illegal_user_logins', array() );
 
-		if ( in_array( strtolower( $username ), array_map( 'strtolower', $illegal_logins ) ) ) {
+		if ( in_array( strtolower( $username ), array_map( 'strtolower', $illegal_logins ), true ) ) {
 			return new WP_Error( 'rest_user_invalid_username', __( 'Sorry, that username is not allowed.' ), array( 'status' => 400 ) );
 		}
 
@@ -1154,7 +1153,7 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 	 * @param mixed           $value   The password submitted in the request.
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @param string          $param   The parameter name.
-	 * @return WP_Error|string The sanitized password, if valid, otherwise an error.
+	 * @return string|WP_Error The sanitized password, if valid, otherwise an error.
 	 */
 	public function check_user_password( $value, $request, $param ) {
 		$password = (string) $value;

@@ -82,7 +82,7 @@ this["wp"] = this["wp"] || {}; this["wp"]["annotations"] =
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 355);
+/******/ 	return __webpack_require__(__webpack_require__.s = 379);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -94,29 +94,7 @@ this["wp"] = this["wp"] || {}; this["wp"]["annotations"] =
 
 /***/ }),
 
-/***/ 10:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return _defineProperty; });
-function _defineProperty(obj, key, value) {
-  if (key in obj) {
-    Object.defineProperty(obj, key, {
-      value: value,
-      enumerable: true,
-      configurable: true,
-      writable: true
-    });
-  } else {
-    obj[key] = value;
-  }
-
-  return obj;
-}
-
-/***/ }),
-
-/***/ 17:
+/***/ 18:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -132,7 +110,7 @@ function _arrayWithoutHoles(arr) {
   }
 }
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/esm/iterableToArray.js
-var iterableToArray = __webpack_require__(30);
+var iterableToArray = __webpack_require__(32);
 
 // CONCATENATED MODULE: ./node_modules/@babel/runtime/helpers/esm/nonIterableSpread.js
 function _nonIterableSpread() {
@@ -160,28 +138,12 @@ function _toConsumableArray(arr) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-
-// CONCATENATED MODULE: ./node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js
-function _objectWithoutPropertiesLoose(source, excluded) {
-  if (source == null) return {};
-  var target = {};
-  var sourceKeys = Object.keys(source);
-  var key, i;
-
-  for (i = 0; i < sourceKeys.length; i++) {
-    key = sourceKeys[i];
-    if (excluded.indexOf(key) >= 0) continue;
-    target[key] = source[key];
-  }
-
-  return target;
-}
-// CONCATENATED MODULE: ./node_modules/@babel/runtime/helpers/esm/objectWithoutProperties.js
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return _objectWithoutProperties; });
+/* harmony import */ var _objectWithoutPropertiesLoose__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(40);
 
 function _objectWithoutProperties(source, excluded) {
   if (source == null) return {};
-  var target = _objectWithoutPropertiesLoose(source, excluded);
+  var target = Object(_objectWithoutPropertiesLoose__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"])(source, excluded);
   var key, i;
 
   if (Object.getOwnPropertySymbols) {
@@ -200,7 +162,7 @@ function _objectWithoutProperties(source, excluded) {
 
 /***/ }),
 
-/***/ 22:
+/***/ 24:
 /***/ (function(module, exports) {
 
 (function() { module.exports = this["wp"]["richText"]; }());
@@ -214,7 +176,7 @@ function _objectWithoutProperties(source, excluded) {
 
 /***/ }),
 
-/***/ 30:
+/***/ 32:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -225,7 +187,7 @@ function _iterableToArray(iter) {
 
 /***/ }),
 
-/***/ 355:
+/***/ 379:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -247,16 +209,16 @@ __webpack_require__.d(actions_namespaceObject, "__experimentalRemoveAnnotationsB
 var external_this_wp_data_ = __webpack_require__(4);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/esm/defineProperty.js
-var defineProperty = __webpack_require__(10);
+var defineProperty = __webpack_require__(9);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/esm/toConsumableArray.js + 2 modules
-var toConsumableArray = __webpack_require__(17);
+var toConsumableArray = __webpack_require__(18);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/esm/objectSpread.js
 var objectSpread = __webpack_require__(7);
 
-// EXTERNAL MODULE: external "lodash"
-var external_lodash_ = __webpack_require__(2);
+// EXTERNAL MODULE: external {"this":"lodash"}
+var external_this_lodash_ = __webpack_require__(2);
 
 // CONCATENATED MODULE: ./node_modules/@wordpress/annotations/build-module/store/reducer.js
 
@@ -290,7 +252,7 @@ function filterWithReference(collection, predicate) {
 
 
 function isValidAnnotationRange(annotation) {
-  return Object(external_lodash_["isNumber"])(annotation.start) && Object(external_lodash_["isNumber"])(annotation.end) && annotation.start <= annotation.end;
+  return Object(external_this_lodash_["isNumber"])(annotation.start) && Object(external_this_lodash_["isNumber"])(annotation.end) && annotation.start <= annotation.end;
 }
 /**
  * Reducer managing annotations.
@@ -322,18 +284,18 @@ function reducer_annotations() {
         return state;
       }
 
-      var previousAnnotationsForBlock = Object(external_lodash_["get"])(state, blockClientId, []);
+      var previousAnnotationsForBlock = Object(external_this_lodash_["get"])(state, blockClientId, []);
       return Object(objectSpread["a" /* default */])({}, state, Object(defineProperty["a" /* default */])({}, blockClientId, [].concat(Object(toConsumableArray["a" /* default */])(previousAnnotationsForBlock), [newAnnotation])));
 
     case 'ANNOTATION_REMOVE':
-      return Object(external_lodash_["mapValues"])(state, function (annotationsForBlock) {
+      return Object(external_this_lodash_["mapValues"])(state, function (annotationsForBlock) {
         return filterWithReference(annotationsForBlock, function (annotation) {
           return annotation.id !== action.annotationId;
         });
       });
 
     case 'ANNOTATION_UPDATE_RANGE':
-      return Object(external_lodash_["mapValues"])(state, function (annotationsForBlock) {
+      return Object(external_this_lodash_["mapValues"])(state, function (annotationsForBlock) {
         var hasChangedRange = false;
         var newAnnotations = annotationsForBlock.map(function (annotation) {
           if (annotation.id === action.annotationId) {
@@ -352,7 +314,7 @@ function reducer_annotations() {
       });
 
     case 'ANNOTATION_REMOVE_SOURCE':
-      return Object(external_lodash_["mapValues"])(state, function (annotationsForBlock) {
+      return Object(external_this_lodash_["mapValues"])(state, function (annotationsForBlock) {
         return filterWithReference(annotationsForBlock, function (annotation) {
           return annotation.source !== action.source;
         });
@@ -363,11 +325,11 @@ function reducer_annotations() {
 }
 /* harmony default export */ var reducer = (reducer_annotations);
 
-// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/esm/objectWithoutProperties.js + 1 modules
+// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/esm/objectWithoutProperties.js
 var objectWithoutProperties = __webpack_require__(21);
 
 // EXTERNAL MODULE: ./node_modules/rememo/es/rememo.js
-var rememo = __webpack_require__(36);
+var rememo = __webpack_require__(38);
 
 // CONCATENATED MODULE: ./node_modules/@wordpress/annotations/build-module/store/selectors.js
 
@@ -399,14 +361,14 @@ var EMPTY_ARRAY = [];
  */
 
 var __experimentalGetAnnotationsForBlock = Object(rememo["a" /* default */])(function (state, blockClientId) {
-  return Object(external_lodash_["get"])(state, blockClientId, []).filter(function (annotation) {
+  return Object(external_this_lodash_["get"])(state, blockClientId, []).filter(function (annotation) {
     return annotation.selector === 'block';
   });
 }, function (state, blockClientId) {
-  return [Object(external_lodash_["get"])(state, blockClientId, EMPTY_ARRAY)];
+  return [Object(external_this_lodash_["get"])(state, blockClientId, EMPTY_ARRAY)];
 });
 var selectors_experimentalGetAllAnnotationsForBlock = function __experimentalGetAllAnnotationsForBlock(state, blockClientId) {
-  return Object(external_lodash_["get"])(state, blockClientId, EMPTY_ARRAY);
+  return Object(external_this_lodash_["get"])(state, blockClientId, EMPTY_ARRAY);
 };
 /**
  * Returns the annotations that apply to the given RichText instance.
@@ -422,7 +384,7 @@ var selectors_experimentalGetAllAnnotationsForBlock = function __experimentalGet
  */
 
 var __experimentalGetAnnotationsForRichText = Object(rememo["a" /* default */])(function (state, blockClientId, richTextIdentifier) {
-  return Object(external_lodash_["get"])(state, blockClientId, []).filter(function (annotation) {
+  return Object(external_this_lodash_["get"])(state, blockClientId, []).filter(function (annotation) {
     return annotation.selector === 'range' && richTextIdentifier === annotation.richTextIdentifier;
   }).map(function (annotation) {
     var range = annotation.range,
@@ -431,7 +393,7 @@ var __experimentalGetAnnotationsForRichText = Object(rememo["a" /* default */])(
     return Object(objectSpread["a" /* default */])({}, range, other);
   });
 }, function (state, blockClientId) {
-  return [Object(external_lodash_["get"])(state, blockClientId, EMPTY_ARRAY)];
+  return [Object(external_this_lodash_["get"])(state, blockClientId, EMPTY_ARRAY)];
 });
 /**
  * Returns all annotations in the editor state.
@@ -441,13 +403,13 @@ var __experimentalGetAnnotationsForRichText = Object(rememo["a" /* default */])(
  */
 
 function __experimentalGetAnnotations(state) {
-  return Object(external_lodash_["flatMap"])(state, function (annotations) {
+  return Object(external_this_lodash_["flatMap"])(state, function (annotations) {
     return annotations;
   });
 }
 
 // EXTERNAL MODULE: ./node_modules/uuid/v4.js
-var v4 = __webpack_require__(67);
+var v4 = __webpack_require__(66);
 var v4_default = /*#__PURE__*/__webpack_require__.n(v4);
 
 // CONCATENATED MODULE: ./node_modules/@wordpress/annotations/build-module/store/actions.js
@@ -577,7 +539,7 @@ var store = Object(external_this_wp_data_["registerStore"])(MODULE_KEY, {
 /* harmony default export */ var build_module_store = (store);
 
 // EXTERNAL MODULE: external {"this":["wp","richText"]}
-var external_this_wp_richText_ = __webpack_require__(22);
+var external_this_wp_richText_ = __webpack_require__(24);
 
 // EXTERNAL MODULE: external {"this":["wp","i18n"]}
 var external_this_wp_i18n_ = __webpack_require__(1);
@@ -815,7 +777,7 @@ Object(external_this_wp_hooks_["addFilter"])('editor.BlockListBlock', 'core/anno
 
 /***/ }),
 
-/***/ 36:
+/***/ 38:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1104,11 +1066,33 @@ function isShallowEqual( a, b, fromIndex ) {
 
 /***/ }),
 
-/***/ 67:
+/***/ 40:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return _objectWithoutPropertiesLoose; });
+function _objectWithoutPropertiesLoose(source, excluded) {
+  if (source == null) return {};
+  var target = {};
+  var sourceKeys = Object.keys(source);
+  var key, i;
+
+  for (i = 0; i < sourceKeys.length; i++) {
+    key = sourceKeys[i];
+    if (excluded.indexOf(key) >= 0) continue;
+    target[key] = source[key];
+  }
+
+  return target;
+}
+
+/***/ }),
+
+/***/ 66:
 /***/ (function(module, exports, __webpack_require__) {
 
-var rng = __webpack_require__(85);
-var bytesToUuid = __webpack_require__(86);
+var rng = __webpack_require__(86);
+var bytesToUuid = __webpack_require__(87);
 
 function v4(options, buf, offset) {
   var i = buf && offset || 0;
@@ -1145,12 +1129,12 @@ module.exports = v4;
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return _objectSpread; });
-/* harmony import */ var _defineProperty__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(10);
+/* harmony import */ var _defineProperty__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(9);
 
 function _objectSpread(target) {
   for (var i = 1; i < arguments.length; i++) {
     var source = arguments[i] != null ? arguments[i] : {};
-    var ownKeys = Object.keys(source);
+    var ownKeys = Object.keys(Object(source));
 
     if (typeof Object.getOwnPropertySymbols === 'function') {
       ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) {
@@ -1168,7 +1152,7 @@ function _objectSpread(target) {
 
 /***/ }),
 
-/***/ 85:
+/***/ 86:
 /***/ (function(module, exports) {
 
 // Unique ID creation requires a high quality random # generator.  In the
@@ -1209,7 +1193,7 @@ if (getRandomValues) {
 
 /***/ }),
 
-/***/ 86:
+/***/ 87:
 /***/ (function(module, exports) {
 
 /**
@@ -1237,6 +1221,28 @@ function bytesToUuid(buf, offset) {
 
 module.exports = bytesToUuid;
 
+
+/***/ }),
+
+/***/ 9:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return _defineProperty; });
+function _defineProperty(obj, key, value) {
+  if (key in obj) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj[key] = value;
+  }
+
+  return obj;
+}
 
 /***/ })
 

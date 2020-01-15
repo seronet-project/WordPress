@@ -393,7 +393,7 @@ function wp_unschedule_event( $timestamp, $hook, $args = array() ) {
  *
  * @param string $hook Action hook, the execution of which will be unscheduled.
  * @param array  $args Optional. Arguments that were to be passed to the hook's callback function.
- * @return false|int On success an integer indicating number of events unscheduled (0 indicates no
+ * @return int|false On success an integer indicating number of events unscheduled (0 indicates no
  *                   events were registered with the hook and arguments combination), false if
  *                   unscheduling one or more events fail.
  */
@@ -461,7 +461,7 @@ function wp_clear_scheduled_hook( $hook, $args = array() ) {
  * @since 5.1.0 Return value added to indicate success or failure.
  *
  * @param string $hook Action hook, the execution of which will be unscheduled.
- * @return false|int On success an integer indicating number of events unscheduled (0 indicates no
+ * @return int|false On success an integer indicating number of events unscheduled (0 indicates no
  *                   events were registered on the hook), false if unscheduling fails.
  */
 function wp_unschedule_hook( $hook ) {
@@ -528,7 +528,7 @@ function wp_unschedule_hook( $hook ) {
  *                            Although not passed to a callback, these arguments are used to uniquely identify the
  *                            event, so they should be the same as those used when originally scheduling the event.
  * @param int|null $timestamp Optional. Unix timestamp (UTC) of the event. If not specified, the next scheduled event is returned.
- * @return false|object The event object. False if the event does not exist.
+ * @return object|false The event object. False if the event does not exist.
  */
 function wp_get_scheduled_event( $hook, $args = array(), $timestamp = null ) {
 	/**
@@ -606,7 +606,7 @@ function wp_get_scheduled_event( $hook, $args = array(), $timestamp = null ) {
  * @param array  $args Optional. Array containing each separate argument to pass to the hook's callback function.
  *                     Although not passed to a callback, these arguments are used to uniquely identify the
  *                     event, so they should be the same as those used when originally scheduling the event.
- * @return false|int The Unix timestamp of the next time the event will occur. False if the event doesn't exist.
+ * @return int|false The Unix timestamp of the next time the event will occur. False if the event doesn't exist.
  */
 function wp_next_scheduled( $hook, $args = array() ) {
 	$next_event = wp_get_scheduled_event( $hook, $args );
@@ -783,29 +783,30 @@ function wp_cron() {
 /**
  * Retrieve supported event recurrence schedules.
  *
- * The default supported recurrences are 'hourly', 'twicedaily', and 'daily'. A plugin may
- * add more by hooking into the {@see 'cron_schedules'} filter. The filter accepts an array
- * of arrays. The outer array has a key that is the name of the schedule or for
- * example 'weekly'. The value is an array with two keys, one is 'interval' and
- * the other is 'display'.
+ * The default supported recurrences are 'hourly', 'twicedaily', 'daily', and 'weekly'.
+ * A plugin may add more by hooking into the {@see 'cron_schedules'} filter.
+ * The filter accepts an array of arrays. The outer array has a key that is the name
+ * of the schedule, for example 'monthly'. The value is an array with two keys,
+ * one is 'interval' and the other is 'display'.
  *
- * The 'interval' is a number in seconds of when the cron job should run. So for
- * 'hourly', the time is 3600 or 60*60. For weekly, the value would be
- * 60*60*24*7 or 604800. The value of 'interval' would then be 604800.
+ * The 'interval' is a number in seconds of when the cron job should run.
+ * So for 'hourly' the time is `HOUR_IN_SECONDS` (60 * 60 or 3600). For 'monthly',
+ * the value would be `MONTH_IN_SECONDS` (30 * 24 * 60 * 60 or 2592000).
  *
- * The 'display' is the description. For the 'weekly' key, the 'display' would
- * be `__( 'Once Weekly' )`.
+ * The 'display' is the description. For the 'monthly' key, the 'display'
+ * would be `__( 'Once Monthly' )`.
  *
- * For your plugin, you will be passed an array. you can easily add your
+ * For your plugin, you will be passed an array. You can easily add your
  * schedule by doing the following.
  *
  *     // Filter parameter variable name is 'array'.
- *     $array['weekly'] = array(
- *         'interval' => 604800,
- *         'display'  => __( 'Once Weekly' )
+ *     $array['monthly'] = array(
+ *         'interval' => MONTH_IN_SECONDS,
+ *         'display'  => __( 'Once Monthly' )
  *     );
  *
  * @since 2.1.0
+ * @since 5.4.0 The 'weekly' schedule was added.
  *
  * @return array
  */
@@ -823,7 +824,12 @@ function wp_get_schedules() {
 			'interval' => DAY_IN_SECONDS,
 			'display'  => __( 'Once Daily' ),
 		),
+		'weekly'     => array(
+			'interval' => WEEK_IN_SECONDS,
+			'display'  => __( 'Once Weekly' ),
+		),
 	);
+
 	/**
 	 * Filters the non-default cron schedules.
 	 *
@@ -926,7 +932,7 @@ function wp_get_ready_cron_jobs() {
  * @since 2.1.0
  * @access private
  *
- * @return false|array CRON info array.
+ * @return array|false CRON info array.
  */
 function _get_cron_array() {
 	$cron = get_option( 'cron' );

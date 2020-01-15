@@ -37,7 +37,7 @@ function get_the_ID() { // phpcs:ignore WordPress.NamingConventions.ValidFunctio
  * @param string $before Optional. Markup to prepend to the title. Default empty.
  * @param string $after  Optional. Markup to append to the title. Default empty.
  * @param bool   $echo   Optional. Whether to echo or return the title. Default true for echo.
- * @return string|void Current post title if $echo is false.
+ * @return void|string Void if `$echo` argument is true, current post title if `$echo` is false.
  */
 function the_title( $before = '', $after = '', $echo = true ) {
 	$title = get_the_title();
@@ -75,7 +75,7 @@ function the_title( $before = '', $after = '', $echo = true ) {
  *     @type bool    $echo   Whether to echo or return the title. Default true for echo.
  *     @type WP_Post $post   Current post object to retrieve the title for.
  * }
- * @return string|void String when echo is false.
+ * @return void|string Void if 'echo' argument is true, the title attribute if 'echo' is false.
  */
 function the_title_attribute( $args = '' ) {
 	$defaults    = array(
@@ -419,8 +419,8 @@ function get_the_excerpt( $post = null ) {
 	 * @since 1.2.0
 	 * @since 4.5.0 Introduced the `$post` parameter.
 	 *
-	 * @param string $post_excerpt The post excerpt.
-	 * @param WP_Post $post Post object.
+	 * @param string  $post_excerpt The post excerpt.
+	 * @param WP_Post $post         Post object.
 	 */
 	return apply_filters( 'get_the_excerpt', $post->post_excerpt, $post );
 }
@@ -1062,7 +1062,8 @@ function _wp_link_page( $i ) {
  * @since 1.5.0
  *
  * @param string $key Meta data key name.
- * @return false|string|array Array of values or single value, if only one element exists. False will be returned if key does not exist.
+ * @return array|string|false Array of values, or single value if only one element exists.
+ *                            False if the key does not exist.
  */
 function post_custom( $key = '' ) {
 	$custom = get_post_custom();
@@ -1153,7 +1154,7 @@ function the_meta() {
  *     @type string       $value_field           Post field used to populate the 'value' attribute of the option
  *                                               elements. Accepts any valid post field. Default 'ID'.
  * }
- * @return string HTML content, if not displaying.
+ * @return string HTML dropdown list of pages.
  */
 function wp_dropdown_pages( $args = '' ) {
 	$defaults = array(
@@ -1202,15 +1203,16 @@ function wp_dropdown_pages( $args = '' ) {
 	 * @since 2.1.0
 	 * @since 4.4.0 `$parsed_args` and `$pages` added as arguments.
 	 *
-	 * @param string $output      HTML output for drop down list of pages.
-	 * @param array  $parsed_args The parsed arguments array.
-	 * @param array  $pages       List of WP_Post objects returned by `get_pages()`
+	 * @param string    $output      HTML output for drop down list of pages.
+	 * @param array     $parsed_args The parsed arguments array.
+	 * @param WP_Post[] $pages       Array of the page objects.
 	 */
 	$html = apply_filters( 'wp_dropdown_pages', $output, $parsed_args, $pages );
 
 	if ( $parsed_args['echo'] ) {
 		echo $html;
 	}
+
 	return $html;
 }
 
@@ -1252,7 +1254,7 @@ function wp_dropdown_pages( $args = '' ) {
  *                                      Default 'preserve'.
  *     @type Walker       $walker       Walker instance to use for listing pages. Default empty (Walker_Page).
  * }
- * @return string|void HTML list of pages.
+ * @return void|string Void if 'echo' argument is true, HTML list of pages if 'echo' is false.
  */
 function wp_list_pages( $args = '' ) {
 	$defaults = array(
@@ -1292,7 +1294,7 @@ function wp_list_pages( $args = '' ) {
 	 *
 	 * @since 2.1.0
 	 *
-	 * @param array $exclude_array An array of page IDs to exclude.
+	 * @param string[] $exclude_array An array of page IDs to exclude.
 	 */
 	$parsed_args['exclude'] = implode( ',', apply_filters( 'wp_list_pages_excludes', $exclude_array ) );
 
@@ -1330,9 +1332,9 @@ function wp_list_pages( $args = '' ) {
 	 *
 	 * @see wp_list_pages()
 	 *
-	 * @param string $output      HTML output of the pages list.
-	 * @param array  $parsed_args An array of page-listing arguments.
-	 * @param array  $pages       List of WP_Post objects returned by `get_pages()`
+	 * @param string    $output      HTML output of the pages list.
+	 * @param array     $parsed_args An array of page-listing arguments.
+	 * @param WP_Post[] $pages       Array of the page objects.
 	 */
 	$html = apply_filters( 'wp_list_pages', $output, $parsed_args, $pages );
 
@@ -1373,7 +1375,7 @@ function wp_list_pages( $args = '' ) {
  *                                         or 'discard'. Default 'discard'.
  *     @type Walker          $walker       Walker instance to use for listing pages. Default empty (Walker_Page).
  * }
- * @return string|void HTML menu
+ * @return void|string Void if 'echo' argument is true, HTML menu if 'echo' is false.
  */
 function wp_page_menu( $args = array() ) {
 	$defaults = array(
@@ -1488,6 +1490,7 @@ function wp_page_menu( $args = array() ) {
 	 * @param array  $args An array of arguments.
 	 */
 	$menu = apply_filters( 'wp_page_menu', $menu, $args );
+
 	if ( $args['echo'] ) {
 		echo $menu;
 	} else {

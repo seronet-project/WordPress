@@ -62,7 +62,7 @@ function got_url_rewrite() {
  *
  * @param string $filename Filename to extract the strings from.
  * @param string $marker   The marker to extract the strings from.
- * @return array An array of strings from a file (.htaccess) from between BEGIN and END markers.
+ * @return string[] An array of strings from a file (.htaccess) from between BEGIN and END markers.
  */
 function extract_from_markers( $filename, $marker ) {
 	$result = array();
@@ -111,8 +111,15 @@ function insert_with_markers( $filename, $marker, $insertion ) {
 		if ( ! is_writable( dirname( $filename ) ) ) {
 			return false;
 		}
+
 		if ( ! touch( $filename ) ) {
 			return false;
+		}
+
+		// Make sure the file is created with a minimum set of permissions.
+		$perms = fileperms( $filename );
+		if ( $perms ) {
+			chmod( $filename, $perms | 0644 );
 		}
 	} elseif ( ! is_writeable( $filename ) ) {
 		return false;

@@ -1,3 +1,4 @@
+/*! This file is auto-generated */
 .site-health #wpcontent,
 .site-health.auto-fold #wpcontent {
 	padding-right: 0;
@@ -215,8 +216,8 @@
 
 .site-health-copy-buttons .success.visible {
 	display: inline-block;
-	height: 28px;
-	line-height: 2.2;
+	height: 30px;
+	line-height: 2.30769231;
 }
 
 .site-status-has-issues.hide {
