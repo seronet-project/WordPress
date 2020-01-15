@@ -337,7 +337,6 @@
 }
 
 #adminmenu div.wp-menu-name {
-	display: flex;
 	padding: 8px 0;
 }
 
@@ -509,11 +508,14 @@ ul#adminmenu > li.current > a.current:after {
 }
 
 /* @todo: consider to use a single rule for these counters and the list table comments counters. */
-#adminmenu .wp-menu-name > span {
+#adminmenu .awaiting-mod,
+#adminmenu .update-plugins {
 	display: inline-block;
 	vertical-align: top;
-	margin: 1px 2px -1px 1px;
-	padding: 0 6px;
+	box-sizing: border-box;
+	margin: 1px 2px -1px 0;
+	padding: 0 5px;
+	min-width: 18px;
 	height: 18px;
 	border-radius: 9px;
 	background-color: #ca4a1f;
@@ -690,7 +692,7 @@ li#wp-admin-bar-menu-toggle {
 	}
 
 	.auto-fold #adminmenu a.menu-top {
-		height: auto;
+		height: 34px;
 	}
 
 	.auto-fold #adminmenu li.wp-menu-open {

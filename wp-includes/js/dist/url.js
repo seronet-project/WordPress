@@ -82,12 +82,12 @@ this["wp"] = this["wp"] || {}; this["wp"]["url"] =
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 378);
+/******/ 	return __webpack_require__(__webpack_require__.s = 338);
 /******/ })
 /************************************************************************/
 /******/ ({
 
-/***/ 222:
+/***/ 214:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -325,7 +325,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 223:
+/***/ 215:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -351,7 +351,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 378:
+/***/ 338:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -376,7 +376,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "safeDecodeURI", function() { return safeDecodeURI; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "filterURLForDisplay", function() { return filterURLForDisplay; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "safeDecodeURIComponent", function() { return safeDecodeURIComponent; });
-/* harmony import */ var qs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(91);
+/* harmony import */ var qs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(84);
 /* harmony import */ var qs__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(qs__WEBPACK_IMPORTED_MODULE_0__);
 /**
  * External dependencies
@@ -752,6 +752,10 @@ function removeQueryArgs(url) {
  */
 
 function prependHTTP(url) {
+  if (!url) {
+    return url;
+  }
+
   url = url.trim();
 
   if (!USABLE_HREF_REGEXP.test(url) && !EMAIL_REGEXP.test(url)) {
@@ -824,14 +828,14 @@ function safeDecodeURIComponent(uriComponent) {
 
 /***/ }),
 
-/***/ 379:
+/***/ 339:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var utils = __webpack_require__(222);
-var formats = __webpack_require__(223);
+var utils = __webpack_require__(214);
+var formats = __webpack_require__(215);
 var has = Object.prototype.hasOwnProperty;
 
 var arrayPrefixGenerators = {
@@ -1101,13 +1105,13 @@ module.exports = function (object, opts) {
 
 /***/ }),
 
-/***/ 380:
+/***/ 340:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var utils = __webpack_require__(222);
+var utils = __webpack_require__(214);
 
 var has = Object.prototype.hasOwnProperty;
 
@@ -1351,15 +1355,15 @@ module.exports = function (str, opts) {
 
 /***/ }),
 
-/***/ 91:
+/***/ 84:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var stringify = __webpack_require__(379);
-var parse = __webpack_require__(380);
-var formats = __webpack_require__(223);
+var stringify = __webpack_require__(339);
+var parse = __webpack_require__(340);
+var formats = __webpack_require__(215);
 
 module.exports = {
     formats: formats,

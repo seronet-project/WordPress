@@ -82,7 +82,7 @@ this["wp"] = this["wp"] || {}; this["wp"]["nux"] =
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 399);
+/******/ 	return __webpack_require__(__webpack_require__.s = 361);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -511,29 +511,7 @@ function isShallowEqual( a, b, fromIndex ) {
 
 /***/ }),
 
-/***/ 38:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return _arrayWithHoles; });
-function _arrayWithHoles(arr) {
-  if (Array.isArray(arr)) return arr;
-}
-
-/***/ }),
-
-/***/ 39:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return _nonIterableRest; });
-function _nonIterableRest() {
-  throw new TypeError("Invalid attempt to destructure non-iterable instance");
-}
-
-/***/ }),
-
-/***/ 399:
+/***/ 361:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -865,6 +843,7 @@ var external_this_wp_i18n_ = __webpack_require__(1);
 
 
 
+
 function getAnchorRect(anchor) {
   // The default getAnchorRect() excludes an element's top and bottom padding
   // from its calculation. We want tips to point to the outer margin of an
@@ -886,6 +865,22 @@ function DotTip(_ref) {
       hasNextTip = _ref.hasNextTip,
       onDismiss = _ref.onDismiss,
       onDisable = _ref.onDisable;
+  var anchorParent = Object(external_this_wp_element_["useRef"])(null);
+  var getAnchorRectCallback = Object(external_this_wp_element_["useCallback"])(function (anchor) {
+    anchorParent.current = anchor.parentNode;
+    return getAnchorRect(anchor);
+  }, [anchorParent]);
+  var onFocusOutsideCallback = Object(external_this_wp_element_["useCallback"])(function (event) {
+    if (!anchorParent.current) {
+      return;
+    }
+
+    if (anchorParent.current.contains(event.relatedTarget)) {
+      return;
+    }
+
+    onDisable();
+  }, [onDisable, anchorParent]);
 
   if (!isVisible) {
     return null;
@@ -896,10 +891,11 @@ function DotTip(_ref) {
     position: position,
     noArrow: true,
     focusOnMount: "container",
-    getAnchorRect: getAnchorRect,
+    getAnchorRect: getAnchorRectCallback,
     role: "dialog",
     "aria-label": Object(external_this_wp_i18n_["__"])('Editor tips'),
-    onClick: onClick
+    onClick: onClick,
+    onFocusOutside: onFocusOutsideCallback
   }, Object(external_this_wp_element_["createElement"])("p", null, children), Object(external_this_wp_element_["createElement"])("p", null, Object(external_this_wp_element_["createElement"])(external_this_wp_components_["Button"], {
     isLink: true,
     onClick: onDismiss
@@ -947,6 +943,28 @@ function DotTip(_ref) {
 
 
 
+
+/***/ }),
+
+/***/ 38:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return _arrayWithHoles; });
+function _arrayWithHoles(arr) {
+  if (Array.isArray(arr)) return arr;
+}
+
+/***/ }),
+
+/***/ 39:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return _nonIterableRest; });
+function _nonIterableRest() {
+  throw new TypeError("Invalid attempt to destructure non-iterable instance");
+}
 
 /***/ }),
 
