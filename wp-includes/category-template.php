@@ -452,8 +452,8 @@ function wp_dropdown_categories( $args = '' ) {
 	 *
 	 * @since 2.1.0
 	 *
-	 * @param string $output HTML output.
-	 * @param array  $parsed_args      Arguments used to build the drop-down.
+	 * @param string $output      HTML output.
+	 * @param array  $parsed_args Arguments used to build the drop-down.
 	 */
 	$output = apply_filters( 'wp_dropdown_cats', $output, $parsed_args );
 
@@ -1388,7 +1388,7 @@ function get_term_parents_list( $term_id, $taxonomy, $args = array() ) {
  * @param string $before   Optional. Before list.
  * @param string $sep      Optional. Separate items using this.
  * @param string $after    Optional. After list.
- * @return void|false False on WordPress error.
+ * @return void|false Void on success, false on failure.
  */
 function the_terms( $id, $taxonomy, $before = '', $sep = ', ', $after = '' ) {
 	$term_list = get_the_term_list( $id, $taxonomy, $before, $sep, $after );
