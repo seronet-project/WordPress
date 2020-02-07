@@ -32,7 +32,7 @@ resources:
   icon: github-face
   source:
     uri: https://github.com/WordPress/WordPress.git
-    branch: 5.3
+    branch: master
     depth: 30
 
 - name: notify

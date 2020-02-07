@@ -3391,6 +3391,17 @@ function attachment_submitbox_metadata() {
 		</div>
 		<?php
 	}
+
+	if ( ! empty( $meta['original_image'] ) ) {
+		?>
+		<div class="misc-pub-section misc-pub-original-image">
+			<?php _e( 'Original image:' ); ?>
+			<a href="<?php echo esc_url( wp_get_original_image_url( $attachment_id ) ); ?>">
+				<?php echo esc_html( wp_basename( wp_get_original_image_path( $attachment_id ) ) ); ?>
+			</a>
+		</div>
+		<?php
+	}
 }
 
 /**
@@ -3458,7 +3469,7 @@ function wp_read_video_metadata( $file ) {
 	}
 
 	if ( ! class_exists( 'getID3', false ) ) {
-		require( ABSPATH . WPINC . '/ID3/getid3.php' );
+		require ABSPATH . WPINC . '/ID3/getid3.php';
 	}
 
 	$id3  = new getID3();
@@ -3569,7 +3580,7 @@ function wp_read_audio_metadata( $file ) {
 	}
 
 	if ( ! class_exists( 'getID3', false ) ) {
-		require( ABSPATH . WPINC . '/ID3/getid3.php' );
+		require ABSPATH . WPINC . '/ID3/getid3.php';
 	}
 
 	$id3  = new getID3();
