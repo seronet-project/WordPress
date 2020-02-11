@@ -706,7 +706,7 @@ class WP_Site_Health {
 		$result = array(
 			'label'       => sprintf(
 				/* translators: %s: The current PHP version. */
-				__( 'Your version of PHP (%s) is up to date' ),
+				__( 'Your site is running the current version of PHP (%s)' ),
 				PHP_VERSION
 			),
 			'status'      => 'good',
@@ -741,7 +741,7 @@ class WP_Site_Health {
 		if ( $response['is_supported'] ) {
 			$result['label'] = sprintf(
 				/* translators: %s: The server PHP version. */
-				__( 'Your version of PHP (%s) is out of date' ),
+				__( 'Your site is running an older version of PHP (%s)' ),
 				PHP_VERSION
 			);
 			$result['status'] = 'recommended';
@@ -753,7 +753,7 @@ class WP_Site_Health {
 		if ( $response['is_secure'] ) {
 			$result['label'] = sprintf(
 				/* translators: %s: The server PHP version. */
-				__( 'Your version of PHP (%s) should be updated' ),
+				__( 'Your site is running an older version of PHP (%s), which should be updated' ),
 				PHP_VERSION
 			);
 			$result['status'] = 'recommended';
@@ -764,7 +764,7 @@ class WP_Site_Health {
 		// Anything no longer secure must be updated.
 		$result['label'] = sprintf(
 			/* translators: %s: The server PHP version. */
-			__( 'Your version of PHP (%s) requires an update' ),
+			__( 'Your site is running an outdated version of PHP (%s), which requires an update' ),
 			PHP_VERSION
 		);
 		$result['status']         = 'critical';
@@ -1398,7 +1398,7 @@ class WP_Site_Health {
 			if ( defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 				$result['label'] = __( 'Your site is set to log errors to a potentially public file.' );
 
-				$result['status'] = 'critical';
+				$result['status'] = ( 0 === strpos( ini_get( 'error_log' ), ABSPATH ) ) ? 'critical' : 'recommended';
 
 				$result['description'] .= sprintf(
 					'<p>%s</p>',
