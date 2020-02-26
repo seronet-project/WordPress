@@ -3799,6 +3799,8 @@ final class WP_Customize_Manager {
 	/**
 	 * Remove a customize setting.
 	 *
+	 * Note that removing the setting doesn't destroy the WP_Customize_Setting instance or remove its filters.
+	 *
 	 * @since 3.4.0
 	 *
 	 * @param string $id Customize Setting ID.
@@ -3854,6 +3856,8 @@ final class WP_Customize_Manager {
 
 	/**
 	 * Remove a customize panel.
+	 *
+	 * Note that removing the panel doesn't destroy the WP_Customize_Panel instance or remove its filters.
 	 *
 	 * @since 4.0.0
 	 *
@@ -3951,6 +3955,8 @@ final class WP_Customize_Manager {
 	/**
 	 * Remove a customize section.
 	 *
+	 * Note that removing the section doesn't destroy the WP_Customize_Section instance or remove its filters.
+	 *
 	 * @since 3.4.0
 	 *
 	 * @param string $id Section ID.
@@ -3993,26 +3999,9 @@ final class WP_Customize_Manager {
 	 * @since 4.5.0 Return added WP_Customize_Control instance.
 	 *
 	 * @param WP_Customize_Control|string $id   Customize Control object, or ID.
-	 * @param array                       $args {
-	 *  Optional. Array of properties for the new Control object. Default empty array.
-	 *
-	 *  @type array        $settings              All settings tied to the control. If undefined, defaults to `$setting`.
-	 *                                            IDs in the array correspond to the ID of a registered `WP_Customize_Setting`.
-	 *  @type string       $setting               The primary setting for the control (if there is one). Default is 'default'.
-	 *  @type string       $capability            Capability required to use this control. Normally derived from `$settings`.
-	 *  @type int          $priority              Order priority to load the control. Default 10.
-	 *  @type string       $section               The section this control belongs to. Default empty.
-	 *  @type string       $label                 Label for the control. Default empty.
-	 *  @type string       $description           Description for the control. Default empty.
-	 *  @type array        $choices               List of choices for 'radio' or 'select' type controls, where values
-	 *                                            are the keys, and labels are the values. Default empty array.
-	 *  @type array        $input_attrs           List of custom input attributes for control output, where attribute
-	 *                                            names are the keys and values are the values. Default empty array.
-	 *  @type bool         $allow_addition        Show UI for adding new content, currently only used for the
-	 *                                            dropdown-pages control. Default false.
-	 *  @type string       $type                  The type of the control. Default 'text'.
-	 *  @type callback     $active_callback       Active callback.
-	 * }
+	 * @param array                       $args Optional. Array of properties for the new Control object.
+	 *                                          See WP_Customize_Control::__construct() for information
+	 *                                          on accepted arguments. Default empty array.
 	 * @return WP_Customize_Control             The instance of the control that was added.
 	 */
 	public function add_control( $id, $args = array() ) {
@@ -4042,6 +4031,8 @@ final class WP_Customize_Manager {
 
 	/**
 	 * Remove a customize control.
+	 *
+	 * Note that removing the control doesn't destroy the WP_Customize_Control instance or remove its filters.
 	 *
 	 * @since 3.4.0
 	 *
