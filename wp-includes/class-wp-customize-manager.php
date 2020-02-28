@@ -3160,7 +3160,7 @@ final class WP_Customize_Manager {
 	 * @param string   $cap     Capability name.
 	 * @param int      $user_id The user ID.
 	 * @param array    $args    Adds the context to the cap. Typically the object ID.
-	 * @return array   Capabilities.
+	 * @return array Capabilities.
 	 */
 	public function grant_edit_post_capability_for_changeset( $caps, $cap, $user_id, $args ) {
 		if ( 'edit_post' === $cap && ! empty( $args[0] ) && 'customize_changeset' === get_post_type( $args[0] ) ) {
@@ -3356,7 +3356,6 @@ final class WP_Customize_Manager {
 	 * @param bool    $post_has_changed Whether the post has changed.
 	 * @param WP_Post $last_revision    The last revision post object.
 	 * @param WP_Post $post             The post object.
-	 *
 	 * @return bool Whether a revision should be made.
 	 */
 	public function _filter_revision_post_has_changed( $post_has_changed, $last_revision, $post ) {
@@ -3680,27 +3679,14 @@ final class WP_Customize_Manager {
 	 * @since 3.4.0
 	 * @since 4.5.0 Return added WP_Customize_Setting instance.
 	 *
+	 * @see WP_Customize_Setting::__construct()
 	 * @link https://developer.wordpress.org/themes/customize-api
 	 *
 	 * @param WP_Customize_Setting|string $id   Customize Setting object, or ID.
-	 * @param array                       $args {
-	 *  Optional. Array of properties for the new WP_Customize_Setting. Default empty array.
-	 *
-	 *  @type string       $type                  Type of the setting. Default 'theme_mod'.
-	 *  @type string       $capability            Capability required for the setting. Default 'edit_theme_options'
-	 *  @type string|array $theme_supports        Theme features required to support the panel. Default is none.
-	 *  @type string       $default               Default value for the setting. Default is empty string.
-	 *  @type string       $transport             Options for rendering the live preview of changes in Customizer.
-	 *                                            Using 'refresh' makes the change visible by reloading the whole preview.
-	 *                                            Using 'postMessage' allows a custom JavaScript to handle live changes.
-	 *                                            Default is 'refresh'.
-	 *  @type callable     $validate_callback     Server-side validation callback for the setting's value.
-	 *  @type callable     $sanitize_callback     Callback to filter a Customize setting value in un-slashed form.
-	 *  @type callable     $sanitize_js_callback  Callback to convert a Customize PHP setting value to a value that is
-	 *                                            JSON serializable.
-	 *  @type bool         $dirty                 Whether or not the setting is initially dirty when created.
-	 * }
-	 * @return WP_Customize_Setting             The instance of the setting that was added.
+	 * @param array                       $args Optional. Array of properties for the new Setting object.
+	 *                                          See WP_Customize_Setting::__construct() for information
+	 *                                          on accepted arguments. Default empty array.
+	 * @return WP_Customize_Setting The instance of the setting that was added.
 	 */
 	public function add_setting( $id, $args = array() ) {
 		if ( $id instanceof WP_Customize_Setting ) {
@@ -3815,19 +3801,13 @@ final class WP_Customize_Manager {
 	 * @since 4.0.0
 	 * @since 4.5.0 Return added WP_Customize_Panel instance.
 	 *
-	 * @param WP_Customize_Panel|string $id   Customize Panel object, or Panel ID.
-	 * @param array                     $args {
-	 *  Optional. Array of properties for the new Panel object. Default empty array.
-	 *  @type int          $priority              Priority of the panel, defining the display order of panels and sections.
-	 *                                            Default 160.
-	 *  @type string       $capability            Capability required for the panel. Default `edit_theme_options`
-	 *  @type string|array $theme_supports        Theme features required to support the panel.
-	 *  @type string       $title                 Title of the panel to show in UI.
-	 *  @type string       $description           Description to show in the UI.
-	 *  @type string       $type                  Type of the panel.
-	 *  @type callable     $active_callback       Active callback.
-	 * }
-	 * @return WP_Customize_Panel             The instance of the panel that was added.
+	 * @see WP_Customize_Panel::__construct()
+	 *
+	 * @param WP_Customize_Panel|string $id   Customize Panel object, or ID.
+	 * @param array                     $args Optional. Array of properties for the new Panel object.
+	 *                                        See WP_Customize_Panel::__construct() for information
+	 *                                        on accepted arguments. Default empty array.
+	 * @return WP_Customize_Panel The instance of the panel that was added.
 	 */
 	public function add_panel( $id, $args = array() ) {
 		if ( $id instanceof WP_Customize_Panel ) {
@@ -3911,21 +3891,13 @@ final class WP_Customize_Manager {
 	 * @since 3.4.0
 	 * @since 4.5.0 Return added WP_Customize_Section instance.
 	 *
-	 * @param WP_Customize_Section|string $id   Customize Section object, or Section ID.
-	 * @param array                     $args {
-	 *  Optional. Array of properties for the new Section object. Default empty array.
-	 *  @type int          $priority              Priority of the section, defining the display order of panels and sections.
-	 *                                            Default 160.
-	 *  @type string       $panel                 The panel this section belongs to (if any). Default empty.
-	 *  @type string       $capability            Capability required for the section. Default 'edit_theme_options'
-	 *  @type string|array $theme_supports        Theme features required to support the section.
-	 *  @type string       $title                 Title of the section to show in UI.
-	 *  @type string       $description           Description to show in the UI.
-	 *  @type string       $type                  Type of the section.
-	 *  @type callable     $active_callback       Active callback.
-	 *  @type bool         $description_hidden    Hide the description behind a help icon, instead of inline above the first control. Default false.
-	 * }
-	 * @return WP_Customize_Section             The instance of the section that was added.
+	 * @see WP_Customize_Section::__construct()
+	 *
+	 * @param WP_Customize_Section|string $id   Customize Section object, or ID.
+	 * @param array                       $args Optional. Array of properties for the new Section object.
+	 *                                          See WP_Customize_Section::__construct() for information
+	 *                                          on accepted arguments. Default empty array.
+	 * @return WP_Customize_Section The instance of the section that was added.
 	 */
 	public function add_section( $id, $args = array() ) {
 		if ( $id instanceof WP_Customize_Section ) {
@@ -4004,7 +3976,7 @@ final class WP_Customize_Manager {
 	 * @param array                       $args Optional. Array of properties for the new Control object.
 	 *                                          See WP_Customize_Control::__construct() for information
 	 *                                          on accepted arguments. Default empty array.
-	 * @return WP_Customize_Control             The instance of the control that was added.
+	 * @return WP_Customize_Control The instance of the control that was added.
 	 */
 	public function add_control( $id, $args = array() ) {
 		if ( $id instanceof WP_Customize_Control ) {
