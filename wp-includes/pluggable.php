@@ -573,16 +573,21 @@ if ( ! function_exists( 'wp_logout' ) ) :
 	 * @since 2.5.0
 	 */
 	function wp_logout() {
+		$user_id = get_current_user_id();
+
 		wp_destroy_current_session();
 		wp_clear_auth_cookie();
 		wp_set_current_user( 0 );
 
 		/**
-		 * Fires after a user is logged-out.
+		 * Fires after a user is logged out.
 		 *
 		 * @since 1.5.0
+		 * @since 5.5.0 Added the `$user_id` parameter.
+		 *
+		 * @param int $user_id ID of the user that was logged out.
 		 */
-		do_action( 'wp_logout' );
+		do_action( 'wp_logout', $user_id );
 	}
 endif;
 
@@ -2601,6 +2606,8 @@ if ( ! function_exists( 'get_avatar' ) ) :
 	 *                                       Default null.
 	 *     @type bool         $force_display Whether to always show the avatar - ignores the show_avatars option.
 	 *                                       Default false.
+	 *     @type string       $loading       Value for the `loading` attribute.
+	 *                                       Default null.
 	 *     @type string       $extra_attr    HTML attributes to insert in the IMG element. Is not sanitized. Default empty.
 	 * }
 	 * @return string|false `<img>` tag for the user's avatar. False on failure.
@@ -2618,8 +2625,13 @@ if ( ! function_exists( 'get_avatar' ) ) :
 			'alt'           => '',
 			'class'         => null,
 			'force_display' => false,
+			'loading'       => null,
 			'extra_attr'    => '',
 		);
+
+		if ( wp_lazy_loading_enabled( 'img', 'get_avatar' ) ) {
+			$defaults['loading'] = 'lazy';
+		}
 
 		if ( empty( $args ) ) {
 			$args = array();
@@ -2690,6 +2702,18 @@ if ( ! function_exists( 'get_avatar' ) ) :
 			}
 		}
 
+		// Add `loading` attribute.
+		$extra_attr = $args['extra_attr'];
+		$loading    = $args['loading'];
+
+		if ( in_array( $loading, array( 'lazy', 'eager' ), true ) && ! preg_match( '/\bloading\s*=/', $extra_attr ) ) {
+			if ( ! empty( $extra_attr ) ) {
+				$extra_attr .= ' ';
+			}
+
+			$extra_attr .= "loading='{$loading}'";
+		}
+
 		$avatar = sprintf(
 			"<img alt='%s' src='%s' srcset='%s' class='%s' height='%d' width='%d' %s/>",
 			esc_attr( $args['alt'] ),
@@ -2698,7 +2722,7 @@ if ( ! function_exists( 'get_avatar' ) ) :
 			esc_attr( join( ' ', $class ) ),
 			(int) $args['height'],
 			(int) $args['width'],
-			$args['extra_attr']
+			$extra_attr
 		);
 
 		/**
