@@ -719,16 +719,6 @@ function wp_default_scripts( $scripts ) {
 		'authcheckL10n',
 		array(
 			'beforeunload' => __( 'Your session has expired. You can log in again from this page or go to the login page.' ),
-
-			/**
-			 * Filters the authentication check interval.
-			 *
-			 * @since 3.6.0
-			 *
-			 * @param int $interval The interval in which to check a user's authentication.
-			 *                      Default 3 minutes in seconds, or 180.
-			 */
-			'interval'     => apply_filters( 'wp_auth_check_interval', 3 * MINUTE_IN_SECONDS ),
 		)
 	);
 
@@ -1981,6 +1971,7 @@ function wp_localize_community_events() {
  * the $_wp_admin_css_colors array value URL.
  *
  * @since 2.6.0
+ *
  * @global array $_wp_admin_css_colors
  *
  * @param string $src    Source URL.
@@ -2193,7 +2184,7 @@ function wp_print_footer_scripts() {
 }
 
 /**
- * Wrapper for do_action('wp_enqueue_scripts')
+ * Wrapper for do_action( 'wp_enqueue_scripts' ).
  *
  * Allows plugins to queue scripts for the front end using wp_enqueue_script().
  * Runs first in wp_head() where all is_home(), is_page(), etc. functions are available.
