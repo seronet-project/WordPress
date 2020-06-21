@@ -1982,8 +1982,6 @@ add_shortcode( 'gallery', 'gallery_shortcode' );
  *
  * @since 2.5.0
  *
- * @staticvar int $instance
- *
  * @param array $attr {
  *     Attributes of the gallery shortcode.
  *
@@ -2312,7 +2310,6 @@ function wp_playlist_scripts( $type ) {
  * @since 3.9.0
  *
  * @global int $content_width
- * @staticvar int $instance
  *
  * @param array $attr {
  *     Array of default playlist attributes.
@@ -2646,8 +2643,6 @@ function wp_get_attachment_id3_keys( $attachment, $context = 'display' ) {
  *
  * @since 3.6.0
  *
- * @staticvar int $instance
- *
  * @param array  $attr {
  *     Attributes of the audio shortcode.
  *
@@ -2860,7 +2855,6 @@ function wp_get_video_extensions() {
  * @since 3.6.0
  *
  * @global int $content_width
- * @staticvar int $instance
  *
  * @param array  $attr {
  *     Attributes of the shortcode.
@@ -4329,7 +4323,7 @@ function get_post_galleries( $post, $html = true ) {
 					$shortcode_attrs = array();
 				}
 
-				// Specify the post id of the gallery we're viewing if the shortcode doesn't reference another post already.
+				// Specify the post ID of the gallery we're viewing if the shortcode doesn't reference another post already.
 				if ( ! isset( $shortcode_attrs['id'] ) ) {
 					$shortcode[3] .= ' id="' . intval( $post->ID ) . '"';
 				}
@@ -4502,7 +4496,7 @@ function attachment_url_to_postid( $url ) {
 	}
 
 	/**
-	 * Filters an attachment id found by URL.
+	 * Filters an attachment ID found by URL.
 	 *
 	 * @since 4.2.0
 	 *
@@ -4547,8 +4541,8 @@ function wp_register_media_personal_data_exporter( $exporters ) {
  *
  * @since 4.9.6
  *
- * @param  string $email_address The attachment owner email address.
- * @param  int    $page          Attachment page.
+ * @param string $email_address The attachment owner email address.
+ * @param int    $page          Attachment page.
  * @return array An array of personal data.
  */
 function wp_media_personal_data_exporter( $email_address, $page = 1 ) {
