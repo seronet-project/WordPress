@@ -473,7 +473,7 @@ class WP_List_Table {
 
 		echo "</select>\n";
 
-		submit_button( __( 'Apply' ), 'action', '', false, array( 'id' => "doaction$two" ) );
+		submit_button( __( 'Apply' ), 'action', "doaction$two", false, array( 'id' => "doaction$two" ) );
 		echo "\n";
 	}
 
@@ -489,12 +489,12 @@ class WP_List_Table {
 			return false;
 		}
 
-		if ( isset( $_REQUEST['action'] ) && -1 != $_REQUEST['action'] ) {
-			return $_REQUEST['action'];
+		if ( isset( $_REQUEST['doaction2'] ) && isset( $_REQUEST['action2'] ) && -1 != $_REQUEST['action2'] ) {
+			return $_REQUEST['action2'];
 		}
 
-		if ( isset( $_REQUEST['action2'] ) && -1 != $_REQUEST['action2'] ) {
-			return $_REQUEST['action2'];
+		if ( isset( $_REQUEST['action'] ) && -1 != $_REQUEST['action'] ) {
+			return $_REQUEST['action'];
 		}
 
 		return false;
@@ -946,12 +946,12 @@ class WP_List_Table {
 	}
 
 	/**
-	 * Get a list of sortable columns. The format is:
-	 * 'internal-name' => 'orderby'
-	 * or
-	 * 'internal-name' => array( 'orderby', true )
+	 * Get a list of sortable columns.
 	 *
-	 * The second format will make the initial sorting order be descending
+	 * The format is:
+	 * - `'internal-name' => 'orderby'`
+	 * - `'internal-name' => array( 'orderby', 'asc' )` - The second element set the initial sorting order.
+	 * - `'internal-name' => array( 'orderby', true )` - The second element will make the initial sorting order be descending.
 	 *
 	 * @since 3.1.0
 	 *
@@ -1161,9 +1161,13 @@ class WP_List_Table {
 					$class[] = 'sorted';
 					$class[] = $current_order;
 				} else {
-					$order   = $desc_first ? 'desc' : 'asc';
+					if ( in_array( strtolower( $desc_first ), array( 'desc', 'asc' ), true ) ) {
+						$order = 'asc' === strtolower( $desc_first ) ? 'desc' : 'asc';
+					} else {
+						$order = $desc_first ? 'desc' : 'asc';
+					}
 					$class[] = 'sortable';
-					$class[] = $desc_first ? 'asc' : 'desc';
+					$class[] = 'desc' === $order ? 'asc' : 'desc';
 				}
 
 				$column_display_name = '<a href="' . esc_url( add_query_arg( compact( 'orderby', 'order' ), $current_url ) ) . '"><span>' . $column_display_name . '</span><span class="sorting-indicator"></span></a>';
