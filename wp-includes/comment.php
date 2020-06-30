@@ -517,9 +517,11 @@ function get_comment_meta( $comment_id, $key = '', $single = false ) {
  * @param string $meta_key   Metadata key.
  * @param mixed  $meta_value Metadata value. Must be serializable if non-scalar.
  * @param mixed  $prev_value Optional. Previous value to check before updating.
- *                           Default empty.
+ *                           If specified, only update existing metadata entries with
+ *                           this value. Otherwise, update all entries. Default empty.
  * @return int|bool Meta ID if the key didn't exist, true on successful update,
- *                  false on failure.
+ *                  false on failure or if the value passed to the function
+ *                  is the same as the one that is already in the database.
  */
 function update_comment_meta( $comment_id, $meta_key, $meta_value, $prev_value = '' ) {
 	return update_metadata( 'comment', $comment_id, $meta_key, $meta_value, $prev_value );
@@ -2425,8 +2427,8 @@ function wp_set_comment_status( $comment_id, $comment_status, $wp_error = false 
  *
  * @param array $commentarr Contains information on the comment.
  * @param bool  $wp_error   Optional. Whether to return a WP_Error on failure. Default false.
- * @return int|bool|WP_Error Comment was updated if value is 1, or was not updated if value is 0,
- *                           false, or a WP_Error object.
+ * @return int|false|WP_Error The value 1 if the comment was updated, 0 if not updated.
+ *                            False or a WP_Error object on failure.
  */
 function wp_update_comment( $commentarr, $wp_error = false ) {
 	global $wpdb;
@@ -2434,20 +2436,20 @@ function wp_update_comment( $commentarr, $wp_error = false ) {
 	// First, get all of the original fields.
 	$comment = get_comment( $commentarr['comment_ID'], ARRAY_A );
 	if ( empty( $comment ) ) {
-		if ( ! $wp_error ) {
+		if ( $wp_error ) {
+			return new WP_Error( 'invalid_comment_id', __( 'Invalid comment ID.' ) );
+		} else {
 			return 0;
 		}
-
-		return new WP_Error( 'invalid_comment_id', __( 'Invalid comment ID.' ) );
 	}
 
 	// Make sure that the comment post ID is valid (if specified).
 	if ( ! empty( $commentarr['comment_post_ID'] ) && ! get_post( $commentarr['comment_post_ID'] ) ) {
-		if ( ! $wp_error ) {
+		if ( $wp_error ) {
+			return new WP_Error( 'invalid_post_id', __( 'Invalid post ID.' ) );
+		} else {
 			return 0;
 		}
-
-		return new WP_Error( 'invalid_post_id', __( 'Invalid post ID.' ) );
 	}
 
 	// Escape data pulled from DB.
@@ -2488,8 +2490,8 @@ function wp_update_comment( $commentarr, $wp_error = false ) {
 	/**
 	 * Filters the comment data immediately before it is updated in the database.
 	 *
-	 * Note: data being passed to the filter is already unslashed. Returning 0 or a
-	 * WP_Error object is preventing the comment to be updated.
+	 * Note: data being passed to the filter is already unslashed. Returning false
+	 * or a WP_Error object would prevent the comment from being updated.
 	 *
 	 * @since 4.7.0
 	 * @since 5.5.0 The `$wp_error` parameter was added.
@@ -2497,20 +2499,35 @@ function wp_update_comment( $commentarr, $wp_error = false ) {
 	 * @param array $data       The new, processed comment data.
 	 * @param array $comment    The old, unslashed comment data.
 	 * @param array $commentarr The new, raw comment data.
-	 * @param bool  $wp_error   Optional. Whether to return a WP_Error on failure.
-	 *                          Default false.
+	 * @param bool  $wp_error   Whether to return a WP_Error on failure.
 	 */
 	$data = apply_filters( 'wp_update_comment_data', $data, $comment, $commentarr, $wp_error );
 
+	if ( ! $data ) {
+		$data = new WP_Error( 'comment_update_canceled', __( 'Comment update canceled.' ) );
+	}
+
 	// Do not carry on on failure.
-	if ( is_wp_error( $data ) || 0 === $data ) {
-		return $data;
+	if ( is_wp_error( $data ) ) {
+		if ( $wp_error ) {
+			return $data;
+		} else {
+			return false;
+		}
 	}
 
 	$keys = array( 'comment_post_ID', 'comment_content', 'comment_author', 'comment_author_email', 'comment_approved', 'comment_karma', 'comment_author_url', 'comment_date', 'comment_date_gmt', 'comment_type', 'comment_parent', 'user_id', 'comment_agent', 'comment_author_IP' );
 	$data = wp_array_slice_assoc( $data, $keys );
 
 	$rval = $wpdb->update( $wpdb->comments, $data, compact( 'comment_ID' ) );
+
+	if ( false === $rval ) {
+		if ( $wp_error ) {
+			return new WP_Error( 'db_update_error', __( 'Could not update comment in the database.' ), $wpdb->last_error );
+		} else {
+			return false;
+		}
+	}
 
 	// If metadata is provided, store it.
 	if ( isset( $commentarr['comment_meta'] ) && is_array( $commentarr['comment_meta'] ) ) {
