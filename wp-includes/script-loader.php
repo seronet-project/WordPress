@@ -800,8 +800,8 @@ function wp_default_scripts( $scripts ) {
 
 	// Masonry v2 depended on jQuery. v3 does not. The older jquery-masonry handle is a shiv.
 	// It sets jQuery as a dependency, as the theme may have been implicitly loading it this way.
-	$scripts->add( 'imagesloaded', '/wp-includes/js/imagesloaded.min.js', array(), '3.2.0', 1 );
-	$scripts->add( 'masonry', '/wp-includes/js/masonry.min.js', array( 'imagesloaded' ), '3.3.2', 1 );
+	$scripts->add( 'imagesloaded', '/wp-includes/js/imagesloaded.min.js', array(), '4.1.4', 1 );
+	$scripts->add( 'masonry', '/wp-includes/js/masonry.min.js', array( 'imagesloaded' ), '4.2.2', 1 );
 	$scripts->add( 'jquery-masonry', "/wp-includes/js/jquery/jquery.masonry$dev_suffix.js", array( 'jquery', 'masonry' ), '3.1.2b', 1 );
 
 	$scripts->add( 'thickbox', '/wp-includes/js/thickbox/thickbox.js', array( 'jquery' ), '3.1-20121105', 1 );
@@ -1205,8 +1205,9 @@ function wp_default_scripts( $scripts ) {
 
 	// To enqueue media-views or media-editor, call wp_enqueue_media().
 	// Both rely on numerous settings, styles, and templates to operate correctly.
-	$scripts->add( 'media-views', "/wp-includes/js/media-views$suffix.js", array( 'utils', 'media-models', 'wp-plupload', 'jquery-ui-sortable', 'wp-mediaelement', 'wp-api-request', 'wp-a11y', 'wp-i18n', 'clipboard' ), false, 1 );
+	$scripts->add( 'media-views', "/wp-includes/js/media-views$suffix.js", array( 'utils', 'media-models', 'wp-plupload', 'jquery-ui-sortable', 'wp-mediaelement', 'wp-api-request', 'wp-a11y', 'clipboard' ), false, 1 );
 	$scripts->set_translations( 'media-views' );
+
 	$scripts->add( 'media-editor', "/wp-includes/js/media-editor$suffix.js", array( 'shortcode', 'media-views' ), false, 1 );
 	$scripts->add( 'media-audiovideo', "/wp-includes/js/media-audiovideo$suffix.js", array( 'media-editor' ), false, 1 );
 	$scripts->add( 'mce-view', "/wp-includes/js/mce-view$suffix.js", array( 'shortcode', 'jquery', 'media-views', 'media-audiovideo' ), false, 1 );
@@ -1379,24 +1380,11 @@ function wp_default_scripts( $scripts ) {
 			)
 		);
 
-		$scripts->add( 'site-health', "/wp-admin/js/site-health$suffix.js", array( 'clipboard', 'jquery', 'wp-util', 'wp-a11y', 'wp-i18n' ), false, 1 );
+		$scripts->add( 'site-health', "/wp-admin/js/site-health$suffix.js", array( 'clipboard', 'jquery', 'wp-util', 'wp-a11y' ), false, 1 );
 		$scripts->set_translations( 'site-health' );
 
-		$scripts->add( 'privacy-tools', "/wp-admin/js/privacy-tools$suffix.js", array( 'jquery', 'wp-a11y', 'wp-i18n' ), false, 1 );
-		did_action( 'init' ) && $scripts->localize(
-			'privacy-tools',
-			'privacyToolsL10n',
-			array(
-				'noDataFound'     => __( 'No personal data was found for this user.' ),
-				'foundAndRemoved' => __( 'All of the personal data found for this user was erased.' ),
-				'noneRemoved'     => __( 'Personal data was found for this user but was not erased.' ),
-				'someNotRemoved'  => __( 'Personal data was found for this user but some of the personal data found was not erased.' ),
-				'removalError'    => __( 'An error occurred while attempting to find and erase personal data.' ),
-				'emailSent'       => __( 'The personal data export link for this user was sent.' ),
-				'noExportFile'    => __( 'No personal data export file was generated.' ),
-				'exportError'     => __( 'An error occurred while attempting to export personal data.' ),
-			)
-		);
+		$scripts->add( 'privacy-tools', "/wp-admin/js/privacy-tools$suffix.js", array( 'jquery', 'wp-a11y' ), false, 1 );
+		$scripts->set_translations( 'privacy-tools' );
 
 		$scripts->add( 'updates', "/wp-admin/js/updates$suffix.js", array( 'jquery', 'wp-util', 'wp-a11y', 'wp-sanitize' ), false, 1 );
 		$scripts->set_translations( 'updates' );
