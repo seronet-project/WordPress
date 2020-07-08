@@ -1181,6 +1181,7 @@ function wp_removable_query_args() {
 	$removable_query_args = array(
 		'activate',
 		'activated',
+		'admin_email_remind_later',
 		'approved',
 		'deactivate',
 		'delete_count',
@@ -2532,8 +2533,25 @@ function wp_unique_filename( $dir, $filename, $unique_filename_callback = null )
 
 		// The (resized) image files would have name and extension, and will be in the uploads dir.
 		if ( $name && $ext && @is_dir( $dir ) && false !== strpos( $dir, $upload_dir['basedir'] ) ) {
-			// List of all files and directories contained in $dir.
-			$files = @scandir( $dir );
+			/**
+			 * Filters the file list used for calculating a unique filename for a newly added file.
+			 *
+			 * Returning an array from the filter will effectively short-circuit retrieval
+			 * from the filesystem and return the passed value instead.
+			 *
+			 * @since 5.5.0
+			 *
+			 * @param array|null $files    The list of files to use for filename comparisons.
+			 *                             Default null (to retrieve the list from the filesystem).
+			 * @param string     $dir      The directory for the new file.
+			 * @param string     $filename The proposed filename for the new file.
+			 */
+			$files = apply_filters( 'pre_wp_unique_filename_file_list', null, $dir, $filename );
+
+			if ( null === $files ) {
+				// List of all files and directories contained in $dir.
+				$files = @scandir( $dir );
+			}
 
 			if ( ! empty( $files ) ) {
 				// Remove "dot" dirs.
@@ -3486,7 +3504,7 @@ function _default_wp_die_handler( $message, $title = '', $args = array() ) {
 		}
 		a:hover,
 		a:active {
-			color: #00a0d2;
+			color: #006799;
 		}
 		a:focus {
 			color: #124964;
@@ -4037,6 +4055,19 @@ function _wp_json_prepare_data( $data ) {
  * @param int   $status_code The HTTP status code to output.
  */
 function wp_send_json( $response, $status_code = null ) {
+	if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+		_doing_it_wrong(
+			__FUNCTION__,
+			sprintf(
+				/* translators: 1: WP_REST_Response, 2: WP_Error */
+				__( 'Return a %1$s or %2$s object from your callback when using the REST API.' ),
+				'WP_REST_Response',
+				'WP_Error'
+			),
+			'5.5.0'
+		);
+	}
+
 	if ( ! headers_sent() ) {
 		header( 'Content-Type: application/json; charset=' . get_option( 'blog_charset' ) );
 		if ( null !== $status_code ) {
@@ -5179,7 +5210,7 @@ function _doing_it_wrong( $function, $message, $version ) {
 
 			trigger_error(
 				sprintf(
-					/* translators: Developer debugging message. 1: PHP function name, 2: Explanatory message, 3: Version information message. */
+					/* translators: Developer debugging message. 1: PHP function name, 2: Explanatory message, 3: WordPress version number. */
 					__( '%1$s was called <strong>incorrectly</strong>. %2$s %3$s' ),
 					$function,
 					$message,

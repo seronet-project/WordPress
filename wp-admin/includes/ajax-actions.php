@@ -1927,7 +1927,7 @@ function wp_ajax_meta_box_order() {
 		update_user_option( $user->ID, "screen_layout_$page", $page_columns, true );
 	}
 
-	wp_die( 1 );
+	wp_send_json_success();
 }
 
 /**
@@ -2607,8 +2607,11 @@ function wp_ajax_image_editor() {
 	switch ( $_POST['do'] ) {
 		case 'save':
 			$msg = wp_save_image( $attachment_id );
-			$msg = wp_json_encode( $msg );
-			wp_die( $msg );
+			if ( $msg->error ) {
+				wp_send_json_error( $msg );
+			}
+
+			wp_send_json_success( $msg );
 			break;
 		case 'scale':
 			$msg = wp_save_image( $attachment_id );
@@ -2618,8 +2621,25 @@ function wp_ajax_image_editor() {
 			break;
 	}
 
+	ob_start();
 	wp_image_editor( $attachment_id, $msg );
-	wp_die();
+	$html = ob_get_clean();
+
+	if ( $msg->error ) {
+		wp_send_json_error(
+			array(
+				'message' => $msg,
+				'html'    => $html,
+			)
+		);
+	}
+
+	wp_send_json_success(
+		array(
+			'message' => $msg,
+			'html'    => $html,
+		)
+	);
 }
 
 /**

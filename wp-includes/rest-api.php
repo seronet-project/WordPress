@@ -184,6 +184,8 @@ function rest_api_default_filters() {
 		add_filter( 'deprecated_function_trigger_error', '__return_false' );
 		add_action( 'deprecated_argument_run', 'rest_handle_deprecated_argument', 10, 3 );
 		add_filter( 'deprecated_argument_trigger_error', '__return_false' );
+		add_action( 'doing_it_wrong_run', 'rest_handle_doing_it_wrong', 10, 3 );
+		add_filter( 'doing_it_wrong_trigger_error', '__return_false' );
 	}
 
 	// Default serving.
@@ -586,7 +588,7 @@ function rest_handle_deprecated_argument( $function, $message, $version ) {
 	if ( ! WP_DEBUG || headers_sent() ) {
 		return;
 	}
-	if ( ! empty( $message ) ) {
+	if ( $message ) {
 		/* translators: 1: Function name, 2: WordPress version number, 3: Error message. */
 		$string = sprintf( __( '%1$s (since %2$s; %3$s)' ), $function, $version, $message );
 	} else {
@@ -595,6 +597,33 @@ function rest_handle_deprecated_argument( $function, $message, $version ) {
 	}
 
 	header( sprintf( 'X-WP-DeprecatedParam: %s', $string ) );
+}
+
+/**
+ * Handles _doing_it_wrong errors.
+ *
+ * @since 5.5.0
+ *
+ * @param string      $function The function that was called.
+ * @param string      $message  A message explaining what has been done incorrectly.
+ * @param string|null $version  The version of WordPress where the message was added.
+ */
+function rest_handle_doing_it_wrong( $function, $message, $version ) {
+	if ( ! WP_DEBUG || headers_sent() ) {
+		return;
+	}
+
+	if ( $version ) {
+		/* translators: Developer debugging message. 1: PHP function name, 2: WordPress version number, 3: Explanatory message. */
+		$string = __( '%1$s (since %2$s; %3$s)' );
+		$string = sprintf( $string, $function, $version, $message );
+	} else {
+		/* translators: Developer debugging message. 1: PHP function name, 2: Explanatory message. */
+		$string = __( '%1$s (%2$s)' );
+		$string = sprintf( $string, $function, $message );
+	}
+
+	header( sprintf( 'X-WP-DoingItWrong: %s', $string ) );
 }
 
 /**
@@ -1439,6 +1468,63 @@ function rest_handle_multi_type_schema( $value, $args, $param = '' ) {
 }
 
 /**
+ * Checks if an array is made up of unique items.
+ *
+ * @since 5.5.0
+ *
+ * @param array $array The array to check.
+ * @return bool True if the array contains unique items, false otherwise.
+ */
+function rest_validate_array_contains_unique_items( $array ) {
+	$seen = array();
+
+	foreach ( $array as $item ) {
+		$stabilized = rest_stabilize_value( $item );
+		$key        = serialize( $stabilized );
+
+		if ( ! isset( $seen[ $key ] ) ) {
+			$seen[ $key ] = true;
+
+			continue;
+		}
+
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Stabilizes a value following JSON Schema semantics.
+ *
+ * For lists, order is preserved. For objects, properties are reordered alphabetically.
+ *
+ * @since 5.5.0
+ *
+ * @param mixed $value The value to stabilize. Must already be sanitized. Objects should have been converted to arrays.
+ * @return mixed The stabilized value.
+ */
+function rest_stabilize_value( $value ) {
+	if ( is_scalar( $value ) || is_null( $value ) ) {
+		return $value;
+	}
+
+	if ( is_object( $value ) ) {
+		_doing_it_wrong( __FUNCTION__, __( 'Cannot stabilize objects. Convert the object to an array first.' ), '5.5.0' );
+
+		return $value;
+	}
+
+	ksort( $value );
+
+	foreach ( $value as $k => $v ) {
+		$value[ $k ] = rest_stabilize_value( $v );
+	}
+
+	return $value;
+}
+
+/**
  * Validate a value based on a schema.
  *
  * @since 4.7.0
@@ -1448,8 +1534,8 @@ function rest_handle_multi_type_schema( $value, $args, $param = '' ) {
  * @since 5.4.0 Convert an empty string to an empty object.
  * @since 5.5.0 Add the "uuid" and "hex-color" formats.
  *              Support the "minLength", "maxLength" and "pattern" keywords for strings.
+ *              Support the "minItems", "maxItems" and "uniqueItems" keywords for arrays.
  *              Validate required properties.
- *              Support the "minItems" and "maxItems" keywords for arrays.
  *
  * @param mixed  $value The value to validate.
  * @param array  $args  Schema array to use for validation.
@@ -1492,10 +1578,12 @@ function rest_validate_value_from_schema( $value, $args, $param = '' ) {
 
 		$value = rest_sanitize_array( $value );
 
-		foreach ( $value as $index => $v ) {
-			$is_valid = rest_validate_value_from_schema( $v, $args['items'], $param . '[' . $index . ']' );
-			if ( is_wp_error( $is_valid ) ) {
-				return $is_valid;
+		if ( isset( $args['items'] ) ) {
+			foreach ( $value as $index => $v ) {
+				$is_valid = rest_validate_value_from_schema( $v, $args['items'], $param . '[' . $index . ']' );
+				if ( is_wp_error( $is_valid ) ) {
+					return $is_valid;
+				}
 			}
 		}
 
@@ -1507,6 +1595,11 @@ function rest_validate_value_from_schema( $value, $args, $param = '' ) {
 		if ( isset( $args['maxItems'] ) && count( $value ) > $args['maxItems'] ) {
 			/* translators: 1: Parameter, 2: Number. */
 			return new WP_Error( 'rest_invalid_param', sprintf( __( '%1$s must contain at most %2$s items.' ), $param, number_format_i18n( $args['maxItems'] ) ) );
+		}
+
+		if ( ! empty( $args['uniqueItems'] ) && ! rest_validate_array_contains_unique_items( $value ) ) {
+			/* translators: 1: Parameter */
+			return new WP_Error( 'rest_invalid_param', sprintf( __( '%1$s has duplicate items.' ), $param ) );
 		}
 	}
 
@@ -1718,7 +1811,7 @@ function rest_validate_value_from_schema( $value, $args, $param = '' ) {
  * @param mixed  $value The value to sanitize.
  * @param array  $args  Schema array to use for sanitization.
  * @param string $param The parameter name, used in error messages.
- * @return mixed The sanitized value.
+ * @return mixed|WP_Error The sanitized value or a WP_Error instance if the value cannot be safely sanitized.
  */
 function rest_sanitize_value_from_schema( $value, $args, $param = '' ) {
 	$allowed_types = array( 'array', 'object', 'string', 'number', 'integer', 'boolean', 'null' );
@@ -1750,12 +1843,15 @@ function rest_sanitize_value_from_schema( $value, $args, $param = '' ) {
 	if ( 'array' === $args['type'] ) {
 		$value = rest_sanitize_array( $value );
 
-		if ( empty( $args['items'] ) ) {
-			return $value;
+		if ( ! empty( $args['items'] ) ) {
+			foreach ( $value as $index => $v ) {
+				$value[ $index ] = rest_sanitize_value_from_schema( $v, $args['items'], $param . '[' . $index . ']' );
+			}
 		}
 
-		foreach ( $value as $index => $v ) {
-			$value[ $index ] = rest_sanitize_value_from_schema( $v, $args['items'], $param . '[' . $index . ']' );
+		if ( ! empty( $args['uniqueItems'] ) && ! rest_validate_array_contains_unique_items( $value ) ) {
+			/* translators: 1: Parameter */
+			return new WP_Error( 'rest_invalid_param', sprintf( __( '%1$s has duplicate items.' ), $param ) );
 		}
 
 		return $value;
