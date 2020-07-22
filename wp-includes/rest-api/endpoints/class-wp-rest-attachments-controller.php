@@ -424,7 +424,7 @@ class WP_REST_Attachments_Controller extends WP_REST_Posts_Controller {
 		if (
 			! $image_meta ||
 			! $image_file ||
-			! wp_image_file_matches_image_meta( $request['src'], $image_meta )
+			! wp_image_file_matches_image_meta( $request['src'], $image_meta, $attachment_id )
 		) {
 			return new WP_Error(
 				'rest_unknown_attachment',
@@ -579,6 +579,12 @@ class WP_REST_Attachments_Controller extends WP_REST_Posts_Controller {
 		if ( ! empty( $image_alt ) ) {
 			// update_post_meta() expects slashed.
 			update_post_meta( $new_attachment_id, '_wp_attachment_image_alt', wp_slash( $image_alt ) );
+		}
+
+		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+			// Set a custom header with the attachment_id.
+			// Used by the browser/client to resume creating image sub-sizes after a PHP fatal error.
+			header( 'X-WP-Upload-Attachment-ID: ' . $new_attachment_id );
 		}
 
 		// Generate image sub-sizes and meta.
