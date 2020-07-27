@@ -548,7 +548,7 @@ class WP_REST_Plugins_Controller extends WP_REST_Controller {
 			'network_only' => $item['Network'],
 			'requires_wp'  => $item['RequiresWP'],
 			'requires_php' => $item['RequiresPHP'],
-			'text_domain'  => $item['TextDomain'],
+			'textdomain'   => $item['TextDomain'],
 		);
 
 		$data = $this->add_additional_fields_to_object( $data, $request );
@@ -815,7 +815,7 @@ class WP_REST_Plugins_Controller extends WP_REST_Controller {
 	/**
 	 * Retrieves the plugin's schema, conforming to JSON Schema.
 	 *
-	 * @since 4.7.0
+	 * @since 5.5.0
 	 *
 	 * @return array Item schema data.
 	 */
@@ -908,7 +908,7 @@ class WP_REST_Plugins_Controller extends WP_REST_Controller {
 					'readonly'    => true,
 					'context'     => array( 'view', 'edit', 'embed' ),
 				),
-				'text_domain'  => array(
+				'textdomain'   => array(
 					'description' => __( 'The plugin\'s text domain.' ),
 					'type'        => 'string',
 					'readonly'    => true,
