@@ -2120,7 +2120,7 @@ function delete_post_meta( $post_id, $meta_key, $meta_value = '' ) {
  *                        This parameter has no effect if $key is not specified.
  *                        Default false.
  * @return mixed An array if $single is false. The value of the meta field
- *               if $single is true.
+ *               if $single is true. False for an invalid $post_id.
  */
 function get_post_meta( $post_id, $key = '', $single = false ) {
 	return get_metadata( 'post', $post_id, $key, $single );
@@ -4054,14 +4054,14 @@ function wp_insert_post( $postarr, $wp_error = false ) {
 					$postarr['tax_input'][ $taxonomy ] = array_filter( $postarr['tax_input'][ $taxonomy ] );
 				}
 
-				// Passed custom taxonomy list overwrites existing list if not empty.
+				// Passed custom taxonomy list overwrites the existing list if not empty.
 				$terms = wp_get_object_terms( $post_ID, $taxonomy, array( 'fields' => 'ids' ) );
 				if ( ! empty( $terms ) && empty( $postarr['tax_input'][ $taxonomy ] ) ) {
 					$postarr['tax_input'][ $taxonomy ] = $terms;
 				}
 
 				if ( empty( $postarr['tax_input'][ $taxonomy ] ) ) {
-					$default_term_id = get_option( 'default_taxonomy_' . $taxonomy );
+					$default_term_id = get_option( 'default_term_' . $taxonomy );
 					if ( ! empty( $default_term_id ) ) {
 						$postarr['tax_input'][ $taxonomy ] = array( (int) $default_term_id );
 					}
