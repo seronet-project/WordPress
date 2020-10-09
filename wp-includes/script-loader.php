@@ -1067,6 +1067,12 @@ function wp_default_scripts( $scripts ) {
 	);
 	$scripts->set_translations( 'password-strength-meter' );
 
+	$scripts->add( 'application-passwords', "/wp-admin/js/application-passwords$suffix.js", array( 'jquery', 'wp-util', 'wp-api-request', 'wp-date', 'wp-i18n', 'wp-hooks', 'wp-a11y' ), false, 1 );
+	$scripts->set_translations( 'application-passwords' );
+
+	$scripts->add( 'auth-app', "/wp-admin/js/auth-app$suffix.js", array( 'jquery', 'wp-api-request', 'wp-i18n', 'wp-hooks' ), false, 1 );
+	$scripts->set_translations( 'auth-app' );
+
 	$scripts->add( 'user-profile', "/wp-admin/js/user-profile$suffix.js", array( 'jquery', 'password-strength-meter', 'wp-util' ), false, 1 );
 	$scripts->set_translations( 'user-profile' );
 
@@ -2185,7 +2191,7 @@ function script_concat_settings() {
  * @global WP_Screen $current_screen WordPress current screen object.
  */
 function wp_common_block_scripts_and_styles() {
-	if ( ! wp_should_load_block_editor_scripts_and_styles() ) {
+	if ( is_admin() && ! wp_should_load_block_editor_scripts_and_styles() ) {
 		return;
 	}
 
@@ -2219,15 +2225,11 @@ function wp_common_block_scripts_and_styles() {
 function wp_should_load_block_editor_scripts_and_styles() {
 	global $current_screen;
 
-	if ( ! is_admin() ) {
-		return false;
-	}
-
 	$is_block_editor_screen = ( $current_screen instanceof WP_Screen ) && $current_screen->is_block_editor();
 
 	/**
 	 * Filters the flag that decides whether or not block editor scripts and
-	 * styles are going to be enqueued on the current admin screen.
+	 * styles are going to be enqueued on the current screen.
 	 *
 	 * @since 5.6.0
 	 *
@@ -2247,7 +2249,7 @@ function wp_should_load_block_editor_scripts_and_styles() {
 function wp_enqueue_registered_block_scripts_and_styles() {
 	global $current_screen;
 
-	$load_editor_scripts = wp_should_load_block_editor_scripts_and_styles();
+	$load_editor_scripts = is_admin() && wp_should_load_block_editor_scripts_and_styles();
 
 	$block_registry = WP_Block_Type_Registry::get_instance();
 	foreach ( $block_registry->get_all_registered() as $block_name => $block_type ) {
