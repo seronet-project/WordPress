@@ -94,10 +94,10 @@ function wp_default_packages_vendor( $scripts ) {
 	);
 
 	$vendor_scripts_versions = array(
-		'react'                       => '16.9.0',
-		'react-dom'                   => '16.9.0',
+		'react'                       => '16.13.1',
+		'react-dom'                   => '16.13.1',
 		'moment'                      => '2.26.0',
-		'lodash'                      => '4.17.15',
+		'lodash'                      => '4.17.19',
 		'wp-polyfill-fetch'           => '3.0.0',
 		'wp-polyfill-formdata'        => '3.0.12',
 		'wp-polyfill-node-contains'   => '3.42.0',
@@ -1286,7 +1286,7 @@ function wp_default_scripts( $scripts ) {
 		$scripts->add( 'plugin-install', "/wp-admin/js/plugin-install$suffix.js", array( 'jquery', 'jquery-ui-core', 'thickbox' ), false, 1 );
 		$scripts->set_translations( 'plugin-install' );
 
-		$scripts->add( 'site-health', "/wp-admin/js/site-health$suffix.js", array( 'clipboard', 'jquery', 'wp-util', 'wp-a11y' ), false, 1 );
+		$scripts->add( 'site-health', "/wp-admin/js/site-health$suffix.js", array( 'clipboard', 'jquery', 'wp-util', 'wp-a11y', 'wp-api-request' ), false, 1 );
 		$scripts->set_translations( 'site-health' );
 
 		$scripts->add( 'privacy-tools', "/wp-admin/js/privacy-tools$suffix.js", array( 'jquery', 'wp-a11y' ), false, 1 );
