@@ -980,8 +980,29 @@ function wp_media_upload_handler() {
 function media_sideload_image( $file, $post_id = 0, $desc = null, $return = 'html' ) {
 	if ( ! empty( $file ) ) {
 
+		$allowed_extensions = array( 'jpg', 'jpeg', 'jpe', 'png', 'gif' );
+
+		/**
+		 * Filters the list of allowed file extensions when sideloading an image from a URL.
+		 *
+		 * The default allowed extensions are:
+		 *
+		 *  - `jpg`
+		 *  - `jpeg`
+		 *  - `jpe`
+		 *  - `png`
+		 *  - `gif`
+		 *
+		 * @since 5.6.0
+		 *
+		 * @param string[] $allowed_extensions Array of allowed file extensions.
+		 * @param string   $file               The URL of the image to download.
+		 */
+		$allowed_extensions = apply_filters( 'image_sideload_extensions', $allowed_extensions, $file );
+		$allowed_extensions = array_map( 'preg_quote', $allowed_extensions );
+
 		// Set variables for storage, fix file filename for query strings.
-		preg_match( '/[^\?]+\.(jpe?g|jpe|gif|png)\b/i', $file, $matches );
+		preg_match( '/[^\?]+\.(' . implode( '|', $allowed_extensions ) . ')\b/i', $file, $matches );
 
 		if ( ! $matches ) {
 			return new WP_Error( 'image_sideload_failed', __( 'Invalid image URL.' ) );
@@ -1118,7 +1139,7 @@ function image_align_input_fields( $post, $checked = '' ) {
 			" /><label for='image-align-{$name}-{$post->ID}' class='align image-align-{$name}-label'>$label</label>";
 	}
 
-	return join( "\n", $out );
+	return implode( "\n", $out );
 }
 
 /**
@@ -1195,7 +1216,7 @@ function image_size_input_fields( $post, $check = '' ) {
 	return array(
 		'label' => __( 'Size' ),
 		'input' => 'html',
-		'html'  => join( "\n", $out ),
+		'html'  => implode( "\n", $out ),
 	);
 }
 
@@ -1424,7 +1445,7 @@ function get_attachment_fields_to_edit( $post, $errors = null ) {
 			$values[] = $term->slug;
 		}
 
-		$t['value'] = join( ', ', $values );
+		$t['value'] = implode( ', ', $values );
 
 		$form_fields[ $taxonomy ] = $t;
 	}
@@ -1784,7 +1805,7 @@ function get_media_item( $attachment_id, $args = null ) {
 		}
 
 		if ( ! empty( $field['helps'] ) ) {
-			$item .= "<p class='help'>" . join( "</p>\n<p class='help'>", array_unique( (array) $field['helps'] ) ) . '</p>';
+			$item .= "<p class='help'>" . implode( "</p>\n<p class='help'>", array_unique( (array) $field['helps'] ) ) . '</p>';
 		}
 		$item .= "</td>\n\t\t</tr>\n";
 
@@ -1883,7 +1904,7 @@ function get_compat_media_markup( $attachment_id, $args = null ) {
 				$values[] = $term->slug;
 			}
 
-			$t['value']    = join( ', ', $values );
+			$t['value']    = implode( ', ', $values );
 			$t['taxonomy'] = true;
 
 			$form_fields[ $taxonomy ] = $t;
@@ -1976,7 +1997,7 @@ function get_compat_media_markup( $attachment_id, $args = null ) {
 		}
 
 		if ( ! empty( $field['helps'] ) ) {
-			$item .= "<p class='help'>" . join( "</p>\n<p class='help'>", array_unique( (array) $field['helps'] ) ) . '</p>';
+			$item .= "<p class='help'>" . implode( "</p>\n<p class='help'>", array_unique( (array) $field['helps'] ) ) . '</p>';
 		}
 
 		$item .= "</td>\n\t\t</tr>\n";
