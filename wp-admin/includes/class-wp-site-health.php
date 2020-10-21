@@ -106,8 +106,8 @@ class WP_Site_Health {
 		if ( 'site-health' === $screen->id && ! isset( $_GET['tab'] ) ) {
 			$tests = WP_Site_Health::get_tests();
 
-			// Don't run https test on localhost.
-			if ( 'localhost' === preg_replace( '|https?://|', '', get_site_url() ) ) {
+			// Don't run https test on development environments.
+			if ( $this->is_development_environment() ) {
 				unset( $tests['direct']['https_status'] );
 			}
 
@@ -1465,6 +1465,11 @@ class WP_Site_Health {
 
 				$result['status'] = 'critical';
 
+				// On development environments, set the status to recommended.
+				if ( $this->is_development_environment() ) {
+					$result['status'] = 'recommended';
+				}
+
 				$result['description'] .= sprintf(
 					'<p>%s</p>',
 					sprintf(
@@ -2155,19 +2160,22 @@ class WP_Site_Health {
 			),
 			'async'  => array(
 				'dotorg_communication' => array(
-					'label'    => __( 'Communication with WordPress.org' ),
-					'test'     => rest_url( 'wp-site-health/v1/tests/dotorg-communication' ),
-					'has_rest' => true,
+					'label'             => __( 'Communication with WordPress.org' ),
+					'test'              => rest_url( 'wp-site-health/v1/tests/dotorg-communication' ),
+					'has_rest'          => true,
+					'async_direct_test' => array( WP_Site_Health::get_instance(), 'get_test_dotorg_communication' ),
 				),
 				'background_updates'   => array(
-					'label'    => __( 'Background updates' ),
-					'test'     => rest_url( 'wp-site-health/v1/tests/background-updates' ),
-					'has_rest' => true,
+					'label'             => __( 'Background updates' ),
+					'test'              => rest_url( 'wp-site-health/v1/tests/background-updates' ),
+					'has_rest'          => true,
+					'async_direct_test' => array( WP_Site_Health::get_instance(), 'get_test_background_updates' ),
 				),
 				'loopback_requests'    => array(
-					'label'    => __( 'Loopback request' ),
-					'test'     => rest_url( 'wp-site-health/v1/tests/loopback-requests' ),
-					'has_rest' => true,
+					'label'             => __( 'Loopback request' ),
+					'test'              => rest_url( 'wp-site-health/v1/tests/loopback-requests' ),
+					'has_rest'          => true,
+					'async_direct_test' => array( WP_Site_Health::get_instance(), 'get_test_loopback_requests' ),
 				),
 			),
 		);
@@ -2204,10 +2212,13 @@ class WP_Site_Health {
 		 *         Plugins and themes are encouraged to prefix test identifiers with their slug
 		 *         to avoid any collisions between tests.
 		 *
-		 *         @type string  $label       A friendly label for your test to identify it by.
-		 *         @type mixed   $test        A callable to perform a direct test, or a string AJAX action to be
-		 *                                    called to perform an async test.
-		 *         @type boolean $has_rest    Optional. Denote if `$test` has a REST API endpoint.
+		 *         @type string   $label              A friendly label for your test to identify it by.
+		 *         @type mixed    $test               A callable to perform a direct test, or a string AJAX action to be
+		 *                                            called to perform an async test.
+		 *         @type boolean  $has_rest           Optional. Denote if `$test` has a REST API endpoint.
+		 *         @type callable $async_direct_test  A manner of directly calling the test marked as asynchronous, as
+		 *                                            the scheduled event can not authenticate, and endpoints may require
+		 *                                            authentication.
 		 *     }
 		 * }
 		 */
@@ -2387,13 +2398,8 @@ class WP_Site_Health {
 			'requires_php' => '5.6.20',
 		);
 
-		$type = 'plugin';
-		/** This filter is documented in wp-admin/includes/class-wp-automatic-updater.php */
-		$test_plugins_enabled = apply_filters( "auto_update_{$type}", true, $mock_plugin );
-
-		$type = 'theme';
-		/** This filter is documented in wp-admin/includes/class-wp-automatic-updater.php */
-		$test_themes_enabled = apply_filters( "auto_update_{$type}", true, $mock_theme );
+		$test_plugins_enabled = wp_is_auto_update_forced_for_item( 'plugin', true, $mock_plugin );
+		$test_themes_enabled  = wp_is_auto_update_forced_for_item( 'theme', true, $mock_theme );
 
 		$ui_enabled_for_plugins = wp_is_auto_update_enabled_for_type( 'plugin' );
 		$ui_enabled_for_themes  = wp_is_auto_update_enabled_for_type( 'theme' );
@@ -2525,8 +2531,8 @@ class WP_Site_Health {
 			'critical'    => 0,
 		);
 
-		// Don't run https test on localhost.
-		if ( 'localhost' === preg_replace( '|https?://|', '', get_site_url() ) ) {
+		// Don't run https test on development environments.
+		if ( $this->is_development_environment() ) {
 			unset( $tests['direct']['https_status'] );
 		}
 
@@ -2550,10 +2556,18 @@ class WP_Site_Health {
 		}
 
 		foreach ( $tests['async'] as $test ) {
+			// Local endpoints may require authentication, so asynchronous tests can pass a direct test runner as well.
+			if ( ! empty( $test['async_direct_test'] ) && is_callable( $test['async_direct_test'] ) ) {
+				// This test is callable, do so and continue to the next asynchronous check.
+				$results[] = $this->perform_test( $test['async_direct_test'] );
+				continue;
+			}
+
 			if ( is_string( $test['test'] ) ) {
+				// Check if this test has a REST API endpoint.
 				if ( isset( $test['has_rest'] ) && $test['has_rest'] ) {
-					$result_fetch = wp_remote_post(
-						rest_url( $test['test'] ),
+					$result_fetch = wp_remote_get(
+						$test['test'],
 						array(
 							'body' => array(
 								'_wpnonce' => wp_create_nonce( 'wp_rest' ),
@@ -2572,7 +2586,7 @@ class WP_Site_Health {
 					);
 				}
 
-				if ( ! is_wp_error( $result_fetch ) ) {
+				if ( ! is_wp_error( $result_fetch ) && 200 === wp_remote_retrieve_response_code( $result_fetch ) ) {
 					$result = json_decode( wp_remote_retrieve_body( $result_fetch ), true );
 				} else {
 					$result = false;
@@ -2601,4 +2615,16 @@ class WP_Site_Health {
 
 		set_transient( 'health-check-site-status-result', wp_json_encode( $site_status ) );
 	}
+
+	/**
+	 * Checks if the current environment type is set to 'development' or 'local'.
+	 *
+	 * @since 5.6.0
+	 *
+	 * @return bool True if it is a development environment, false if not.
+	 */
+	public function is_development_environment() {
+		return in_array( wp_get_environment_type(), array( 'development', 'local' ), true );
+	}
+
 }

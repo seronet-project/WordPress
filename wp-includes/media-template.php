@@ -459,6 +459,10 @@ function wp_print_media_templates() {
 					</div>
 				<# } #>
 
+				<# if ( data.mediaStates ) { #>
+					<div class="media-states"><strong><?php _e( 'Used as:' ); ?></strong> {{ data.mediaStates }}</div>
+				<# } #>
+
 				<div class="compat-meta">
 					<# if ( data.compat && data.compat.meta ) { #>
 						{{{ data.compat.meta }}}
@@ -514,11 +518,19 @@ function wp_print_media_templates() {
 			</div>
 
 			<div class="actions">
-				<a class="view-attachment" href="{{ data.link }}"><?php _e( 'View attachment page' ); ?></a>
-				<# if ( data.can.save ) { #> |
+				<# if ( data.link ) { #>
+					<a class="view-attachment" href="{{ data.link }}"><?php _e( 'View attachment page' ); ?></a>
+				<# } #>
+				<# if ( data.can.save ) { #>
+					<# if ( data.link ) { #>
+						<span class="links-separator">|</span>
+					<# } #>
 					<a href="{{ data.editLink }}"><?php _e( 'Edit more details' ); ?></a>
 				<# } #>
-				<# if ( ! data.uploading && data.can.remove ) { #> |
+				<# if ( ! data.uploading && data.can.remove ) { #>
+					<# if ( data.link || data.can.save ) { #>
+						<span class="links-separator">|</span>
+					<# } #>
 					<?php if ( MEDIA_TRASH ) : ?>
 						<# if ( 'trash' === data.status ) { #>
 							<button type="button" class="button-link untrash-attachment"><?php _e( 'Restore from Trash' ); ?></button>
@@ -663,6 +675,10 @@ function wp_print_media_templates() {
 						<span aria-hidden="true">{{ data.fileLength }}</span>
 						<span class="screen-reader-text">{{ data.fileLengthHumanReadable }}</span>
 					</div>
+				<# } #>
+
+				<# if ( data.mediaStates ) { #>
+					<div class="media-states"><strong><?php _e( 'Used as:' ); ?></strong> {{ data.mediaStates }}</div>
 				<# } #>
 
 				<# if ( ! data.uploading && data.can.remove ) { #>
