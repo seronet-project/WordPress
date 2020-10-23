@@ -18,16 +18,23 @@ if ( isset( $_POST['action'] ) && 'authorize_application_password' === $_POST['a
 	$success_url = $_POST['success_url'];
 	$reject_url  = $_POST['reject_url'];
 	$app_name    = $_POST['app_name'];
+	$app_id      = $_POST['app_id'];
 	$redirect    = '';
 
 	if ( isset( $_POST['reject'] ) ) {
 		if ( $reject_url ) {
-			$redirect = add_query_arg( 'success', 'false', $reject_url );
+			$redirect = $reject_url;
 		} else {
 			$redirect = admin_url();
 		}
 	} elseif ( isset( $_POST['approve'] ) ) {
-		$created = WP_Application_Passwords::create_new_application_password( get_current_user_id(), array( 'name' => $app_name ) );
+		$created = WP_Application_Passwords::create_new_application_password(
+			get_current_user_id(),
+			array(
+				'name'   => $app_name,
+				'app_id' => $app_id,
+			)
+		);
 
 		if ( is_wp_error( $created ) ) {
 			$error = $created;
@@ -56,11 +63,20 @@ if ( isset( $_POST['action'] ) && 'authorize_application_password' === $_POST['a
 $title = __( 'Authorize Application' );
 
 $app_name    = ! empty( $_REQUEST['app_name'] ) ? $_REQUEST['app_name'] : '';
+$app_id      = ! empty( $_REQUEST['app_id'] ) ? $_REQUEST['app_id'] : '';
 $success_url = ! empty( $_REQUEST['success_url'] ) ? $_REQUEST['success_url'] : null;
-$reject_url  = ! empty( $_REQUEST['reject_url'] ) ? $_REQUEST['reject_url'] : $success_url;
-$user        = wp_get_current_user();
 
-$request  = compact( 'app_name', 'success_url', 'reject_url' );
+if ( ! empty( $_REQUEST['reject_url'] ) ) {
+	$reject_url = $_REQUEST['reject_url'];
+} elseif ( $success_url ) {
+	$reject_url = add_query_arg( 'success', 'false', $success_url );
+} else {
+	$reject_url = null;
+}
+
+$user = wp_get_current_user();
+
+$request  = compact( 'app_name', 'app_id', 'success_url', 'reject_url' );
 $is_valid = wp_is_authorize_application_password_request_valid( $request, $user );
 
 if ( is_wp_error( $is_valid ) ) {
@@ -112,14 +128,42 @@ require_once ABSPATH . 'wp-admin/admin-header.php';
 		<h2 class="title"><?php __( 'An application would like to connect to your account.' ); ?></h2>
 		<?php if ( $app_name ) : ?>
 			<p>
-			<?php
-			/* translators: %s: Application name. */
-			printf( __( 'Would you like to give the application identifying itself as %s access to your account? You should only do this if you trust the app in question.' ), '<strong>' . esc_html( $app_name ) . '</strong>' );
-			?>
+				<?php
+				printf(
+					/* translators: %s: Application name. */
+					__( 'Would you like to give the application identifying itself as %s access to your account? You should only do this if you trust the app in question.' ),
+					'<strong>' . esc_html( $app_name ) . '</strong>'
+				);
+				?>
 			</p>
 		<?php else : ?>
 			<p><?php _e( 'Would you like to give this application access to your account? You should only do this if you trust the app in question.' ); ?></p>
 		<?php endif; ?>
+
+		<?php
+		if ( is_multisite() ) {
+			$blogs       = get_blogs_of_user( $user->ID, true );
+			$blogs_count = count( $blogs );
+			if ( $blogs_count > 1 ) {
+				?>
+				<p>
+					<?php
+					printf(
+						/* translators: 1: URL to my-sites.php, 2: Number of blogs the user has. */
+						_n(
+							'This will grant access to <a href="%1$s">the %2$s blog in this installation that you have permissions on</a>.',
+							'This will grant access to <a href="%1$s">all %2$s blogs in this installation that you have permissions on</a>.',
+							$blogs_count
+						),
+						admin_url( 'my-sites.php' ),
+						number_format_i18n( $blogs_count )
+					);
+					?>
+				</p>
+				<?php
+			}
+		}
+		?>
 
 		<?php if ( $new_password ) : ?>
 			<div class="notice notice-success notice-alt below-h2">
@@ -151,6 +195,7 @@ require_once ABSPATH . 'wp-admin/admin-header.php';
 			<form action="<?php echo esc_url( admin_url( 'authorize-application.php' ) ); ?>" method="post">
 				<?php wp_nonce_field( 'authorize_application_password' ); ?>
 				<input type="hidden" name="action" value="authorize_application_password" />
+				<input type="hidden" name="app_id" value="<?php echo esc_attr( $app_id ); ?>" />
 				<input type="hidden" name="success_url" value="<?php echo esc_url( $success_url ); ?>" />
 				<input type="hidden" name="reject_url" value="<?php echo esc_url( $reject_url ); ?>" />
 
@@ -206,14 +251,7 @@ require_once ABSPATH . 'wp-admin/admin-header.php';
 						printf(
 							/* translators: %s: The URL the user is being redirected to. */
 							__( 'You will be sent to %s' ),
-							'<strong><kbd>' . esc_html(
-								add_query_arg(
-									array(
-										'success' => 'false',
-									),
-									$reject_url
-								)
-							) . '</kbd></strong>'
+							'<strong><kbd>' . esc_html( $reject_url ) . '</kbd></strong>'
 						);
 					} else {
 						_e( 'You will be returned to the WordPress Dashboard, and no changes will be made.' );
