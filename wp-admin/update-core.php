@@ -348,8 +348,13 @@ function core_auto_updates_settings() {
 		$can_set_update_option = false;
 	}
 
-	if ( defined( 'AUTOMATIC_UPDATER_DISABLED' ) ) {
-		if ( true === AUTOMATIC_UPDATER_DISABLED ) {
+	if ( defined( 'AUTOMATIC_UPDATER_DISABLED' )
+		|| has_filter( 'automatic_updater_disabled' )
+	) {
+		if ( true === AUTOMATIC_UPDATER_DISABLED
+			/** This filter is documented in wp-admin/includes/class-wp-automatic-updater.php */
+			|| true === apply_filters( 'automatic_updater_disabled', false )
+		) {
 			$upgrade_dev   = false;
 			$upgrade_minor = false;
 			$upgrade_major = false;
@@ -395,10 +400,10 @@ function core_auto_updates_settings() {
 
 			if ( $can_set_update_option ) {
 				echo '<br>';
-				echo sprintf(
-					/* Translators: Action link to disable core auto-updates. */
-					__( '<a href="%s">Switch to automatic updates for maintenance and security releases only.</a>' ),
-					wp_nonce_url( add_query_arg( 'value', 'disable', $action_url ), 'core-major-auto-updates-nonce' )
+				printf(
+					'<a href="%s">%s</a>',
+					wp_nonce_url( add_query_arg( 'value', 'disable', $action_url ), 'core-major-auto-updates-nonce' ),
+					__( 'Switch to automatic updates for maintenance and security releases only.' )
 				);
 			}
 		} elseif ( $upgrade_minor ) {
@@ -406,10 +411,10 @@ function core_auto_updates_settings() {
 
 			if ( $can_set_update_option ) {
 				echo '<br>';
-				echo sprintf(
-					/* Translators: Action link to enable core auto-updates. */
-					__( '<a href="%s">Enable automatic updates for all new versions of WordPress.</a>' ),
-					wp_nonce_url( add_query_arg( 'value', 'enable', $action_url ), 'core-major-auto-updates-nonce' )
+				printf(
+					'<a href="%s">%s</a>',
+					wp_nonce_url( add_query_arg( 'value', 'enable', $action_url ), 'core-major-auto-updates-nonce' ),
+					__( 'Enable automatic updates for all new versions of WordPress.' )
 				);
 			}
 		} else {
@@ -1200,6 +1205,11 @@ if ( 'upgrade-core' === $action ) {
 	require_once ABSPATH . 'wp-admin/admin-footer.php';
 
 } elseif ( 'core-major-auto-updates-settings' === $action ) {
+
+	if ( ! current_user_can( 'update_core' ) ) {
+		wp_die( __( 'Sorry, you are not allowed to update this site.' ) );
+	}
+
 	$redirect_url = self_admin_url( 'update-core.php' );
 
 	if ( isset( $_GET['value'] ) ) {
