@@ -5,7 +5,7 @@
  *
  * @package WordPress
  * @subpackage Twenty_Twenty
- * @since 1.0
+ * @since Twenty Twenty 1.0
  */
 
 get_header();
@@ -24,10 +24,10 @@ get_header();
 		}
 	}
 
-	get_template_part( 'template-parts/footer-menus-widgets' );
-
 	?>
 
 </main><!-- #site-content -->
+
+<?php get_template_part( 'template-parts/footer-menus-widgets' ); ?>
 
 <?php get_footer(); ?>

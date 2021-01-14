@@ -8,10 +8,10 @@
  *
  * @package WordPress
  * @subpackage Twenty_Twenty
- * @since 1.0.0
+ * @since Twenty Twenty 1.0
  */
 
-?>		
+?>
 			<footer id="site-footer" role="contentinfo" class="header-footer-group">
 
 				<div class="section-inner">
@@ -20,40 +20,36 @@
 
 						<p class="footer-copyright">&copy;
 							<?php
-							echo esc_html(
-								date_i18n(
-									/* Translators: Y = Format parameter for date() https://php.net/manual/en/function.date.php */
-									_x( 'Y', 'Translators: Y = Current year', 'twentytwenty' )
-								)
+							echo date_i18n(
+								/* translators: Copyright date format, see https://www.php.net/manual/datetime.format.php */
+								_x( 'Y', 'copyright date format', 'twentytwenty' )
 							);
 							?>
-							<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php echo bloginfo( 'name' ); ?></a>
-						</p>
+							<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php bloginfo( 'name' ); ?></a>
+						</p><!-- .footer-copyright -->
 
 						<p class="powered-by-wordpress">
 							<a href="<?php echo esc_url( __( 'https://wordpress.org/', 'twentytwenty' ) ); ?>">
-								<?php
-								_e( 'Powered by WordPress', 'twentytwenty' ); // phpcs:ignore WordPress.Security.EscapeOutput.UnsafePrintingFunction -- core trusts translations
-								?>
+								<?php _e( 'Powered by WordPress', 'twentytwenty' ); ?>
 							</a>
-						</p><!-- .theme-credits -->
+						</p><!-- .powered-by-wordpress -->
 
 					</div><!-- .footer-credits -->
 
 					<a class="to-the-top" href="#site-header">
 						<span class="to-the-top-long">
 							<?php
-							// Translators: %s = HTML character for an arrow.
-							printf( esc_html( _x( 'To the top %s', '%s = HTML character for an arrow', 'twentytwenty' ) ), '<span class="arrow">&uarr;</span>' );
+							/* translators: %s: HTML character for up arrow. */
+							printf( __( 'To the top %s', 'twentytwenty' ), '<span class="arrow" aria-hidden="true">&uarr;</span>' );
 							?>
-						</span>
+						</span><!-- .to-the-top-long -->
 						<span class="to-the-top-short">
 							<?php
-							// Translators: %s = HTML character for an arrow.
-							printf( esc_html( _x( 'Up %s', '%s = HTML character for an arrow', 'twentytwenty' ) ), '<span class="arrow">&uarr;</span>' );
+							/* translators: %s: HTML character for up arrow. */
+							printf( __( 'Up %s', 'twentytwenty' ), '<span class="arrow" aria-hidden="true">&uarr;</span>' );
 							?>
-						</span>
-					</a>
+						</span><!-- .to-the-top-short -->
+					</a><!-- .to-the-top -->
 
 				</div><!-- .section-inner -->
 

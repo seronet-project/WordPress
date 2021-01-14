@@ -41,7 +41,7 @@
 
 .media-frame a:hover,
 .media-frame a:active {
-	color: #00a0d2;
+	color: #006799;
 }
 
 .media-frame a:focus {
@@ -73,7 +73,7 @@
 
 .media-frame select,
 .wp-admin .media-frame select {
-	min-height: 28px;
+	min-height: 30px;
 	vertical-align: middle;
 }
 
@@ -118,6 +118,12 @@
 	padding: 0 8px;
 	/* inherits font size 13px */
 	line-height: 2.15384615; /* 28px */
+}
+
+/* Search field in the Media Library toolbar */
+.media-frame.mode-grid .wp-filter input[type="search"] {
+	font-size: 14px;
+	line-height: 2;
 }
 
 .media-frame input[type="text"]:focus,
@@ -230,11 +236,11 @@
 
 .media-modal-close:hover,
 .media-modal-close:active {
-	color: #00a0d2;
+	color: #006799;
 }
 
 .media-modal-close:focus {
-	color: #00a0d2;
+	color: #006799;
 	border-color: #5b9dd9;
 	box-shadow: 0 0 3px rgba(0, 115, 170, 0.8);
 	/* Only visible in Windows High Contrast mode */
@@ -248,7 +254,7 @@
 .media-modal-close .media-modal-icon:before {
 	content: "\f158";
 	font: normal 20px/1 dashicons;
-	speak: none;
+	speak: never;
 	vertical-align: middle;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
@@ -268,7 +274,7 @@
 }
 
 .media-modal-content .media-frame select.attachment-filters {
-	margin-top: 11px;
+	margin-top: 32px;
 	margin-right: 2%;
 	width: 42%;
 	width: calc(48% - 12px);
@@ -301,21 +307,16 @@
 
 .media-frame-toolbar .media-toolbar {
 	top: auto;
-	bottom: -45px;
+	bottom: -47px;
 	height: auto;
 	overflow: visible;
 	border-top: 1px solid #ddd;
 }
 
-@media screen and (max-width: 782px) {
-	.media-frame-toolbar .media-toolbar {
-		bottom: -48px;
-	}
-}
-
 .media-toolbar-primary {
 	float: right;
 	height: 100%;
+	position: relative;
 }
 
 .media-toolbar-secondary {
@@ -345,12 +346,23 @@
 	right: 0;
 	bottom: 0;
 	width: 267px;
-	padding: 0 16px 24px;
+	padding: 0 16px;
 	z-index: 75;
 	background: #f3f3f3;
 	border-left: 1px solid #ddd;
 	overflow: auto;
 	-webkit-overflow-scrolling: touch;
+}
+
+/*
+ * Implementation of bottom padding in overflow content differs across browsers.
+ * We need a different method. See https://github.com/w3c/csswg-drafts/issues/129
+ */
+.media-sidebar::after {
+	content: "";
+	display: flex;
+	clear: both;
+	height: 24px;
 }
 
 .hide-toolbar .media-sidebar {
@@ -443,6 +455,28 @@
 
 .media-sidebar .checkbox-label-inline {
 	font-size: 12px;
+}
+
+.media-sidebar .copy-to-clipboard-container,
+.attachment-details .copy-to-clipboard-container {
+	flex-wrap: wrap;
+	margin-top: 10px;
+	margin-left: calc( 35% - 1px );
+	padding-top: 10px;
+}
+
+/* Needs high specificity. */
+.attachment-details .attachment-info .copy-to-clipboard-container {
+	float: none;
+}
+
+.media-sidebar .copy-to-clipboard-container .success,
+.attachment-details .copy-to-clipboard-container .success {
+	padding: 0;
+	min-height: 0;
+	line-height: 2.18181818;
+	text-align: left;
+	color: #40860a;
 }
 
 .compat-item label span {
@@ -745,8 +779,6 @@
 	position: absolute;
 	left: 200px;
 	right: 0;
-	bottom: 0;
-	height: 60px;
 	z-index: 100;
 	bottom: 60px;
 	height: auto;
@@ -768,6 +800,7 @@
 }
 
 .media-frame.hide-menu .media-frame-menu,
+.media-frame.hide-menu .media-frame-menu-heading,
 .media-frame.hide-router .media-frame-router,
 .media-frame.hide-toolbar .media-frame-toolbar {
 	display: none;
@@ -778,6 +811,32 @@
 	font-size: 22px;
 	line-height: 2.27272727;
 	margin: 0;
+}
+
+.media-frame-menu-heading,
+.media-attachments-filter-heading {
+	position: absolute;
+	left: 20px;
+	top: 22px;
+	margin: 0;
+	font-size: 13px;
+	line-height: 1;
+	/* Above the media-frame-menu. */
+	z-index: 151;
+}
+
+.media-attachments-filter-heading {
+	top: 10px;
+	left: 16px;
+}
+
+.mode-grid .media-attachments-filter-heading {
+	top: 0;
+	left: -9999px;
+}
+
+.mode-grid .media-frame-actions-heading {
+	display: none;
 }
 
 .wp-core-ui .button.media-frame-menu-toggle {
@@ -849,7 +908,7 @@
  * Search
  */
 .media-frame .search {
-	margin-top: 10px;
+	margin: 32px 0 0;
 	padding: 4px;
 	font-size: 13px;
 	color: #444;
@@ -859,6 +918,14 @@
 
 .media-toolbar-primary .search {
 	max-width: 100%;
+}
+
+.media-frame .media-search-input-label {
+	position: absolute;
+	left: 0;
+	top: 10px;
+	margin: 0;
+	line-height: 1;
 }
 
 /**
@@ -1106,7 +1173,8 @@
 
 .attachments-browser .media-toolbar {
 	right: 300px;
-	height: 50px;
+	height: 72px;
+	background: #fff;
 }
 
 .attachments-browser.hide-sidebar .media-toolbar {
@@ -1127,7 +1195,7 @@
 .attachments-browser .attachments,
 .attachments-browser .uploader-inline {
 	position: absolute;
-	top: 50px;
+	top: 72px;
 	left: 0;
 	right: 300px;
 	bottom: 0;
@@ -1141,6 +1209,15 @@
 
 .attachments-browser .media-toolbar-primary {
 	max-width: 33%;
+}
+
+.mode-grid .attachments-browser .media-toolbar-primary {
+	display: flex;
+	align-items: center;
+}
+
+.mode-grid .attachments-browser .media-toolbar-mode-select .media-toolbar-primary {
+	display: none;
 }
 
 .attachments-browser .media-toolbar-secondary {
@@ -1185,10 +1262,9 @@
 .attachments-browser .instructions {
 	display: inline-block;
 	margin-top: 16px;
-	line-height: 18px;
+	line-height: 1.38461538;
 	font-size: 13px;
 	color: #666;
-	margin-right: 0.5em;
 }
 
 .attachments-browser .no-media {
@@ -1523,7 +1599,7 @@
 
 .media-selection .button-link:hover,
 .media-selection .button-link:focus {
-	color: #00a0d2;
+	color: #006799;
 }
 
 .media-selection .button-link:last-child {
@@ -1628,12 +1704,24 @@
 	vertical-align: middle;
 }
 
-.media-frame .spinner.is-active {
-	visibility: visible;
+.media-frame.mode-grid .spinner {
+	margin: 0;
+	float: none;
+	vertical-align: middle;
 }
 
-.media-toolbar .spinner {
-	margin-top: 14px;
+.media-modal .media-toolbar .spinner {
+	float: none;
+	vertical-align: bottom;
+	margin: 0 0 5px 5px;
+}
+
+.media-frame .instructions + .spinner.is-active {
+	vertical-align: middle;
+}
+
+.media-frame .spinner.is-active {
+	visibility: visible;
 }
 
 /**
@@ -1675,6 +1763,14 @@
 	color: #666;
 	border-bottom: 1px solid #ddd;
 	padding-bottom: 11px;
+}
+
+.attachment-info .wp-media-wrapper {
+	margin-bottom: 8px;
+}
+
+.attachment-info .wp-media-wrapper.wp-audio {
+	margin-top: 13px;
 }
 
 .attachment-info .filename {
@@ -1793,7 +1889,7 @@
 }
 
 .media-modal .imgedit-wrap .imgedit-panel-content {
-	padding: 16px;
+	padding: 16px 16px 0 16px;
 	position: absolute;
 	top: 0;
 	right: 282px;
@@ -1802,16 +1898,32 @@
 	overflow: auto;
 }
 
+/*
+ * Implementation of bottom padding in overflow content differs across browsers.
+ * We need a different method. See https://github.com/w3c/csswg-drafts/issues/129
+ */
+.media-modal .imgedit-wrap .imgedit-submit {
+	margin-bottom: 16px;
+}
+
 .media-modal .imgedit-wrap .imgedit-settings {
 	background: #f3f3f3;
 	border-left: 1px solid #ddd;
-	padding: 20px 16px 16px;
+	padding: 20px 16px 0;
 	position: absolute;
 	top: 0;
 	right: 0;
 	bottom: 0;
 	width: 250px;
 	overflow: auto;
+}
+
+/*
+ * Implementation of bottom padding in overflow content differs across browsers.
+ * We need a different method. See https://github.com/w3c/csswg-drafts/issues/129
+ */
+.media-modal .imgedit-wrap .imgedit-save-target {
+	margin: 8px 0 24px;
 }
 
 .media-modal .imgedit-group {
@@ -1896,7 +2008,8 @@
 	display: block;
 }
 
-.media-modal .imgedit-wrap div.updated {
+.media-modal .imgedit-wrap div.updated, /* Back-compat for pre-5.5 */
+.media-modal .imgedit-wrap .notice {
 	margin: 0;
 	margin-bottom: 16px;
 }
@@ -1944,8 +2057,20 @@
 	left: 0;
 	right: 0;
 	bottom: 0;
-	padding: 0 16px 32px;
+	padding: 0 16px;
 	overflow: auto;
+}
+
+/*
+ * Implementation of bottom padding in overflow content differs across browsers.
+ * We need a different method. See https://github.com/w3c/csswg-drafts/issues/129
+ */
+.embed-link-settings::after,
+.embed-media-settings::after {
+	content: "";
+	display: flex;
+	clear: both;
+	height: 24px;
 }
 
 .media-embed .embed-link-settings {
@@ -1990,6 +2115,10 @@
 	top: 0;
 	overflow: visible;
 	padding: 0;
+}
+
+.image-details .embed-media-settings::after {
+	content: none;
 }
 
 .image-details .embed-media-settings,
@@ -2044,7 +2173,7 @@
 
 .image-details .advanced-toggle:after {
 	font: normal 20px/1 dashicons;
-	speak: none;
+	speak: never;
 	vertical-align: top;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
@@ -2217,6 +2346,7 @@
 }
 
 /* Buttons group in IE 11. */
+.media-frame .setting-group .button-group,
 .image-details .embed-media-settings .setting .button-group {
 	width: auto;
 }
@@ -2330,7 +2460,8 @@
 		overflow: auto;
 		z-index: 2000;
 		top: 75px;
-		left: 0;
+		left: 50%;
+		transform: translateX(-50%);
 		right: auto;
 		bottom: auto;
 		padding: 5px 0;
@@ -2350,17 +2481,35 @@
 		margin: 5px 10px;
 	}
 
+	/* Visually hide the menu heading keeping it available to assistive technologies. */
+	.media-frame-menu-heading {
+		clip: rect(1px, 1px, 1px, 1px);
+		-webkit-clip-path: inset(50%);
+		clip-path: inset(50%);
+		height: 1px;
+		overflow: hidden;
+		padding: 0;
+		width: 1px;
+		word-wrap: normal !important;
+	}
+
+	/* Reveal the menu toggle button. */
 	.wp-core-ui .media-frame:not(.hide-menu) .button.media-frame-menu-toggle {
 		display: inline-flex;
 		align-items: center;
-		vertical-align: top;
-		min-height: 40px;
-		margin: -6px 6px 0;
+		position: absolute;
+		left: 50%;
+		transform: translateX(-50%);
+		margin: -6px 0 0;
 		padding: 0 2px 0 12px;
 		font-size: 0.875rem;
 		font-weight: 600;
 		text-decoration: none;
 		background: transparent;
+		/* Only for IE11 to vertically align text within the inline-flex button */
+		height: 0.1%;
+		/* Modern browsers */
+		min-height: 40px;
 	}
 
 	.wp-core-ui .button.media-frame-menu-toggle:hover,
@@ -2421,6 +2570,18 @@
 		padding: 8px 2px 2px;
 	}
 
+	/* Needs high specificity. */
+	.media-sidebar .setting .copy-to-clipboard-container,
+	.attachment-details .attachment-info .copy-to-clipboard-container {
+		margin-left: 0;
+		padding-top: 0;
+	}
+
+	.media-sidebar .setting .copy-attachment-url,
+	.attachment-details .attachment-info .copy-attachment-url {
+		margin: 0 1px;
+	}
+
 	.media-sidebar .setting .value,
 	.attachment-details .setting .value {
 		float: none;
@@ -2452,6 +2613,10 @@
 		height: auto;
 	}
 
+	.media-frame .media-toolbar input[type="search"] {
+		line-height: 2.25; /* 36px */
+	}
+
 	.media-sidebar .setting select.columns,
 	.attachment-details .setting select.columns {
 		width: auto;
@@ -2461,6 +2626,13 @@
 	.media-frame textarea,
 	.media-frame .search {
 		padding: 3px 6px;
+	}
+
+	.wp-admin .media-frame select {
+		min-height: 40px;
+		font-size: 16px;
+		line-height: 1.625;
+		padding: 5px 24px 5px 8px;
 	}
 
 	.image-details .column-image {
@@ -2549,10 +2721,6 @@
 		height: auto;
 	}
 
-	.media-modal .attachments-browser .media-toolbar .spinner {
-		margin: 14px 2px 0;
-	}
-
 	/* Text inputs need to be 16px, or they force zooming on iOS */
 	.media-frame input[type="text"],
 	.media-frame input[type="password"],
@@ -2563,6 +2731,39 @@
 	.media-frame textarea,
 	.media-frame select {
 		font-size: 16px;
+	}
+
+	.media-frame .media-toolbar input[type="search"] {
+		line-height: 2.3755; /* 38px */
+	}
+
+	.media-modal .media-toolbar .spinner {
+		margin-bottom: 10px;
+	}
+}
+
+@media screen and (max-width: 782px) {
+	.attachments-browser .media-toolbar {
+		height: 82px;
+	}
+
+	.attachments-browser .attachments,
+	.attachments-browser .uploader-inline {
+		top: 82px;
+	}
+
+	.media-frame-toolbar .media-toolbar {
+		bottom: -54px;
+	}
+
+	.mode-grid .attachments-browser .media-toolbar-primary {
+		display: block;
+	}
+
+	.media-sidebar .copy-to-clipboard-container .success,
+	.attachment-details .copy-to-clipboard-container .success {
+		font-size: 14px;
+		line-height: 2.71428571;
 	}
 }
 
@@ -2634,10 +2835,6 @@
 @media only screen and (max-width: 480px) {
 	.wp-core-ui.wp-customizer .media-button {
 		margin-top: 13px;
-	}
-
-	.media-frame.hide-router .media-frame-content {
-		top: 40px;
 	}
 }
 

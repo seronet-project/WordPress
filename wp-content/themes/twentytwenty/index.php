@@ -11,7 +11,7 @@
  *
  * @package WordPress
  * @subpackage Twenty_Twenty
- * @since 1.0.0
+ * @since Twenty Twenty 1.0
  */
 
 get_header();
@@ -34,11 +34,21 @@ get_header();
 		);
 
 		if ( $wp_query->found_posts ) {
-			/* Translators: %s = Number of results */
-			$archive_subtitle = sprintf( _nx( 'We found %s result for your search.', 'We found %s results for your search.', $wp_query->found_posts, '%s = Number of results', 'twentytwenty' ), $wp_query->found_posts );
+			$archive_subtitle = sprintf(
+				/* translators: %s: Number of search results. */
+				_n(
+					'We found %s result for your search.',
+					'We found %s results for your search.',
+					$wp_query->found_posts,
+					'twentytwenty'
+				),
+				number_format_i18n( $wp_query->found_posts )
+			);
 		} else {
 			$archive_subtitle = __( 'We could not find any results for your search. You can give it another try through the search form below.', 'twentytwenty' );
 		}
+	} elseif ( is_archive() && ! have_posts() ) {
+		$archive_title = __( 'Nothing Found', 'twentytwenty' );
 	} elseif ( ! is_home() ) {
 		$archive_title    = get_the_archive_title();
 		$archive_subtitle = get_the_archive_description();
@@ -88,7 +98,7 @@ get_header();
 			<?php
 			get_search_form(
 				array(
-					'label' => _x( 'search again', 'Label', 'twentytwenty' ),
+					'label' => __( 'search again', 'twentytwenty' ),
 				)
 			);
 			?>
@@ -100,9 +110,10 @@ get_header();
 	?>
 
 	<?php get_template_part( 'template-parts/pagination' ); ?>
-	<?php get_template_part( 'template-parts/footer-menus-widgets' ); ?>
 
 </main><!-- #site-content -->
+
+<?php get_template_part( 'template-parts/footer-menus-widgets' ); ?>
 
 <?php
 get_footer();

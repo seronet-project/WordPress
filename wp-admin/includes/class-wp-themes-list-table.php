@@ -212,7 +212,7 @@ class WP_Themes_List_Table extends WP_List_Table {
 				'<a href="%s" class="activatelink" title="%s">%s</a>',
 				$activate_link,
 				/* translators: %s: Theme name. */
-				esc_attr( sprintf( __( 'Activate &#8220;%s&#8221;' ), $title ) ),
+				esc_attr( sprintf( _x( 'Activate &#8220;%s&#8221;', 'theme' ), $title ) ),
 				__( 'Activate' )
 			);
 
@@ -281,7 +281,7 @@ class WP_Themes_List_Table extends WP_List_Table {
 				<?php
 				if ( $theme->parent() ) {
 					printf(
-						/* translators: %s: Link to documentation on child themes. */
+						/* translators: 1: Link to documentation on child themes, 2: Name of parent theme. */
 						' <p class="howto">' . __( 'This <a href="%1$s">child theme</a> requires its parent theme, %2$s.' ) . '</p>',
 						__( 'https://developer.wordpress.org/themes/advanced-topics/child-themes/' ),
 						$theme->parent()->display( 'Name' )
@@ -300,16 +300,16 @@ class WP_Themes_List_Table extends WP_List_Table {
 	 * @return bool
 	 */
 	public function search_theme( $theme ) {
-		// Search the features
+		// Search the features.
 		foreach ( $this->features as $word ) {
-			if ( ! in_array( $word, $theme->get( 'Tags' ) ) ) {
+			if ( ! in_array( $word, $theme->get( 'Tags' ), true ) ) {
 				return false;
 			}
 		}
 
-		// Match all phrases
+		// Match all phrases.
 		foreach ( $this->search_terms as $word ) {
-			if ( in_array( $word, $theme->get( 'Tags' ) ) ) {
+			if ( in_array( $word, $theme->get( 'Tags' ), true ) ) {
 				continue;
 			}
 

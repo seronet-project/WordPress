@@ -4,6 +4,9 @@
 
 var twentytwenty = twentytwenty || {};
 
+// Set a default value for scrolled.
+twentytwenty.scrolled = 0;
+
 // polyfill closest
 // https://developer.mozilla.org/en-US/docs/Web/API/Element/closest#Polyfill
 if ( ! Element.prototype.closest ) {
@@ -27,17 +30,17 @@ if ( ! Element.prototype.closest ) {
 if ( window.NodeList && ! NodeList.prototype.forEach ) {
 	NodeList.prototype.forEach = function( callback, thisArg ) {
 		var i;
+		var len = this.length;
 
 		thisArg = thisArg || window;
 
-		for ( i = 0; i < this.length; i++ ) {
+		for ( i = 0; i < len; i++ ) {
 			callback.call( thisArg, this[ i ], i, this );
 		}
 	};
 }
 
 // event "polyfill"
-
 twentytwenty.createEvent = function( eventName ) {
 	var event;
 	if ( typeof window.Event === 'function' ) {
@@ -51,7 +54,6 @@ twentytwenty.createEvent = function( eventName ) {
 
 // matches "polyfill"
 // https://developer.mozilla.org/es/docs/Web/API/Element/matches
-
 if ( ! Element.prototype.matches ) {
 	Element.prototype.matches =
 		Element.prototype.matchesSelector ||
@@ -67,6 +69,24 @@ if ( ! Element.prototype.matches ) {
 		};
 }
 
+// Add a class to the body for when touch is enabled for browsers that don't support media queries
+// for interaction media features. Adapted from <https://codepen.io/Ferie/pen/vQOMmO>.
+twentytwenty.touchEnabled = {
+
+	init: function() {
+		var matchMedia = function() {
+			// Include the 'heartz' as a way to have a non-matching MQ to help terminate the join. See <https://git.io/vznFH>.
+			var prefixes = [ '-webkit-', '-moz-', '-o-', '-ms-' ];
+			var query = [ '(', prefixes.join( 'touch-enabled),(' ), 'heartz', ')' ].join( '' );
+			return window.matchMedia && window.matchMedia( query ).matches;
+		};
+
+		if ( ( 'ontouchstart' in window ) || ( window.DocumentTouch && document instanceof window.DocumentTouch ) || matchMedia() ) {
+			document.body.classList.add( 'touch-enabled' );
+		}
+	}
+}; // twentytwenty.touchEnabled
+
 /*	-----------------------------------------------------------------------------------------------
 	Cover Modals
 --------------------------------------------------------------------------------------------------- */
@@ -75,47 +95,58 @@ twentytwenty.coverModals = {
 
 	init: function() {
 		if ( document.querySelector( '.cover-modal' ) ) {
-			// Handle cover modals when they're toggled
+			// Handle cover modals when they're toggled.
 			this.onToggle();
 
-			// When toggled, untoggle if visitor clicks on the wrapping element of the modal
+			// When toggled, untoggle if visitor clicks on the wrapping element of the modal.
 			this.outsideUntoggle();
 
-			// Close on escape key press
+			// Close on escape key press.
 			this.closeOnEscape();
 
-			// Hide and show modals before and after their animations have played out
+			// Hide and show modals before and after their animations have played out.
 			this.hideAndShowModals();
 		}
 	},
 
-	// Handle cover modals when they're toggled
+	// Handle cover modals when they're toggled.
 	onToggle: function() {
-		document.querySelector( '.cover-modal' ).addEventListener( 'toggled', function( event ) {
-			var modal, body;
+		document.querySelectorAll( '.cover-modal' ).forEach( function( element ) {
+			element.addEventListener( 'toggled', function( event ) {
+				var modal = event.target,
+					body = document.body;
 
-			modal = event.target;
-			body = document.body;
+				if ( modal.classList.contains( 'active' ) ) {
+					body.classList.add( 'showing-modal' );
+				} else {
+					body.classList.remove( 'showing-modal' );
+					body.classList.add( 'hiding-modal' );
 
-			if ( modal.classList.contains( 'active' ) ) {
-				body.classList.add( 'showing-modal' );
-			} else {
-				body.classList.remove( 'showing-modal' );
-				body.classList.add( 'hiding-modal' );
-
-				// Remove the hiding class after a delay, when animations have been run
-				setTimeout( function() {
-					body.classList.remove( 'hiding-modal' );
-				}, 500 );
-			}
+					// Remove the hiding class after a delay, when animations have been run.
+					setTimeout( function() {
+						body.classList.remove( 'hiding-modal' );
+					}, 500 );
+				}
+			} );
 		} );
 	},
 
-	// Close modal on outside click
+	// Close modal on outside click.
 	outsideUntoggle: function() {
 		document.addEventListener( 'click', function( event ) {
 			var target = event.target;
 			var modal = document.querySelector( '.cover-modal.active' );
+
+			// if target onclick is <a> with # within the href attribute
+			if ( event.target.tagName.toLowerCase() === 'a' && event.target.hash.includes( '#' ) && modal !== null ) {
+				// untoggle the modal
+				this.untoggleModal( modal );
+				// wait 550 and scroll to the anchor
+				setTimeout( function() {
+					var anchor = document.getElementById( event.target.hash.slice( 1 ) );
+					anchor.scrollIntoView();
+				}, 550 );
+			}
 
 			if ( target === modal ) {
 				this.untoggleModal( target );
@@ -123,7 +154,7 @@ twentytwenty.coverModals = {
 		}.bind( this ) );
 	},
 
-	// Close modal on escape key press
+	// Close modal on escape key press.
 	closeOnEscape: function() {
 		document.addEventListener( 'keydown', function( event ) {
 			if ( event.keyCode === 27 ) {
@@ -135,89 +166,123 @@ twentytwenty.coverModals = {
 		}.bind( this ) );
 	},
 
-	// Hide and show modals before and after their animations have played out
+	// Hide and show modals before and after their animations have played out.
 	hideAndShowModals: function() {
-		var modals = document.querySelectorAll( '.cover-modal' ),
-			htmlStyle = document.documentElement.style;
+		var _doc = document,
+			_win = window,
+			modals = _doc.querySelectorAll( '.cover-modal' ),
+			htmlStyle = _doc.documentElement.style,
+			adminBar = _doc.querySelector( '#wpadminbar' );
 
-		var getAdminBarHeight = function( negativeValue ) {
-			var adminBar = document.querySelector( '#wpadminbar' );
+		function getAdminBarHeight( negativeValue ) {
+			var height,
+				currentScroll = _win.pageYOffset;
 
 			if ( adminBar ) {
-				return ( negativeValue ? '-' : '' ) + adminBar.getBoundingClientRect().height + 'px';
+				height = currentScroll + adminBar.getBoundingClientRect().height;
+
+				return negativeValue ? -height : height;
 			}
 
-			return 0;
-		};
+			return currentScroll === 0 ? 0 : -currentScroll;
+		}
 
 		function htmlStyles() {
-			var overflow = window.innerHeight > document.documentElement.getBoundingClientRect().height;
+			var overflow = _win.innerHeight > _doc.documentElement.getBoundingClientRect().height;
 
 			return {
 				'overflow-y': overflow ? 'hidden' : 'scroll',
 				position: 'fixed',
 				width: '100%',
-				top: getAdminBarHeight( true ),
+				top: getAdminBarHeight( true ) + 'px',
 				left: 0
 			};
 		}
 
-		// Show the modal
+		// Show the modal.
 		modals.forEach( function( modal ) {
 			modal.addEventListener( 'toggle-target-before-inactive', function( event ) {
+				var styles = htmlStyles(),
+					offsetY = _win.pageYOffset,
+					paddingTop = ( Math.abs( getAdminBarHeight() ) - offsetY ) + 'px',
+					mQuery = _win.matchMedia( '(max-width: 600px)' );
+
 				if ( event.target !== modal ) {
 					return;
 				}
 
-				window.scrollTo( { top: 0 } );
-
-				Object.keys( htmlStyles() ).forEach( function( styleKey ) {
-					htmlStyle.setProperty( styleKey, htmlStyles()[ styleKey ] );
+				Object.keys( styles ).forEach( function( styleKey ) {
+					htmlStyle.setProperty( styleKey, styles[ styleKey ] );
 				} );
 
-				document.body.style.setProperty( 'padding-top', getAdminBarHeight() );
+				_win.twentytwenty.scrolled = parseInt( styles.top, 10 );
+
+				if ( adminBar ) {
+					_doc.body.style.setProperty( 'padding-top', paddingTop );
+
+					if ( mQuery.matches ) {
+						if ( offsetY >= getAdminBarHeight() ) {
+							modal.style.setProperty( 'top', 0 );
+						} else {
+							modal.style.setProperty( 'top', ( getAdminBarHeight() - offsetY ) + 'px' );
+						}
+					}
+				}
 
 				modal.classList.add( 'show-modal' );
 			} );
 
-			// Hide the modal after a delay, so animations have time to play out
+			// Hide the modal after a delay, so animations have time to play out.
 			modal.addEventListener( 'toggle-target-after-inactive', function( event ) {
 				if ( event.target !== modal ) {
 					return;
 				}
 
 				setTimeout( function() {
+					var clickedEl = twentytwenty.toggles.clickedEl;
+
 					modal.classList.remove( 'show-modal' );
 
 					Object.keys( htmlStyles() ).forEach( function( styleKey ) {
 						htmlStyle.removeProperty( styleKey );
 					} );
 
-					document.body.style.removeProperty( 'padding-top' );
+					if ( adminBar ) {
+						_doc.body.style.removeProperty( 'padding-top' );
+						modal.style.removeProperty( 'top' );
+					}
+
+					if ( clickedEl !== false ) {
+						clickedEl.focus();
+						clickedEl = false;
+					}
+
+					_win.scrollTo( 0, Math.abs( _win.twentytwenty.scrolled + getAdminBarHeight() ) );
+
+					_win.twentytwenty.scrolled = 0;
 				}, 500 );
 			} );
 		} );
 	},
 
-	// Untoggle a modal
+	// Untoggle a modal.
 	untoggleModal: function( modal ) {
-		var modalToggle, modalTargetClass;
+		var modalTargetClass,
+			modalToggle = false;
 
-		modalToggle = false;
-
-		// If the modal has specified the string (ID or class) used by toggles to target it, untoggle the toggles with that target string
-		// The modal-target-string must match the string toggles use to target the modal
+		// If the modal has specified the string (ID or class) used by toggles to target it, untoggle the toggles with that target string.
+		// The modal-target-string must match the string toggles use to target the modal.
 		if ( modal.dataset.modalTargetString ) {
 			modalTargetClass = modal.dataset.modalTargetString;
 
 			modalToggle = document.querySelector( '*[data-toggle-target="' + modalTargetClass + '"]' );
 		}
 
-		// If a modal toggle exists, trigger it so all of the toggle options are included
+		// If a modal toggle exists, trigger it so all of the toggle options are included.
 		if ( modalToggle ) {
 			modalToggle.click();
 
-			// If one doesn't exist, just hide the modal
+			// If one doesn't exist, just hide the modal.
 		} else {
 			modal.classList.remove( 'active' );
 		}
@@ -241,27 +306,26 @@ twentytwenty.intrinsicRatioVideos = {
 
 	makeFit: function() {
 		document.querySelectorAll( 'iframe, object, video' ).forEach( function( video ) {
-			var container, ratio, iTargetWidth;
+			var ratio, iTargetWidth,
+				container = video.parentNode;
 
-			container = video.parentNode;
-
-			// Skip videos we want to ignore
+			// Skip videos we want to ignore.
 			if ( video.classList.contains( 'intrinsic-ignore' ) || video.parentNode.classList.contains( 'intrinsic-ignore' ) ) {
 				return true;
 			}
 
 			if ( ! video.dataset.origwidth ) {
-				// Get the video element proportions
+				// Get the video element proportions.
 				video.setAttribute( 'data-origwidth', video.width );
 				video.setAttribute( 'data-origheight', video.height );
 			}
 
 			iTargetWidth = container.offsetWidth;
 
-			// Get ratio from proportions
+			// Get ratio from proportions.
 			ratio = iTargetWidth / video.dataset.origwidth;
 
-			// Scale based on ratio, thus retaining proportions
+			// Scale based on ratio, thus retaining proportions.
 			video.style.width = iTargetWidth + 'px';
 			video.style.height = ( video.dataset.origheight * ratio ) + 'px';
 		} );
@@ -270,107 +334,14 @@ twentytwenty.intrinsicRatioVideos = {
 }; // twentytwenty.instrinsicRatioVideos
 
 /*	-----------------------------------------------------------------------------------------------
-	Smooth Scroll
---------------------------------------------------------------------------------------------------- */
-
-twentytwenty.smoothScroll = {
-
-	init: function() {
-		// Scroll to anchor
-		this.scrollToAnchor();
-
-		// Scroll to element
-		this.scrollToElement();
-	},
-
-	// Scroll to anchor
-	scrollToAnchor: function() {
-		var anchorElements = document.querySelectorAll( 'a[href*="#"]' );
-		var anchorElementsList = Array.prototype.slice.call( anchorElements );
-		anchorElementsList.filter( function( element ) {
-			if ( element.href === '#' || element.href === '#0' || element.classList.contains( '.do-not-scroll' ) || element.classList.contains( 'skip-link' ) ) {
-				return false;
-			}
-			return true;
-		} ).forEach( function( element ) {
-			element.addEventListener( 'click', function( event ) {
-				var target, scrollOffset, originalOffset, adminBar, scrollSpeed, additionalOffset;
-
-				// On-page links
-				if ( window.location.hostname === event.target.hostname ) {
-					// Figure out element to scroll to
-					target = window.location.hash !== '' && document.querySelector( window.location.hash );
-					target = target ? target : event.target.hash !== '' && document.querySelector( event.target.hash );
-
-					// Does a scroll target exist?
-					if ( target ) {
-						// Only prevent default if animation is actually gonna happen
-						event.preventDefault();
-
-						// Get options
-						additionalOffset = event.target.dataset.additionalOffset;
-						scrollSpeed = event.target.dataset.scrollSpeed ? event.target.dataset.scrollSpeed : 500;
-
-						// Determine offset
-
-						adminBar = document.querySelector( '#wpadminbar' );
-
-						originalOffset = target.getBoundingClientRect().top + window.pageYOffset;
-						scrollOffset = additionalOffset ? originalOffset + additionalOffset : originalOffset;
-
-						if ( adminBar && event.target.className === 'to-the-top' ) {
-							scrollOffset = scrollOffset - adminBar.getBoundingClientRect().height;
-						}
-
-						twentytwentyScrollTo( scrollOffset, null, scrollSpeed );
-
-						window.location.hash = event.target.hash.slice( 1 );
-					}
-				}
-			} );
-		} );
-	},
-
-	// Scroll to element
-	scrollToElement: function() {
-		var scrollToElement = document.querySelector( '*[data-scroll-to]' );
-
-		if ( scrollToElement ) {
-			scrollToElement.addEventListener( 'click', function( event ) {
-				var target, originalOffset, additionalOffset, scrollOffset, scrollSpeed;
-
-				// Figure out element to scroll to
-				target = event.target.dataset.twentytwentyScrollTo;
-
-				// Make sure said element exists
-				if ( target ) {
-					event.preventDefault();
-
-					// Get options
-					additionalOffset = event.target.dataset.additionalOffset;
-					scrollSpeed = event.target.dataset.scrollSpeed ? event.target.dataset.scrollSpeed : 500;
-
-					// Determine offset
-					originalOffset = target.getBoundingClientRect().top + window.pageYOffset;
-					scrollOffset = additionalOffset ? originalOffset + additionalOffset : originalOffset;
-
-					twentytwentyScrollTo( scrollOffset, null, scrollSpeed );
-				}
-			} );
-		}
-	}
-
-}; // twentytwenty.smoothScroll
-
-/*	-----------------------------------------------------------------------------------------------
 	Modal Menu
 --------------------------------------------------------------------------------------------------- */
 twentytwenty.modalMenu = {
 
 	init: function() {
-		// If the current menu item is in a sub level, expand all the levels higher up on load
+		// If the current menu item is in a sub level, expand all the levels higher up on load.
 		this.expandLevel();
-		this.goBackToCloseButton();
+		this.keepFocusInModal();
 	},
 
 	expandLevel: function() {
@@ -390,42 +361,55 @@ twentytwenty.modalMenu = {
 		} );
 	},
 
-	// If the current menu item is the last one, return to close button when tab
-	goBackToCloseButton: function() {
-		document.addEventListener( 'keydown', function( event ) {
-			var desktopMenuButton = document.querySelector( '.toggle.close-nav-toggle' );
-			var mobileMenuButton = document.querySelector( '.toggle.mobile-nav-toggle' );
-			var isMobileMenu = desktopMenuButton ? window.getComputedStyle( desktopMenuButton, null ).getPropertyValue( 'display' ) === 'none' : false;
-			var firstMenuItem = isMobileMenu ? mobileMenuButton : desktopMenuButton;
+	keepFocusInModal: function() {
+		var _doc = document;
 
-			var menuLinks = isMobileMenu ?
-				document.querySelectorAll( '.menu-modal .mobile-menu li' ) :
-				document.querySelectorAll( '.menu-modal .expanded-menu li' );
+		_doc.addEventListener( 'keydown', function( event ) {
+			var toggleTarget, modal, selectors, elements, menuType, bottomMenu, activeEl, lastEl, firstEl, tabKey, shiftKey,
+				clickedEl = twentytwenty.toggles.clickedEl;
 
-			var socialLinks = document.querySelectorAll( '.menu-modal .social-menu > li' );
-			var hasSocialMenu = document.querySelectorAll( '.menu-modal .social-menu' ).length > 0;
-			var lastModalMenuItems = hasSocialMenu ? socialLinks : menuLinks;
-			var focusedElementParentLi = twentytwentyFindParents( event.target, 'li' );
-			var focusedElementIsInsideModal = twentytwentyFindParents( event.target, '.menu-modal' ).length > 0;
-			var lastMenuItem = lastModalMenuItems[lastModalMenuItems.length - 1];
+			if ( clickedEl && _doc.body.classList.contains( 'showing-modal' ) ) {
+				toggleTarget = clickedEl.dataset.toggleTarget;
+				selectors = 'input, a, button';
+				modal = _doc.querySelector( toggleTarget );
 
-			var isFirstModalItem = isMobileMenu ?
-				event.target === mobileMenuButton :
-				focusedElementIsInsideModal && event.target === desktopMenuButton;
+				elements = modal.querySelectorAll( selectors );
+				elements = Array.prototype.slice.call( elements );
 
-			var isLastModalItem = focusedElementIsInsideModal && focusedElementParentLi[0] ?
-				focusedElementParentLi[0].className === lastMenuItem.className :
-				undefined;
+				if ( '.menu-modal' === toggleTarget ) {
+					menuType = window.matchMedia( '(min-width: 1000px)' ).matches;
+					menuType = menuType ? '.expanded-menu' : '.mobile-menu';
 
-			if ( ! event.shiftKey && event.key === 'Tab' && isLastModalItem ) {
-				// Forward
-				event.preventDefault();
-				firstMenuItem.focus();
-			}
-			if ( event.shiftKey && event.key === 'Tab' && isFirstModalItem ) {
-				// Backward
-				event.preventDefault();
-				lastMenuItem.querySelector( 'a' ).focus();
+					elements = elements.filter( function( element ) {
+						return null !== element.closest( menuType ) && null !== element.offsetParent;
+					} );
+
+					elements.unshift( _doc.querySelector( '.close-nav-toggle' ) );
+
+					bottomMenu = _doc.querySelector( '.menu-bottom > nav' );
+
+					if ( bottomMenu ) {
+						bottomMenu.querySelectorAll( selectors ).forEach( function( element ) {
+							elements.push( element );
+						} );
+					}
+				}
+
+				lastEl = elements[ elements.length - 1 ];
+				firstEl = elements[0];
+				activeEl = _doc.activeElement;
+				tabKey = event.keyCode === 9;
+				shiftKey = event.shiftKey;
+
+				if ( ! shiftKey && tabKey && lastEl === activeEl ) {
+					event.preventDefault();
+					firstEl.focus();
+				}
+
+				if ( shiftKey && tabKey && firstEl === activeEl ) {
+					event.preventDefault();
+					lastEl.focus();
+				}
 			}
 		} );
 	}
@@ -445,9 +429,14 @@ twentytwenty.primaryMenu = {
 	// by adding the '.focus' class to all 'li.menu-item-has-children' when the focus is on the 'a' element.
 	focusMenuWithChildren: function() {
 		// Get all the link elements within the primary menu.
-		var menu = document.querySelector( '.primary-menu-wrapper' );
-		var links = menu.getElementsByTagName( 'a' );
-		var i, len;
+		var links, i, len,
+			menu = document.querySelector( '.primary-menu-wrapper' );
+
+		if ( ! menu ) {
+			return false;
+		}
+
+		links = menu.getElementsByTagName( 'a' );
 
 		// Each time a menu link is focused or blurred, toggle focus.
 		for ( i = 0, len = links.length; i < len; i++ ) {
@@ -481,42 +470,50 @@ twentytwenty.primaryMenu = {
 
 twentytwenty.toggles = {
 
+	clickedEl: false,
+
 	init: function() {
-		// Do the toggle
+		// Do the toggle.
 		this.toggle();
 
-		// Check for toggle/untoggle on resize
+		// Check for toggle/untoggle on resize.
 		this.resizeCheck();
 
-		// Check for untoggle on escape key press
+		// Check for untoggle on escape key press.
 		this.untoggleOnEscapeKeyPress();
 	},
 
 	performToggle: function( element, instantly ) {
-		var toggle, targetString, target, timeOutTime, classToToggle, activeClass;
+		var target, timeOutTime, classToToggle,
+			self = this,
+			_doc = document,
+			// Get our targets.
+			toggle = element,
+			targetString = toggle.dataset.toggleTarget,
+			activeClass = 'active';
 
-		// Get our targets
-		toggle = element;
-		targetString = toggle.dataset.toggleTarget;
-		activeClass = 'active';
+		// Elements to focus after modals are closed.
+		if ( ! _doc.querySelectorAll( '.show-modal' ).length ) {
+			self.clickedEl = _doc.activeElement;
+		}
 
 		if ( targetString === 'next' ) {
 			target = toggle.nextSibling;
 		} else {
-			target = document.querySelector( targetString );
+			target = _doc.querySelector( targetString );
 		}
 
-		// Trigger events on the toggle targets before they are toggled
+		// Trigger events on the toggle targets before they are toggled.
 		if ( target.classList.contains( activeClass ) ) {
 			target.dispatchEvent( twentytwenty.createEvent( 'toggle-target-before-active' ) );
 		} else {
 			target.dispatchEvent( twentytwenty.createEvent( 'toggle-target-before-inactive' ) );
 		}
 
-		// Get the class to toggle, if specified
+		// Get the class to toggle, if specified.
 		classToToggle = toggle.dataset.classToToggle ? toggle.dataset.classToToggle : activeClass;
 
-		// For cover modals, set a short timeout duration so the class animations have time to play out
+		// For cover modals, set a short timeout duration so the class animations have time to play out.
 		timeOutTime = 0;
 
 		if ( target.classList.contains( 'cover-modal' ) ) {
@@ -524,43 +521,43 @@ twentytwenty.toggles = {
 		}
 
 		setTimeout( function() {
-			var focusElement, duration, newTarget, subMenued;
+			var focusElement,
+				subMenued = target.classList.contains( 'sub-menu' ),
+				newTarget = subMenued ? toggle.closest( '.menu-item' ).querySelector( '.sub-menu' ) : target,
+				duration = toggle.dataset.toggleDuration;
 
-			subMenued = target.classList.contains( 'sub-menu' );
-			newTarget = subMenued ? toggle.closest( '.menu-item' ).querySelector( '.sub-menu' ) : target;
-			duration = toggle.dataset.toggleDuration;
-
-			// Toggle the target of the clicked toggle
+			// Toggle the target of the clicked toggle.
 			if ( toggle.dataset.toggleType === 'slidetoggle' && ! instantly && duration !== '0' ) {
 				twentytwentyMenuToggle( newTarget, duration );
 			} else {
 				newTarget.classList.toggle( classToToggle );
 			}
 
-			// If the toggle target is 'next', only give the clicked toggle the active class
+			// If the toggle target is 'next', only give the clicked toggle the active class.
 			if ( targetString === 'next' ) {
 				toggle.classList.toggle( activeClass );
 			} else if ( target.classList.contains( 'sub-menu' ) ) {
 				toggle.classList.toggle( activeClass );
 			} else {
-				// If not, toggle all toggles with this toggle target
-				document.querySelector( '*[data-toggle-target="' + targetString + '"]' ).classList.toggle( activeClass );
+				// If not, toggle all toggles with this toggle target.
+				_doc.querySelector( '*[data-toggle-target="' + targetString + '"]' ).classList.toggle( activeClass );
 			}
 
-			// Toggle aria-expanded on the target
-			twentytwentyToggleAttribute( target, 'aria-expanded', 'true', 'false' );
-
-			// Toggle aria-expanded on the toggle
+			// Toggle aria-expanded on the toggle.
 			twentytwentyToggleAttribute( toggle, 'aria-expanded', 'true', 'false' );
 
-			// Toggle body class
-			if ( toggle.dataset.toggleBodyClass ) {
-				document.querySelector( 'body' ).classList.toggle( toggle.dataset.toggleBodyClass );
+			if ( self.clickedEl && -1 !== toggle.getAttribute( 'class' ).indexOf( 'close-' ) ) {
+				twentytwentyToggleAttribute( self.clickedEl, 'aria-expanded', 'true', 'false' );
 			}
 
-			// Check whether to set focus
+			// Toggle body class.
+			if ( toggle.dataset.toggleBodyClass ) {
+				_doc.body.classList.toggle( toggle.dataset.toggleBodyClass );
+			}
+
+			// Check whether to set focus.
 			if ( toggle.dataset.setFocus ) {
-				focusElement = document.querySelector( toggle.dataset.setFocus );
+				focusElement = _doc.querySelector( toggle.dataset.setFocus );
 
 				if ( focusElement ) {
 					if ( target.classList.contains( activeClass ) ) {
@@ -571,10 +568,10 @@ twentytwenty.toggles = {
 				}
 			}
 
-			// Trigger the toggled event on the toggle target
+			// Trigger the toggled event on the toggle target.
 			target.dispatchEvent( twentytwenty.createEvent( 'toggled' ) );
 
-			// Trigger events on the toggle targets after they are toggled
+			// Trigger events on the toggle targets after they are toggled.
 			if ( target.classList.contains( activeClass ) ) {
 				target.dispatchEvent( twentytwenty.createEvent( 'toggle-target-after-active' ) );
 			} else {
@@ -583,18 +580,19 @@ twentytwenty.toggles = {
 		}, timeOutTime );
 	},
 
-	// Do the toggle
+	// Do the toggle.
 	toggle: function() {
 		var self = this;
 
 		document.querySelectorAll( '*[data-toggle-target]' ).forEach( function( element ) {
-			element.addEventListener( 'click', function() {
+			element.addEventListener( 'click', function( event ) {
+				event.preventDefault();
 				self.performToggle( element );
 			} );
 		} );
 	},
 
-	// Check for toggle/untoggle on screen resize
+	// Check for toggle/untoggle on screen resize.
 	resizeCheck: function() {
 		if ( document.querySelectorAll( '*[data-untoggle-above], *[data-untoggle-below], *[data-toggle-above], *[data-toggle-below]' ).length ) {
 			window.addEventListener( 'resize', function() {
@@ -607,12 +605,12 @@ twentytwenty.toggles = {
 						toggleAbove = toggle.dataset.toggleAbove,
 						toggleBelow = toggle.dataset.toggleBelow;
 
-					// If no width comparison is set, continue
+					// If no width comparison is set, continue.
 					if ( ! unToggleAbove && ! unToggleBelow && ! toggleAbove && ! toggleBelow ) {
 						return;
 					}
 
-					// If the toggle width comparison is true, toggle the toggle
+					// If the toggle width comparison is true, toggle the toggle.
 					if (
 						( ( ( unToggleAbove && winWidth > unToggleAbove ) ||
 							( unToggleBelow && winWidth < unToggleBelow ) ) &&
@@ -628,7 +626,7 @@ twentytwenty.toggles = {
 		}
 	},
 
-	// Close toggle on escape key press
+	// Close toggle on escape key press.
 	untoggleOnEscapeKeyPress: function() {
 		document.addEventListener( 'keyup', function( event ) {
 			if ( event.key === 'Escape' ) {
@@ -644,9 +642,9 @@ twentytwenty.toggles = {
 }; // twentytwenty.toggles
 
 /**
- * Is the DOM ready
+ * Is the DOM ready?
  *
- * this implementation is coming from https://gomakethings.com/a-native-javascript-equivalent-of-jquerys-ready-method/
+ * This implementation is coming from https://gomakethings.com/a-native-javascript-equivalent-of-jquerys-ready-method/
  *
  * @param {Function} fn Callback function to run.
  */
@@ -663,12 +661,12 @@ function twentytwentyDomReady( fn ) {
 }
 
 twentytwentyDomReady( function() {
-	twentytwenty.toggles.init();	// Handle toggles
-	twentytwenty.coverModals.init();	// Handle cover modals
-	twentytwenty.intrinsicRatioVideos.init();	// Retain aspect ratio of videos on window resize
-	twentytwenty.smoothScroll.init();	// Smooth scroll to anchor link or a specific element
-	twentytwenty.modalMenu.init();	// Modal Menu
-	twentytwenty.primaryMenu.init();	// Primary Menu
+	twentytwenty.toggles.init();              // Handle toggles.
+	twentytwenty.coverModals.init();          // Handle cover modals.
+	twentytwenty.intrinsicRatioVideos.init(); // Retain aspect ratio of videos on window resize.
+	twentytwenty.modalMenu.init();            // Modal Menu.
+	twentytwenty.primaryMenu.init();          // Primary Menu.
+	twentytwenty.touchEnabled.init();         // Add class to body if device is touch-enabled.
 } );
 
 /*	-----------------------------------------------------------------------------------------------
@@ -684,7 +682,7 @@ function twentytwentyToggleAttribute( element, attribute, trueVal, falseVal ) {
 	if ( falseVal === undefined ) {
 		falseVal = false;
 	}
-	if ( element[ attribute ] !== trueVal ) {
+	if ( element.getAttribute( attribute ) !== trueVal ) {
 		element.setAttribute( attribute, trueVal );
 	} else {
 		element.setAttribute( attribute, falseVal );
@@ -698,11 +696,9 @@ function twentytwentyToggleAttribute( element, attribute, trueVal, falseVal ) {
  * @param {number} duration
  */
 function twentytwentyMenuToggle( target, duration ) {
-	var initialPositions = [];
-	var finalPositions = [];
-	var initialParentHeight, finalParentHeight;
-	var menu, menuItems;
-	var transitionListener;
+	var initialParentHeight, finalParentHeight, menu, menuItems, transitionListener,
+		initialPositions = [],
+		finalPositions = [];
 
 	if ( ! target ) {
 		return;
@@ -732,9 +728,11 @@ function twentytwentyMenuToggle( target, duration ) {
 	// The whole process happens without giving the browser a chance to render, so it's invisible.
 	target.classList.toggle( 'active' );
 
-	// Step 4: prepare animation.
-	// Position all the items with absolute offsets, at the same starting position.
-	// Shouldn't result in any visual changes if done right.
+	/*
+	 * Step 4: prepare animation.
+	 * Position all the items with absolute offsets, at the same starting position.
+	 * Shouldn't result in any visual changes if done right.
+	 */
 	menu.classList.add( 'is-toggling' );
 	target.classList.toggle( 'active' );
 	menuItems.forEach( function( menuItem, index ) {
@@ -745,15 +743,19 @@ function twentytwentyMenuToggle( target, duration ) {
 		menuItem.style.transform = 'translate(' + initialPosition.x + 'px, ' + initialPosition.y + 'px)';
 	} );
 
-	// The double rAF is unfortunately needed, since we're toggling CSS classes, and
-	// the only way to ensure layout completion here across browsers is to wait twice.
-	// This just delays the start of the animation by 2 frames and is thus not an issue.
+	/*
+	 * The double rAF is unfortunately needed, since we're toggling CSS classes, and
+	 * the only way to ensure layout completion here across browsers is to wait twice.
+	 * This just delays the start of the animation by 2 frames and is thus not an issue.
+	 */
 	requestAnimationFrame( function() {
 		requestAnimationFrame( function() {
-			// Step 5: start animation by moving everything to final position.
-			// All the layout work has already happened, while we were preparing for the animation.
-			// The animation now runs entirely in CSS, using cheap CSS properties (opacity and transform)
-			// that don't trigger the layout or paint stages.
+			/*
+			 * Step 5: start animation by moving everything to final position.
+			 * All the layout work has already happened, while we were preparing for the animation.
+			 * The animation now runs entirely in CSS, using cheap CSS properties (opacity and transform)
+			 * that don't trigger the layout or paint stages.
+			 */
 			menu.classList.add( 'is-animating' );
 			menuItems.forEach( function( menuItem, index ) {
 				var finalPosition = finalPositions[ index ];
@@ -789,7 +791,7 @@ function twentytwentyMenuToggle( target, duration ) {
 }
 
 /**
- * traverses the DOM up to find elements matching the query
+ * Traverses the DOM up to find elements matching the query.
  *
  * @param {HTMLElement} target
  * @param {string} query
@@ -798,7 +800,7 @@ function twentytwentyMenuToggle( target, duration ) {
 function twentytwentyFindParents( target, query ) {
 	var parents = [];
 
-	// recursively go up the DOM adding matches to the parents array
+	// Recursively go up the DOM adding matches to the parents array.
 	function traverse( item ) {
 		var parent = item.parentNode;
 		if ( parent instanceof HTMLElement ) {
@@ -812,50 +814,4 @@ function twentytwentyFindParents( target, query ) {
 	traverse( target );
 
 	return parents;
-}
-
-// twentytwentyEaseInOutQuad functions http://goo.gl/5HLl8
-function twentytwentyEaseInOutQuad( t, b, c, d ) {
-	t /= d / 2;
-	if ( t < 1 ) {
-		return ( ( ( c / 2 ) * t ) * t ) + b;
-	}
-	t--;
-	return ( ( -c / 2 ) * ( ( t * ( t - 2 ) ) - 1 ) ) + b;
-}
-
-function twentytwentyScrollTo( to, callback, duration ) {
-	var start, change, increment, currentTime;
-
-	function move( amount ) {
-		document.documentElement.scrollTop = amount;
-		document.body.parentNode.scrollTop = amount;
-		document.body.scrollTop = amount;
-	}
-
-	start = document.documentElement.scrollTop || document.body.parentNode.scrollTop || document.body.scrollTop;
-	change = to - start;
-	increment = 20;
-	currentTime = 0;
-
-	duration = ( typeof ( duration ) === 'undefined' ) ? 500 : duration;
-
-	function animateScroll() {
-		var val;
-
-		// increment the time
-		currentTime += increment;
-		// find the value with the quadratic in-out twentytwentyEaseInOutQuad function
-		val = twentytwentyEaseInOutQuad( currentTime, start, change, duration );
-		// move the document.body
-		move( val );
-		// do the animation unless its over
-		if ( currentTime < duration ) {
-			window.requestAnimationFrame( animateScroll );
-		} else if ( callback && typeof ( callback ) === 'function' ) {
-			// the animation is done so lets callback
-			callback();
-		}
-	}
-	animateScroll();
 }

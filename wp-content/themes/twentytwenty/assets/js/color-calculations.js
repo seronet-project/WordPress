@@ -3,7 +3,7 @@
 /**
  * Color Calculations.
  *
- * @since 1.0.0
+ * @since Twenty Twenty 1.0
  *
  * @param {string} backgroundColor - The background color.
  * @param {number} accentHue - The hue for our accent color.
@@ -29,25 +29,40 @@ function _twentyTwentyColor( backgroundColor, accentHue ) {
  * For improved performance we only build half the array
  * depending on dark/light background-color.
  *
- * @since 1.0.0
+ * @since Twenty Twenty 1.0
  *
  * @return {Object} - this
  */
 _twentyTwentyColor.prototype.setAccentColorsArray = function() {
 	var self = this,
-		minSaturation = 55,
-		maxSaturation = 90,
-		minLightness = 25,
-		maxLighness = 75,
-		stepSaturation = 2.5,
-		stepLightness = 2.5,
+		minSaturation = 65,
+		maxSaturation = 100,
+		minLightness = 30,
+		maxLightness = 80,
+		stepSaturation = 2,
+		stepLightness = 2,
 		pushColor = function() {
 			var colorObj = new Color( {
 					h: self.accentHue,
 					s: s,
 					l: l
 				} ),
-				item;
+				item,
+				/**
+				 * Get a score for this color in contrast to its background color and surrounding text.
+				 *
+				 * @since Twenty Twenty 1.0
+				 *
+				 * @param {number} contrastBackground - WCAG contrast with the background color.
+				 * @param {number} contrastSurroundingText - WCAG contrast with surrounding text.
+				 * @return {number} - 0 is best, higher numbers have bigger difference with the desired scores.
+				 */
+				getScore = function( contrastBackground, contrastSurroundingText ) {
+					var diffBackground = ( 7 >= contrastBackground ) ? 0 : 7 - contrastBackground,
+						diffSurroundingText = ( 3 >= contrastSurroundingText ) ? 0 : 3 - contrastSurroundingText;
+
+					return diffBackground + diffSurroundingText;
+				};
 
 			item = {
 				color: colorObj,
@@ -62,7 +77,7 @@ _twentyTwentyColor.prototype.setAccentColorsArray = function() {
 
 			// Get a score for this color by multiplying the 2 contrasts.
 			// We'll use that to sort the array.
-			item.score = item.contrastBackground * item.contrastText;
+			item.score = getScore( item.contrastBackground, item.contrastText );
 
 			self.accentColorsArray.push( item );
 		},
@@ -72,7 +87,7 @@ _twentyTwentyColor.prototype.setAccentColorsArray = function() {
 
 	// We're using `for` loops here because they perform marginally better than other loops.
 	for ( s = minSaturation; s <= maxSaturation; s += stepSaturation ) {
-		for ( l = minLightness; l <= maxLighness; l += stepLightness ) {
+		for ( l = minLightness; l <= maxLightness; l += stepLightness ) {
 			pushColor( s, l );
 		}
 	}
@@ -82,14 +97,14 @@ _twentyTwentyColor.prototype.setAccentColorsArray = function() {
 		return 7 <= color.contrastBackground;
 	} );
 
-	// If we have AAA-compliant colors, alpways prefer them.
+	// If we have AAA-compliant colors, always prefer them.
 	if ( aaa.length ) {
 		this.accentColorsArray = aaa;
 	}
 
 	// Sort colors by contrast.
 	this.accentColorsArray.sort( function( a, b ) {
-		return b.score - a.score;
+		return a.score - b.score;
 	} );
 	return this;
 };
@@ -97,7 +112,7 @@ _twentyTwentyColor.prototype.setAccentColorsArray = function() {
 /**
  * Get accessible text-color.
  *
- * @since 1.0.0
+ * @since Twenty Twenty 1.0
  *
  * @return {Color} - Returns a Color object.
  */
@@ -108,7 +123,7 @@ _twentyTwentyColor.prototype.getTextColor = function() {
 /**
  * Get accessible color for the defined accent-hue and background-color.
  *
- * @since 1.0.0
+ * @since Twenty Twenty 1.0
  *
  * @return {Color} - Returns a Color object.
  */
@@ -128,12 +143,13 @@ _twentyTwentyColor.prototype.getAccentColor = function() {
 /**
  * Return a new instance of the _twentyTwentyColor object.
  *
- * @since 1.0.0
+ * @since Twenty Twenty 1.0
+ *
  * @param {string} backgroundColor - The background color.
  * @param {number} accentHue - The hue for our accent color.
  * @return {Object} - this
  */
-function twentyTwentyColor( backgroundColor, accentHue ) { // jshint ignore:line
+function twentyTwentyColor( backgroundColor, accentHue ) {// jshint ignore:line
 	var color = new _twentyTwentyColor( backgroundColor, accentHue );
 	color.setAccentColorsArray();
 	return color;
