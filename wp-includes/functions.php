@@ -3052,7 +3052,7 @@ function wp_get_image_mime( $file ) {
 			$imagetype = exif_imagetype( $file );
 			$mime      = ( $imagetype ) ? image_type_to_mime_type( $imagetype ) : false;
 		} elseif ( function_exists( 'getimagesize' ) ) {
-			$imagesize = @getimagesize( $file );
+			$imagesize = wp_getimagesize( $file );
 			$mime      = ( isset( $imagesize['mime'] ) ) ? $imagesize['mime'] : false;
 		} else {
 			$mime = false;
@@ -7868,170 +7868,121 @@ function wp_fuzzy_number_match( $expected, $actual, $precision = 1 ) {
 }
 
 /**
- * Handles sending a password retrieval email to a user.
+ * Sanitizes an attributes array into an attributes string to be placed inside a `<script>` tag.
  *
- * @since 2.5.0
- * @since 5.7.0 Added `$user_login` parameter.
+ * Automatically injects type attribute if needed.
+ * Used by {@see wp_get_script_tag()} and {@see wp_get_inline_script_tag()}.
  *
- * Note: prior to 5.7.0 this function was in wp_login.php.
+ * @since 5.7.0
  *
- * @global wpdb         $wpdb       WordPress database abstraction object.
- * @global PasswordHash $wp_hasher  Portable PHP password hashing framework.
- *
- * @param  string       $user_login Optional user_login, default null. Uses
- *                                  `$_POST['user_login']` if `$user_login` not set.
- * @return true|WP_Error True when finished, WP_Error object on error.
+ * @param array $attributes Key-value pairs representing `<script>` tag attributes.
+ * @return string String made of sanitized `<script>` tag attributes.
  */
-function retrieve_password( $user_login = null ) {
-	$errors    = new WP_Error();
-	$user_data = false;
+function wp_sanitize_script_attributes( $attributes ) {
+	$html5_script_support = ! is_admin() && ! current_theme_supports( 'html5', 'script' );
+	$attributes_string    = '';
 
-	// Use the passed $user_login if available, otherwise use $_POST['user_login'].
-	if ( ! $user_login && ! empty( $_POST['user_login'] ) ) {
-		$user_login = $_POST['user_login'];
-	}
-
-	if ( empty( $user_login ) ) {
-		$errors->add( 'empty_username', __( '<strong>Error</strong>: Please enter a username or email address.' ) );
-	} elseif ( strpos( $user_login, '@' ) ) {
-		$user_data = get_user_by( 'email', trim( wp_unslash( $user_login ) ) );
-		if ( empty( $user_data ) ) {
-			$errors->add( 'invalid_email', __( '<strong>Error</strong>: There is no account with that username or email address.' ) );
+	// If HTML5 script tag is supported, only the attribute name is added
+	// to $attributes_string for entries with a boolean value, and that are true.
+	foreach ( $attributes as $attribute_name => $attribute_value ) {
+		if ( is_bool( $attribute_value ) ) {
+			if ( $attribute_value ) {
+				$attributes_string .= $html5_script_support ? sprintf( ' %1$s="%2$s"', esc_attr( $attribute_name ), esc_attr( $attribute_name ) ) : ' ' . $attribute_name;
+			}
+		} else {
+			$attributes_string .= sprintf( ' %1$s="%2$s"', esc_attr( $attribute_name ), esc_attr( $attribute_value ) );
 		}
-	} else {
-		$user_data = get_user_by( 'login', trim( wp_unslash( $user_login ) ) );
 	}
 
+	return $attributes_string;
+}
+
+/**
+ * Formats `<script>` loader tags.
+ *
+ * It is possible to inject attributes in the `<script>` tag via the {@see 'wp_script_attributes'} filter.
+ * Automatically injects type attribute if needed.
+ *
+ * @since 5.7.0
+ *
+ * @param array $attributes Key-value pairs representing `<script>` tag attributes.
+ * @return string String containing `<script>` opening and closing tags.
+ */
+function wp_get_script_tag( $attributes ) {
+	if ( ! isset( $attributes['type'] ) && ! is_admin() && ! current_theme_supports( 'html5', 'script' ) ) {
+		$attributes['type'] = 'text/javascript';
+	}
 	/**
-	 * Filters the user data during a password reset request.
-	 *
-	 * Allows, for example, custom validation using data other than username or email address.
+	 * Filters attributes to be added to a script tag.
 	 *
 	 * @since 5.7.0
 	 *
-	 * @param WP_User|false $user_data WP_User object if found, false if the user does not exist.
-	 * @param WP_Error      $errors    A WP_Error object containing any errors generated
-	 *                                 by using invalid credentials.
+	 * @param array $attributes Key-value pairs representing `<script>` tag attributes.
+	 *                          Only the attribute name is added to the `<script>` tag for
+	 *                          entries with a boolean value, and that are true.
 	 */
-	$user_data = apply_filters( 'lostpassword_user_data', $user_data, $errors );
+	$attributes = apply_filters( 'wp_script_attributes', $attributes );
 
+	return sprintf( "<script%s></script>\n", wp_sanitize_script_attributes( $attributes ) );
+}
+
+/**
+ * Prints formatted `<script>` loader tag.
+ *
+ * It is possible to inject attributes in the `<script>` tag via the  {@see 'wp_script_attributes'}  filter.
+ * Automatically injects type attribute if needed.
+ *
+ * @since 5.7.0
+ *
+ * @param array $attributes Key-value pairs representing `<script>` tag attributes.
+ */
+function wp_print_script_tag( $attributes ) {
+	echo wp_get_script_tag( $attributes );
+}
+
+/**
+ * Wraps inline JavaScript in `<script>` tag.
+ *
+ * It is possible to inject attributes in the `<script>` tag via the  {@see 'wp_script_attributes'}  filter.
+ * Automatically injects type attribute if needed.
+ *
+ * @since 5.7.0
+ *
+ * @param string $javascript Inline JavaScript code.
+ * @param array  $attributes  Optional. Key-value pairs representing `<script>` tag attributes.
+ * @return string String containing inline JavaScript code wrapped around `<script>` tag.
+ */
+function wp_get_inline_script_tag( $javascript, $attributes = array() ) {
+	if ( ! isset( $attributes['type'] ) && ! is_admin() && ! current_theme_supports( 'html5', 'script' ) ) {
+		$attributes['type'] = 'text/javascript';
+	}
 	/**
-	 * Fires before errors are returned from a password reset request.
+	 * Filters attributes to be added to a script tag.
 	 *
-	 * @since 2.1.0
-	 * @since 4.4.0 Added the `$errors` parameter.
-	 * @since 5.4.0 Added the `$user_data` parameter.
+	 * @since 5.7.0
 	 *
-	 * @param WP_Error      $errors    A WP_Error object containing any errors generated
-	 *                                 by using invalid credentials.
-	 * @param WP_User|false $user_data WP_User object if found, false if the user does not exist.
+	 * @param array $attributes Key-value pairs representing `<script>` tag attributes.
+	 *                          Only the attribute name is added to the `<script>` tag for
+	 *                          entries with a boolean value, and that are true.
 	 */
-	do_action( 'lostpassword_post', $errors, $user_data );
+	$attributes = apply_filters( 'wp_inline_script_attributes', $attributes, $javascript );
 
-	/**
-	 * Filters the errors encountered on a password reset request.
-	 *
-	 * The filtered WP_Error object may, for example, contain errors for an invalid
-	 * username or email address. A WP_Error object should always be returned,
-	 * but may or may not contain errors.
-	 *
-	 * If any errors are present in $errors, this will abort the password reset request.
-	 *
-	 * @since 5.5.0
-	 *
-	 * @param WP_Error      $errors    A WP_Error object containing any errors generated
-	 *                                 by using invalid credentials.
-	 * @param WP_User|false $user_data WP_User object if found, false if the user does not exist.
-	 */
-	$errors = apply_filters( 'lostpassword_errors', $errors, $user_data );
+	$javascript = "\n" . trim( $javascript, "\n\r " ) . "\n";
 
-	if ( $errors->has_errors() ) {
-		return $errors;
-	}
+	return sprintf( "<script%s>%s</script>\n", wp_sanitize_script_attributes( $attributes ), $javascript );
+}
 
-	if ( ! $user_data ) {
-		$errors->add( 'invalidcombo', __( '<strong>Error</strong>: There is no account with that username or email address.' ) );
-		return $errors;
-	}
-
-	// Redefining user_login ensures we return the right case in the email.
-	$user_login = $user_data->user_login;
-	$user_email = $user_data->user_email;
-	$key        = get_password_reset_key( $user_data );
-
-	if ( is_wp_error( $key ) ) {
-		return $key;
-	}
-
-	if ( is_multisite() ) {
-		$site_name = get_network()->site_name;
-	} else {
-		/*
-		 * The blogname option is escaped with esc_html on the way into the database
-		 * in sanitize_option. We want to reverse this for the plain text arena of emails.
-		 */
-		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-	}
-
-	$message = __( 'Someone has requested a password reset for the following account:' ) . "\r\n\r\n";
-	/* translators: %s: Site name. */
-	$message .= sprintf( __( 'Site Name: %s' ), $site_name ) . "\r\n\r\n";
-	/* translators: %s: User login. */
-	$message .= sprintf( __( 'Username: %s' ), $user_login ) . "\r\n\r\n";
-	$message .= __( 'If this was a mistake, ignore this email and nothing will happen.' ) . "\r\n\r\n";
-	$message .= __( 'To reset your password, visit the following address:' ) . "\r\n\r\n";
-	$message .= network_site_url( "wp-login.php?action=rp&key=$key&login=" . rawurlencode( $user_login ), 'login' ) . "\r\n\r\n";
-
-	$requester_ip = $_SERVER['REMOTE_ADDR'];
-	if ( $requester_ip ) {
-		$message .= sprintf(
-			/* translators: %s: IP address of password reset requester. */
-			__( 'This password reset request originated from the IP address %s.' ),
-			$requester_ip
-		) . "\r\n";
-	}
-
-	/* translators: Password reset notification email subject. %s: Site title. */
-	$title = sprintf( __( '[%s] Password Reset' ), $site_name );
-
-	/**
-	 * Filters the subject of the password reset email.
-	 *
-	 * @since 2.8.0
-	 * @since 4.4.0 Added the `$user_login` and `$user_data` parameters.
-	 *
-	 * @param string  $title      Email subject.
-	 * @param string  $user_login The username for the user.
-	 * @param WP_User $user_data  WP_User object.
-	 */
-	$title = apply_filters( 'retrieve_password_title', $title, $user_login, $user_data );
-
-	/**
-	 * Filters the message body of the password reset mail.
-	 *
-	 * If the filtered message is empty, the password reset email will not be sent.
-	 *
-	 * @since 2.8.0
-	 * @since 4.1.0 Added `$user_login` and `$user_data` parameters.
-	 *
-	 * @param string  $message    Email message.
-	 * @param string  $key        The activation key.
-	 * @param string  $user_login The username for the user.
-	 * @param WP_User $user_data  WP_User object.
-	 */
-	$message = apply_filters( 'retrieve_password_message', $message, $key, $user_login, $user_data );
-
-	if ( $message && ! wp_mail( $user_email, wp_specialchars_decode( $title ), $message ) ) {
-		$errors->add(
-			'retrieve_password_email_failure',
-			sprintf(
-				/* translators: %s: Documentation URL. */
-				__( '<strong>Error</strong>: The email could not be sent. Your site may not be correctly configured to send emails. <a href="%s">Get support for resetting your password</a>.' ),
-				esc_url( __( 'https://wordpress.org/support/article/resetting-your-password/' ) )
-			)
-		);
-		return $errors;
-	}
-
-	return true;
+/**
+ * Prints inline JavaScript wrapped in `<script>` tag.
+ *
+ * It is possible to inject attributes in the `<script>` tag via the  {@see 'wp_script_attributes'}  filter.
+ * Automatically injects type attribute if needed.
+ *
+ * @since 5.7.0
+ *
+ * @param string $javascript Inline JavaScript code.
+ * @param array  $attributes Optional. Key-value pairs representing `<script>` tag attributes.
+ */
+function wp_print_inline_script_tag( $javascript, $attributes = array() ) {
+	echo wp_get_inline_script_tag( $javascript, $attributes );
 }
